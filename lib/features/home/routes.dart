@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants.dart';
 import 'presentation/main_layout.dart';
 import 'presentation/home_screen.dart';
+import '../profile/presentation/profile_screen.dart';
 
 final List<RouteBase> homeRoutes = [
   StatefulShellRoute.indexedStack(
@@ -43,8 +44,7 @@ final List<RouteBase> homeRoutes = [
         routes: [
           GoRoute(
             path: '/profile',
-            builder: (context, state) =>
-                const Scaffold(body: Center(child: Text('Profile'))),
+            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),

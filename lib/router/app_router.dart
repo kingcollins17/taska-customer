@@ -5,6 +5,8 @@ import '../features/onboarding/routes.dart';
 import '../features/splash/routes.dart';
 import '../features/auth/routes.dart';
 import '../features/home/routes.dart';
+import '../features/profile/routes.dart';
+import '../features/task_creation/routes.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -17,6 +19,8 @@ class AppRoutes {
       ...onboardingRoutes,
       ...authRoutes,
       ...homeRoutes,
+      ...profileRoutes,
+      ...taskCreationRoutes,
     ],
   );
 

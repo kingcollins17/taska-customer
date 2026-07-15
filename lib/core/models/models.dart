@@ -3,3 +3,7 @@ export 'auth/register_request.dart';
 export 'auth/login_response.dart';
 export 'user/user_models.dart';
 export 'user/user_requests.dart';
+export 'tasks/task_models.dart';
+export 'service/service.dart';
+export 'region/region.dart';
+export 'address/address.dart';
