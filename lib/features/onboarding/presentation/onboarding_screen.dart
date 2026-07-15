@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:seeker_app/core/designs/app_colors.dart';
+import 'package:seeker_app/core/services/local_storage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -47,6 +48,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     });
   }
 
+  Future<void> _completeOnboarding() async {
+    await appStorage.set(StorageKey.onboardingComplete, true);
+    if (mounted) {
+      context.go('/login');
+    }
+  }
+
   void _onContinue() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
@@ -54,12 +62,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         curve: Curves.easeInOutCubic,
       );
     } else {
-      context.go('/login');
+      _completeOnboarding();
     }
   }
 
   void _onSkip() {
-    context.go('/login');
+    _completeOnboarding();
   }
 
   @override

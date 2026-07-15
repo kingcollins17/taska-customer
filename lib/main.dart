@@ -10,8 +10,8 @@ import 'package:seeker_app/seeker_app.dart';
 import 'core/designs/app_theme.dart';
 import 'router/app_router.dart';
 
-void main() {
-  bootstrap();
+void main() async {
+  await bootstrap();
   runApp(
     ProviderScope(
       child: DevicePreview(

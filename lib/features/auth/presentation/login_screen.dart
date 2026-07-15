@@ -6,13 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
-import 'package:seeker_app/core/designs/widgets/custom_back_button.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 
-import 'widgets/auth_divider.dart';
 import 'package:seeker_app/core/designs/widgets/custom_text_field.dart';
 import 'package:seeker_app/core/designs/widgets/primary_button.dart';
-import 'widgets/social_auth_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +19,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -33,16 +31,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleLogin() {
+    if (!_formKey.currentState!.validate()) return;
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-
-    if (email.isEmpty || password.isEmpty) {
-      context.showMessage(
-        'Please enter email and password',
-        type: MessageType.error,
-      );
-      return;
-    }
 
     context.showLoading();
 
@@ -66,8 +58,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -87,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 28.sp,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -100,28 +95,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
 
               SizedBox(height: 32.h),
 
-              // Email Field
-              CustomTextField(
-                hintText: 'Email address',
-                leadingIcon: Icons.mail_outline,
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-              ),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // Email Field
+                    CustomTextField(
+                      hintText: 'Email address',
+                      leadingIcon: Icons.mail_outline,
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Please enter your email';
+                        final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                        if (!emailRegex.hasMatch(value)) return 'Please enter a valid email address';
+                        return null;
+                      },
+                    ),
 
-              SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-              // Password Field
-              CustomTextField(
-                hintText: 'Password',
-                leadingIcon: Icons.lock_outline,
-                isPassword: true,
-                controller: _passwordController,
+                    // Password Field
+                    CustomTextField(
+                      hintText: 'Password',
+                      leadingIcon: Icons.lock_outline,
+                      isPassword: true,
+                      controller: _passwordController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Please enter your password';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
 
               SizedBox(height: 12.h),
@@ -141,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -152,32 +164,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // Login Button
               PrimaryButton(text: 'Log In', onPressed: _handleLogin),
 
-              SizedBox(height: 32.h),
-
-              // Divider
-              const AuthDivider(),
-
-              SizedBox(height: 32.h),
-
-              // Social Buttons
-              Row(
-                children: [
-                  SocialAuthButton(
-                    text: 'Google',
-                    icon: Icons.g_mobiledata, // Placeholder
-                    iconColor: Colors.redAccent,
-                    onPressed: () {},
-                  ),
-                  SizedBox(width: 16.w),
-                  SocialAuthButton(
-                    text: 'Apple',
-                    icon: Icons.apple,
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 48.h),
+              SizedBox(height: 24.h),
 
               // Sign Up Link
               Center(
@@ -186,14 +173,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     text: "Don't have an account? ",
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     children: [
                       TextSpan(
                         text: 'Sign up',
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           decoration: TextDecoration.underline,
                         ),
                         recognizer: TapGestureRecognizer()

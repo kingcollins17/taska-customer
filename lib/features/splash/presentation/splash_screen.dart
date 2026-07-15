@@ -5,15 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeker_app/core/providers/user_provider.dart';
+import 'package:seeker_app/core/services/local_storage_service.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   // Master entrance sequence
   late final AnimationController _entranceController;
@@ -152,13 +155,27 @@ class _SplashScreenState extends State<SplashScreen>
     _particleController.repeat();
 
     // Navigate after the splash plays
-    Future.delayed(const Duration(milliseconds: 3200), () {
+    Future.delayed(const Duration(milliseconds: 3200), () async {
       if (mounted) {
-        _exitController.forward().then((_) {
-          if (mounted) {
+        await _exitController.forward();
+        if (mounted) {
+          final isOnboardingComplete =
+              await appStorage.get(StorageKey.onboardingComplete) == true;
+          if (!isOnboardingComplete) {
             context.go('/onboarding');
+          } else {
+            final isAuthenticated = await ref.read(
+              isAuthenticatedProvider.future,
+            );
+            if (mounted) {
+              if (isAuthenticated) {
+                context.go('/');
+              } else {
+                context.go('/login');
+              }
+            }
           }
-        });
+        }
       }
     });
   }

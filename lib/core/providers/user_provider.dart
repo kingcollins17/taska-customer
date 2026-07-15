@@ -15,7 +15,7 @@ class UserNotifier extends AsyncNotifier<User?> {
   @override
   FutureOr<User?> build() async {
     // Attempt to load the user profile on initialization if a token exists
-    final token = await appStorage.get('accessToken');
+    final token = await appStorage.get(StorageKey.accessToken);
     if (token != null && token.toString().isNotEmpty) {
       return _fetchUser();
     }
@@ -47,7 +47,7 @@ class UserNotifier extends AsyncNotifier<User?> {
       final response = await client.login(username, password);
 
       if (response.accessToken != null) {
-        await appStorage.set('accessToken', response.accessToken!);
+        await appStorage.set(StorageKey.accessToken, response.accessToken!);
         final user = await _fetchUser();
         state = AsyncData(user);
         onSuccess?.call();
@@ -177,7 +177,7 @@ class UserNotifier extends AsyncNotifier<User?> {
     void Function(String message)? onError,
   }) async {
     try {
-      await appStorage.delete('accessToken');
+      await appStorage.delete(StorageKey.accessToken);
       state = const AsyncData(null);
       onSuccess?.call();
     } catch (e, st) {
@@ -187,3 +187,8 @@ class UserNotifier extends AsyncNotifier<User?> {
     }
   }
 }
+
+final isAuthenticatedProvider = FutureProvider<bool>((ref) async {
+  final user = await ref.watch(userProvider.future);
+  return user != null;
+});

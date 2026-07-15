@@ -13,10 +13,8 @@ import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 import 'package:seeker_app/features/auth/presentation/verify_otp_screen.dart';
 
-import 'widgets/auth_divider.dart';
 import 'package:seeker_app/core/designs/widgets/custom_text_field.dart';
 import 'package:seeker_app/core/designs/widgets/primary_button.dart';
-import 'widgets/social_auth_button.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -26,6 +24,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -42,22 +41,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _handleRegister() {
+    if (!_formKey.currentState!.validate()) return;
+
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    final confirm = _confirmPasswordController.text;
-
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      context.showMessage(
-        'Please fill all required fields',
-        type: MessageType.error,
-      );
-      return;
-    }
-    if (password != confirm) {
-      context.showMessage('Passwords do not match', type: MessageType.error);
-      return;
-    }
 
     final names = name.split(' ');
     final firstName = names.first;
@@ -101,6 +89,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   void _showVerificationScreen(String email, String password) {
     VerifyOTPScreen.verify(
       context,
+      resender: () async {
+        return ref
+            .read(userProvider.notifier)
+            .requestEmailOtp(request: RequestEmailOtpRequest(email: email));
+      },
       verifier: (otp) => _verifyOtp(email, otp),
     ).then((result) {
       if (result != null && result.$1 == true) {
@@ -155,8 +148,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -176,7 +172,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 28.sp,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -189,48 +185,87 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
 
               SizedBox(height: 32.h),
 
-              // Name Field
-              CustomTextField(
-                hintText: 'Full Name',
-                leadingIcon: Icons.person_outline,
-                controller: _nameController,
-                keyboardType: TextInputType.name,
-              ),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // Name Field
+                    CustomTextField(
+                      hintText: 'Full Name',
+                      leadingIcon: Icons.person_outline,
+                      controller: _nameController,
+                      keyboardType: TextInputType.name,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty)
+                          return 'Please enter your full name';
+                        final nameRegex = RegExp(r'^[a-zA-Z]+ [a-zA-Z]+$');
+                        if (!nameRegex.hasMatch(value.trim()))
+                          return 'Full name should be in format firstname lastname separated by a space';
+                        return null;
+                      },
+                    ),
 
-              SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-              // Email Field
-              CustomTextField(
-                hintText: 'Email address',
-                leadingIcon: Icons.mail_outline,
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-              ),
+                    // Email Field
+                    CustomTextField(
+                      hintText: 'Email address',
+                      leadingIcon: Icons.mail_outline,
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty)
+                          return 'Please enter your email';
+                        final emailRegex = RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        );
+                        if (!emailRegex.hasMatch(value.trim()))
+                          return 'Please enter a valid email address';
+                        return null;
+                      },
+                    ),
 
-              SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-              // Password Field
-              CustomTextField(
-                hintText: 'Password',
-                leadingIcon: Icons.lock_outline,
-                isPassword: true,
-                controller: _passwordController,
-              ),
+                    // Password Field
+                    CustomTextField(
+                      hintText: 'Password',
+                      leadingIcon: Icons.lock_outline,
+                      isPassword: true,
+                      controller: _passwordController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty)
+                          return 'Please enter a password';
+                        return null;
+                      },
+                    ),
 
-              SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-              // Confirm Password Field
-              CustomTextField(
-                hintText: 'Confirm Password',
-                leadingIcon: Icons.lock_outline,
-                isPassword: true,
-                controller: _confirmPasswordController,
+                    // Confirm Password Field
+                    CustomTextField(
+                      hintText: 'Confirm Password',
+                      leadingIcon: Icons.lock_outline,
+                      isPassword: true,
+                      controller: _confirmPasswordController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty)
+                          return 'Please confirm your password';
+                        if (value != _passwordController.text)
+                          return 'Passwords do not match';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
 
               SizedBox(height: 32.h),
@@ -238,32 +273,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               // Register Button
               PrimaryButton(text: 'Sign Up', onPressed: _handleRegister),
 
-              SizedBox(height: 32.h),
-
-              // Divider
-              const AuthDivider(),
-
-              SizedBox(height: 32.h),
-
-              // Social Buttons
-              Row(
-                children: [
-                  SocialAuthButton(
-                    text: 'Google',
-                    icon: Icons.g_mobiledata, // Placeholder
-                    iconColor: Colors.redAccent,
-                    onPressed: () {},
-                  ),
-                  SizedBox(width: 16.w),
-                  SocialAuthButton(
-                    text: 'Apple',
-                    icon: Icons.apple,
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 48.h),
+              SizedBox(height: 24.h),
 
               // Login Link
               Center(
@@ -272,14 +282,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     text: 'Already have an account? ',
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     children: [
                       TextSpan(
                         text: 'Log in',
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: colorScheme.onSurface,
                           decoration: TextDecoration.underline,
                         ),
                         recognizer: TapGestureRecognizer()

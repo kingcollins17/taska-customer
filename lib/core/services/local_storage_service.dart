@@ -1,9 +1,18 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+enum StorageKey { accessToken, onboardingComplete, themeMode }
+enum HiveBox { defaultBox }
+
 class LocalStorageService {
   final String boxName;
 
-  LocalStorageService({this.boxName = 'default_box'});
+  LocalStorageService({this.boxName = 'defaultBox'});
+
+  static Future<void> initBoxes() async {
+    for (final box in HiveBox.values) {
+      await Hive.openBox(box.name);
+    }
+  }
 
   Future<Box> _getBox() async {
     if (Hive.isBoxOpen(boxName)) {
@@ -12,19 +21,19 @@ class LocalStorageService {
     return await Hive.openBox(boxName);
   }
 
-  Future<dynamic> get(String key, {dynamic defaultValue}) async {
+  Future<dynamic> get(StorageKey key, {dynamic defaultValue}) async {
     final box = await _getBox();
-    return box.get(key, defaultValue: defaultValue);
+    return box.get(key.name, defaultValue: defaultValue);
   }
 
-  Future<void> set(String key, dynamic value) async {
+  Future<void> set(StorageKey key, dynamic value) async {
     final box = await _getBox();
-    await box.put(key, value);
+    await box.put(key.name, value);
   }
 
-  Future<void> delete(String key) async {
+  Future<void> delete(StorageKey key) async {
     final box = await _getBox();
-    await box.delete(key);
+    await box.delete(key.name);
   }
 
   Future<void> clear() async {

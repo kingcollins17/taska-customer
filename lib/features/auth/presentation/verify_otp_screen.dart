@@ -4,24 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/widgets/custom_back_button.dart';
 import 'package:seeker_app/core/designs/widgets/primary_button.dart';
+import 'package:seeker_app/core/utils/flushbar_message.dart';
+import 'package:seeker_app/core/utils/loading_overlay.dart';
 
 class VerifyOTPScreen extends StatefulWidget {
+  final String? title;
   final Future<bool> Function(String otp)? verifier;
   final Future<void> Function()? resender;
 
-  const VerifyOTPScreen({super.key, this.verifier, this.resender});
+  const VerifyOTPScreen({super.key, this.title, this.verifier, this.resender});
 
   static Future<(bool, String)?> verify(
     BuildContext context, {
+    String? title,
     Future<bool> Function(String otp)? verifier,
     Future<void> Function()? resender,
   }) {
     return Navigator.of(context).push<(bool, String)>(
       MaterialPageRoute(
         builder: (context) => VerifyOTPScreen(
+          title: title,
           verifier: verifier,
           resender: resender,
         ),
@@ -37,23 +41,24 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
   final int _otpLength = 6;
   late List<FocusNode> _focusNodes;
   late List<TextEditingController> _controllers;
-  bool _isLoading = false;
-
   Timer? _resendTimer;
-  int _remainingSeconds = 300;
+  int _remainingSeconds = 120;
   bool _canResend = false;
 
   @override
   void initState() {
     super.initState();
     _focusNodes = List.generate(_otpLength, (index) => FocusNode());
-    _controllers = List.generate(_otpLength, (index) => TextEditingController());
+    _controllers = List.generate(
+      _otpLength,
+      (index) => TextEditingController(),
+    );
     _startResendTimer();
   }
 
   void _startResendTimer() {
     setState(() {
-      _remainingSeconds = 300;
+      _remainingSeconds = 120;
       _canResend = false;
     });
     _resendTimer?.cancel();
@@ -102,7 +107,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
       }
     }
 
-    if (_getOtp().length == _otpLength && !_isLoading) {
+    if (_getOtp().length == _otpLength) {
       _verify();
     }
   }
@@ -121,25 +126,26 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
     }
 
     if (widget.verifier != null) {
-      setState(() => _isLoading = true);
+      context.showLoading();
       try {
         final success = await widget.verifier!(otp);
         if (mounted) {
-          setState(() => _isLoading = false);
+          context.hideLoading();
           if (success) {
             Navigator.of(context).pop((true, otp));
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Invalid verification code')),
+            context.showMessage(
+              'Invalid verification code',
+              type: MessageType.error,
             );
           }
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Verification failed: $e')),
-          );
+          context.hideLoading();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Verification failed: $e')));
         }
       }
     } else {
@@ -151,7 +157,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -165,35 +171,37 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
               ),
               SizedBox(height: 16.h),
               // App Logo placeholder based on UI mockup
+              // Text(
+              //   'Vitaria',
+              //   style: GoogleFonts.inter(
+              //     fontSize: 24.sp,
+              //     fontWeight: FontWeight.w700,
+              //     color: Theme.of(context).colorScheme.onSurface,
+              //     fontStyle: FontStyle.italic,
+              //   ),
+              // ),
+              // SizedBox(height: 48.h),
               Text(
-                'Vitaria',
-                style: GoogleFonts.inter(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              SizedBox(height: 48.h),
-              Text(
-                'Verify Account To\nContinue Now',
+                widget.title ?? 'Verify Account To\nContinue Now',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 28.sp,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.2,
                   letterSpacing: -0.5,
                 ),
               ),
               SizedBox(height: 16.h),
               Text(
-                'Enter the $_otpLength-digit code sent email',
+                'Enter the $_otpLength-digit code sent to you',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               SizedBox(height: 48.h),
@@ -216,24 +224,28 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       onChanged: (value) => _onOtpChange(value, index),
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.zero,
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.05),
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.05),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16.r),
                           borderSide: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.2),
                             width: 1,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16.r),
-                          borderSide: const BorderSide(
-                            color: Colors.white,
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.onSurface,
                             width: 1.5,
                           ),
                         ),
@@ -243,15 +255,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                 ),
               ),
               SizedBox(height: 48.h),
-              _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    )
-                  : PrimaryButton(
-                      text: 'Verification',
-                      onPressed: _verify,
-                      isLoading: _isLoading,
-                    ),
+              PrimaryButton(text: 'Verification', onPressed: _verify),
               SizedBox(height: 32.h),
               GestureDetector(
                 onTap: _canResend
@@ -267,7 +271,9 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                     text: "Didn't receive code? ",
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     children: [
                       TextSpan(
@@ -277,8 +283,10 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w600,
                           color: _canResend
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.4),
+                              ? Theme.of(context).colorScheme.onSurface
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
