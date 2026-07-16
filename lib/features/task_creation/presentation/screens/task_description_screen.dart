@@ -35,6 +35,9 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
   }
 
   Future<void> _pickImage() async {
+    final attachments = ref.read(taskAttachmentUploadProvider).value ?? [];
+    if (attachments.length >= 4) return;
+
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -133,7 +136,7 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Photos (Recommended)',
+                        'Photos (At least 1 required, max 4)',
                         style: AppTextStyles.bodyLarge.copyWith(
                           fontWeight: FontWeight.w600,
                           color: textColor,
@@ -186,27 +189,28 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                               ],
                             ),
                           ),
-                          GestureDetector(
-                            onTap: _pickImage,
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: cardColor,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColors.textSecondary.withOpacity(
-                                    0.3,
+                          if (attachments.length < 4)
+                            GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: cardColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.textSecondary.withOpacity(
+                                      0.3,
+                                    ),
+                                    style: BorderStyle.solid,
                                   ),
-                                  style: BorderStyle.solid,
+                                ),
+                                child: Icon(
+                                  Icons.add_photo_alternate,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
-                              child: Icon(
-                                Icons.add_photo_alternate,
-                                color: AppColors.textSecondary,
-                              ),
                             ),
-                          ),
                         ],
                       ),
                     ],
@@ -218,6 +222,15 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                 child: PrimaryButton(
                   text: 'Continue',
                   onPressed: () {
+                    if (attachments.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select at least 1 photo'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
                     if (_formKey.currentState!.validate()) {
                       ref
                           .read(taskCreationProvider.notifier)

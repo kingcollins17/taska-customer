@@ -215,7 +215,7 @@ return $default(_that.locationType,_that.latitude,_that.longitude,_that.address,
 
 @JsonSerializable(explicitToJson: true)
 class _CreateTaskLocationRequest implements CreateTaskLocationRequest {
-  const _CreateTaskLocationRequest({@JsonKey(name: 'location_type') this.locationType, this.latitude, this.longitude, this.address, this.city, this.state, this.country});
+  const _CreateTaskLocationRequest({@JsonKey(name: 'location_type') this.locationType = 'service', this.latitude, this.longitude, this.address, this.city, this.state, this.country});
   factory _CreateTaskLocationRequest.fromJson(Map<String, dynamic> json) => _$CreateTaskLocationRequestFromJson(json);
 
 @override@JsonKey(name: 'location_type') final  String? locationType;

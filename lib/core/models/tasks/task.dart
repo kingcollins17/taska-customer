@@ -221,7 +221,7 @@ class Task {
 abstract class CreateTaskLocationRequest with _$CreateTaskLocationRequest {
   @JsonSerializable(explicitToJson: true)
   const factory CreateTaskLocationRequest({
-    @JsonKey(name: 'location_type') String? locationType,
+    @JsonKey(name: 'location_type') @Default('service') String? locationType,
     double? latitude,
     double? longitude,
     String? address,

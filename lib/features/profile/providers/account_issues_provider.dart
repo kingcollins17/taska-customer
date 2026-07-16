@@ -2,12 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/constants.dart';
+import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 import 'package:seeker_app/core/designs/widgets/phone_number_sheet.dart';
 import 'package:seeker_app/features/auth/presentation/verify_otp_screen.dart';
-import 'package:seeker_app/core/utils/flushbar_message.dart';
-import 'package:seeker_app/core/utils/loading_overlay.dart';
 
 class AccountIssue {
   final String title;
@@ -52,6 +51,7 @@ Future<void> _handleVerifyPhone(
 ) async {
   String? phoneToVerify = user.phoneNumber;
 
+  'Context mounted ${context.mounted}'.debugLog();
   if (phoneToVerify == null || phoneToVerify.isEmpty) {
     phoneToVerify = await PhoneNumberSheet.collect(
       rootNavigatorKey.currentContext ?? context,
@@ -109,6 +109,9 @@ Future<void> _handleVerifyPhone(
               ),
               onSuccess: () {
                 verifySuccess = true;
+
+                // If successful,invalidate user profile
+                ref.invalidate(userProvider);
               },
               onError: (msg) {
                 verifySuccess = false;

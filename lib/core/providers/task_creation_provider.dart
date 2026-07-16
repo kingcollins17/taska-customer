@@ -180,7 +180,11 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     }
     final current = state.value;
     if (current != null) {
-      _updateState(current.copyWith(locations: [location]));
+      _updateState(
+        current.copyWith(
+          locations: [location.copyWith(locationType: 'service')],
+        ),
+      );
     }
   }
 

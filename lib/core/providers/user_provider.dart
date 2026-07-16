@@ -178,7 +178,7 @@ class UserNotifier extends AsyncNotifier<User?> {
   }) async {
     try {
       final client = ref.read(userClientProvider);
-      final response = await client.updateProviderProfile(request);
+      final response = await client.updateSeekerProfile(request);
 
       if (response.success) {
         final user = await _fetchUser();

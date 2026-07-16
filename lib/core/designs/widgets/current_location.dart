@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/providers/location_provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class CurrentLocation extends ConsumerWidget {
   const CurrentLocation({super.key});
@@ -36,12 +37,19 @@ class CurrentLocation extends ConsumerWidget {
         }
         return const SizedBox();
       },
-      loading: () => const Padding(
-        padding: EdgeInsets.only(right: 16.0),
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
+      loading: () => Padding(
+        padding: const EdgeInsets.only(right: 16.0),
+        child: Shimmer.fromColors(
+          baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+          highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+          child: Container(
+            width: 120,
+            height: 16,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
         ),
       ),
       error: (_, __) => const SizedBox(),

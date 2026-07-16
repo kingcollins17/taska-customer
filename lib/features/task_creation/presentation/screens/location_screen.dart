@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:seeker_app/core/core.dart';
+import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/providers/location_provider.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
@@ -46,7 +47,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 
       if (address != null) {
         final locationRequest = CreateTaskLocationRequest(
-          locationType: 'address',
+          locationType: 'service', // single service location
           latitude: address.lat,
           longitude: address.lng,
           address: address.formattedAddress ?? address.street ?? 'My Location',
@@ -79,6 +80,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         backgroundColor: bgColor,
         elevation: 0,
         leading: const CustomBackButton(),
+        actions: [CurrentLocation()],
       ),
       body: SafeArea(
         child: Column(

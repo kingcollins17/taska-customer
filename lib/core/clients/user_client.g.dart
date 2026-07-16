@@ -263,7 +263,7 @@ class _UserClient implements UserClient {
   }
 
   @override
-  Future<GenericResponse<dynamic>> updateProviderProfile(
+  Future<GenericResponse<dynamic>> updateSeekerProfile(
     UpdateProfileRequest request,
   ) async {
     final _extra = <String, dynamic>{};
@@ -275,7 +275,7 @@ class _UserClient implements UserClient {
       Options(method: 'PUT', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/users/update-provider-profile',
+            '/users/update-seeker-profile',
             queryParameters: queryParameters,
             data: _data,
           )

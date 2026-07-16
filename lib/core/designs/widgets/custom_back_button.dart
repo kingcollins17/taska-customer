@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 class CustomBackButton extends StatelessWidget {
-  const CustomBackButton({super.key});
+  final VoidCallback? onPressed;
+  
+  const CustomBackButton({super.key, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +18,7 @@ class CustomBackButton extends StatelessWidget {
       child: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
         iconSize: 18.sp,
-        onPressed: () {
+        onPressed: onPressed ?? () {
           if (context.canPop()) {
             context.pop();
           }
