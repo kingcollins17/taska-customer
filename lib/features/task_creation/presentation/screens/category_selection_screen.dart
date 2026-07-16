@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:seeker_app/core/core.dart';
+import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:seeker_app/core/designs/app_colors.dart';
@@ -54,10 +56,8 @@ class _CategorySelectionScreenState
       appBar: AppBar(
         backgroundColor: bgColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: textColor),
-          onPressed: () => context.pop(),
-        ),
+        leading: CustomBackButton(),
+        actions: [CurrentLocation()],
       ),
       body: SafeArea(
         child: Padding(
@@ -151,8 +151,15 @@ class _CategorySelectionScreenState
                             if (category.id != null) {
                               ref
                                   .read(taskCreationProvider.notifier)
-                                  .updateCategory(category.id!);
-                              context.pushNamed(RouteNames.taskService.name);
+                                  .updateCategory(category.id!)
+                                  .then((_) {
+                                    context.pushNamed(
+                                      RouteNames.taskService.name,
+                                      queryParameters: {
+                                        'categoryId': category.id,
+                                      },
+                                    );
+                                  });
                             }
                           },
                         );

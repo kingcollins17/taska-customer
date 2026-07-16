@@ -56,8 +56,8 @@ class UserNotifier extends AsyncNotifier<User?> {
       }
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
-      e.debugLog();
-      st.debugLog();
+
+      AppErrorHandler.instance.handleError(e, st);
     }
   }
 
@@ -78,8 +78,8 @@ class UserNotifier extends AsyncNotifier<User?> {
       }
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
-      e.debugLog();
-      st.debugLog();
+
+      AppErrorHandler.instance.handleError(e, st);
     }
   }
 
@@ -99,8 +99,8 @@ class UserNotifier extends AsyncNotifier<User?> {
       }
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
-      e.debugLog();
-      st.debugLog();
+
+      AppErrorHandler.instance.handleError(e, st);
     }
   }
 
@@ -122,8 +122,8 @@ class UserNotifier extends AsyncNotifier<User?> {
       }
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
-      e.debugLog();
-      st.debugLog();
+
+      AppErrorHandler.instance.handleError(e, st);
     }
   }
 
@@ -143,8 +143,8 @@ class UserNotifier extends AsyncNotifier<User?> {
       }
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
-      e.debugLog();
-      st.debugLog();
+
+      AppErrorHandler.instance.handleError(e, st);
     }
   }
 
@@ -166,8 +166,30 @@ class UserNotifier extends AsyncNotifier<User?> {
       }
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
-      e.debugLog();
-      st.debugLog();
+
+      AppErrorHandler.instance.handleError(e, st);
+    }
+  }
+
+  Future<void> updateProfile({
+    required UpdateProfileRequest request,
+    void Function()? onSuccess,
+    void Function(String message)? onError,
+  }) async {
+    try {
+      final client = ref.read(userClientProvider);
+      final response = await client.updateProviderProfile(request);
+
+      if (response.success) {
+        final user = await _fetchUser();
+        state = AsyncData(user);
+        onSuccess?.call();
+      } else {
+        throw response.detail ?? 'Failed to update profile.';
+      }
+    } catch (e, st) {
+      onError?.call(e.toFriendlyMessage());
+      AppErrorHandler.instance.handleError(e, st);
     }
   }
 
@@ -182,8 +204,8 @@ class UserNotifier extends AsyncNotifier<User?> {
       onSuccess?.call();
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
-      e.debugLog();
-      st.debugLog();
+
+      AppErrorHandler.instance.handleError(e, st);
     }
   }
 }

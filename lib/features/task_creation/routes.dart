@@ -8,7 +8,7 @@ import 'presentation/screens/budget_screen.dart';
 import 'presentation/screens/location_screen.dart';
 import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/review_screen.dart';
-import 'presentation/screens/success_attachments_screen.dart';
+import 'presentation/screens/success_screen.dart';
 
 final List<RouteBase> taskCreationRoutes = [
   GoRoute(
@@ -27,7 +27,14 @@ final List<RouteBase> taskCreationRoutes = [
   GoRoute(
     path: '/task-creation/description',
     name: RouteNames.taskDescription.name,
-    builder: (context, state) => const TaskDescriptionScreen(),
+    builder: (context, state) {
+      final params = state.uri.queryParameters;
+
+      return TaskDescriptionScreen(
+        initialTitle:
+            params['title'] ?? params['initialTitle'] ?? params['service'],
+      );
+    },
   ),
   GoRoute(
     path: '/task-creation/budget',
@@ -52,6 +59,6 @@ final List<RouteBase> taskCreationRoutes = [
   GoRoute(
     path: '/task-creation/success',
     name: RouteNames.taskSuccess.name,
-    builder: (context, state) => const SuccessAttachmentsScreen(),
+    builder: (context, state) => const SuccessScreen(),
   ),
 ];

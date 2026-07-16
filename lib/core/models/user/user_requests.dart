@@ -53,3 +53,29 @@ class VerifyPhoneRequest {
 
   Map<String, dynamic> toJson() => _$VerifyPhoneRequestToJson(this);
 }
+
+@JsonSerializable(includeIfNull: false)
+class UpdateProfileRequest {
+  @JsonKey(name: 'first_name')
+  final String? firstName;
+
+  @JsonKey(name: 'last_name')
+  final String? lastName;
+
+  final String? gender;
+
+  @JsonKey(name: 'phone_number')
+  final String? phoneNumber;
+
+  UpdateProfileRequest({
+    this.firstName,
+    this.lastName,
+    this.gender,
+    this.phoneNumber,
+  });
+
+  factory UpdateProfileRequest.fromJson(Map<String, dynamic> json) =>
+      _$UpdateProfileRequestFromJson(json);
+
+  Map<String, dynamic> toJson() => _$UpdateProfileRequestToJson(this);
+}

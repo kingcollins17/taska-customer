@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:seeker_app/core/core.dart';
+import 'package:seeker_app/core/designs/widgets/current_location.dart';
+import 'package:seeker_app/core/providers/task_attachment_upload_provider.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import '../../../../core/designs/app_colors.dart';
+import '../../../../core/designs/app_text_styles.dart';
 import '../../../../core/designs/widgets/primary_button.dart';
 
 class TaskDescriptionScreen extends ConsumerStatefulWidget {
-  const TaskDescriptionScreen({super.key});
+  final String? initialTitle;
+  const TaskDescriptionScreen({super.key, this.initialTitle});
 
   @override
   ConsumerState<TaskDescriptionScreen> createState() =>
@@ -15,7 +22,6 @@ class TaskDescriptionScreen extends ConsumerStatefulWidget {
 }
 
 class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
-  final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -23,15 +29,23 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
   void initState() {
     super.initState();
     final draft = ref.read(taskCreationProvider);
-    //   if (draft.title != null) _titleController.text = draft.title!;
     //   if (draft.description != null)
     //     _descriptionController.text = draft.description!;
     //
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      ref
+          .read(taskAttachmentUploadProvider.notifier)
+          .addAttachment(File(pickedFile.path));
+    }
+  }
+
   @override
   void dispose() {
-    _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -39,6 +53,7 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(taskCreationProvider);
+    final attachments = ref.watch(taskAttachmentUploadProvider).value ?? [];
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
@@ -49,10 +64,8 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
       appBar: AppBar(
         backgroundColor: bgColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => context.pop(),
-        ),
+        leading: CustomBackButton(),
+        actions: [CurrentLocation()],
       ),
       body: SafeArea(
         child: Form(
@@ -68,54 +81,24 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Tell us what you need',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                        style: AppTextStyles.heading1.copyWith(
                           color: textColor,
                           height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.initialTitle ?? '',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 32),
 
                       Text(
-                        'Title',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _titleController,
-                        style: TextStyle(color: textColor),
-                        decoration: InputDecoration(
-                          hintText: 'e.g. Fix leaking kitchen sink',
-                          hintStyle: TextStyle(
-                            color: AppColors.textSecondary.withOpacity(0.5),
-                          ),
-                          filled: true,
-                          fillColor: cardColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.all(16),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a title';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      Text(
                         'Description',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: AppTextStyles.bodyLarge.copyWith(
                           fontWeight: FontWeight.w600,
                           color: textColor,
                         ),
@@ -123,12 +106,14 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _descriptionController,
-                        style: TextStyle(color: textColor),
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: textColor,
+                        ),
                         maxLines: null,
                         minLines: 4,
                         decoration: InputDecoration(
-                          hintText: 'Need an artisan real quick',
-                          hintStyle: TextStyle(
+                          hintText: 'Tell us about your task in details',
+                          hintStyle: AppTextStyles.bodyLarge.copyWith(
                             color: AppColors.textSecondary.withOpacity(0.5),
                           ),
                           filled: true,
@@ -146,6 +131,84 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Photos (Recommended)',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          ...attachments.map(
+                            (file) => Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    file,
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: -6,
+                                  right: -6,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      ref
+                                          .read(
+                                            taskAttachmentUploadProvider
+                                                .notifier,
+                                          )
+                                          .removeAttachment(file);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black87,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.textSecondary.withOpacity(
+                                    0.3,
+                                  ),
+                                  style: BorderStyle.solid,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.add_photo_alternate,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -159,10 +222,12 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                       ref
                           .read(taskCreationProvider.notifier)
                           .updateDescription(
-                            title: _titleController.text.trim(),
+                            title: widget.initialTitle ?? '',
                             description: _descriptionController.text.trim(),
-                          );
-                      context.pushNamed(RouteNames.taskBudget.name);
+                          )
+                          .then((_) {
+                            context.pushNamed(RouteNames.taskBudget.name);
+                          });
                     }
                   },
                 ),

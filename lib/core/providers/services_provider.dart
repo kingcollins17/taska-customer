@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/clients/clients.dart';
 import 'package:seeker_app/core/models/models.dart';
+import 'package:seeker_app/core/providers/regions_provider.dart';
 
 class ServicesNotifier extends AsyncNotifier<List<Service>> {
   int _page = 1;
@@ -150,7 +151,7 @@ final categoryByIdProvider = FutureProvider.family<ServiceCategory, String>((
   return response.data!;
 });
 
-final serviceAvailableInRegionProvider =
+final isServiceAvailableInRegionProvider =
     FutureProvider.family<bool, ({String serviceId, String regionId})>((
       ref,
       param,
@@ -160,4 +161,19 @@ final serviceAvailableInRegionProvider =
           .checkServiceAvailabilityInRegion(param.serviceId, param.regionId);
 
       return response.data?.isAvailable ?? false;
+    });
+
+final isServiceAvailableInCurrentRegionProvider =
+    FutureProvider.family<bool, String>((ref, serviceId) async {
+      final currentRegion = await ref.watch(currentRegionProvider.future);
+
+      if (currentRegion?.id == null) throw 'Current Region not available';
+      final isAvailable = await ref.watch(
+        isServiceAvailableInRegionProvider((
+          regionId: currentRegion!.id!,
+          serviceId: serviceId,
+        )).future,
+      );
+
+      return isAvailable;
     });

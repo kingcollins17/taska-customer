@@ -10,7 +10,7 @@ final regionsProvider = FutureProvider<List<Region>>((ref) async {
   return response.data ?? [];
 });
 
-final currentRegionProvider = FutureProvider.autoDispose<Region?>((ref) async {
+final currentRegionProvider = FutureProvider<Region?>((ref) async {
   final address = await ref.watch(locationProvider.future);
   if (address == null || address.state == null) {
     return null;

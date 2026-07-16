@@ -8,44 +8,44 @@ class AppTextStyles {
   AppTextStyles._();
 
   static TextStyle get heading1 => GoogleFonts.inter(
-        fontSize: 32.sp,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 24.sp,
+    fontWeight: FontWeight.bold,
+    color: AppColors.textPrimary,
+  );
 
   static TextStyle get heading2 => GoogleFonts.inter(
-        fontSize: 24.sp,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 22.sp,
+    fontWeight: FontWeight.bold,
+    color: AppColors.textPrimary,
+  );
 
   static TextStyle get heading3 => GoogleFonts.inter(
-        fontSize: 20.sp,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 18.sp,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
 
   static TextStyle get bodyLarge => GoogleFonts.inter(
-        fontSize: 16.sp,
-        fontWeight: FontWeight.normal,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 16.sp,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textPrimary,
+  );
 
   static TextStyle get bodyMedium => GoogleFonts.inter(
-        fontSize: 14.sp,
-        fontWeight: FontWeight.normal,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 14.sp,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textPrimary,
+  );
 
   static TextStyle get bodySmall => GoogleFonts.inter(
-        fontSize: 12.sp,
-        fontWeight: FontWeight.normal,
-        color: AppColors.textSecondary,
-      );
+    fontSize: 12.sp,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textSecondary,
+  );
 
   static TextStyle get label => GoogleFonts.inter(
-        fontSize: 14.sp,
-        fontWeight: FontWeight.w500,
-        color: AppColors.textPrimary,
-      );
+    fontSize: 11.sp,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
 }

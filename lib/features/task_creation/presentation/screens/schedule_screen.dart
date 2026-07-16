@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import '../../../../core/designs/app_colors.dart';
+import '../../../../core/designs/app_text_styles.dart';
 import '../../../../core/designs/widgets/primary_button.dart';
+import '../../../../core/designs/widgets/custom_back_button.dart';
 
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key});
@@ -19,17 +23,23 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   TimeOfDay? _selectedTime;
 
   String _expirationOption = '3 days'; // '3 days', '5 days', '1 week', 'Custom'
-  DateTime? _customExpirationDate;
+  final _customDaysController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final draft = ref.read(taskCreationProvider);
-    // if (draft.startAt != null) {
-    //   _asSoonAsPossible = false;
-    //   _selectedDate = draft.startAt;
-    //   _selectedTime = TimeOfDay.fromDateTime(draft.startAt!);
-    // }
+    final draft = ref.read(taskCreationProvider).value;
+    if (draft?.scheduledStartAt != null) {
+      _asSoonAsPossible = false;
+      _selectedDate = draft!.scheduledStartAt;
+      _selectedTime = TimeOfDay.fromDateTime(draft.scheduledStartAt!);
+    }
+  }
+
+  @override
+  void dispose() {
+    _customDaysController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickDateTime() async {
@@ -54,6 +64,41 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }
   }
 
+  void _onContinue() {
+    DateTime? startAt;
+    if (!_asSoonAsPossible && _selectedDate != null && _selectedTime != null) {
+      startAt = DateTime(
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
+        _selectedTime!.hour,
+        _selectedTime!.minute,
+      );
+    }
+
+    DateTime baseTime = startAt ?? DateTime.now();
+    DateTime expiresAt;
+
+    if (_expirationOption == '3 days') {
+      expiresAt = baseTime.add(const Duration(days: 3));
+    } else if (_expirationOption == '5 days') {
+      expiresAt = baseTime.add(const Duration(days: 5));
+    } else if (_expirationOption == '1 week') {
+      expiresAt = baseTime.add(const Duration(days: 7));
+    } else if (_expirationOption == 'Custom') {
+      int customDays = int.tryParse(_customDaysController.text.trim()) ?? 3;
+      if (customDays < 1) customDays = 1;
+      expiresAt = baseTime.add(Duration(days: customDays));
+    } else {
+      expiresAt = baseTime.add(const Duration(days: 3)); // Fallback
+    }
+
+    ref
+        .read(taskCreationProvider.notifier)
+        .updateSchedule(startAt: startAt, expiresAt: expiresAt);
+    context.pushNamed(RouteNames.taskReview.name);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -66,25 +111,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       appBar: AppBar(
         backgroundColor: bgColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              // Skip schedule
-              context.push('/task-creation/review');
-            },
-            child: Text(
-              'Skip',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+        leading: const CustomBackButton(),
+        actions: [CurrentLocation()],
       ),
       body: SafeArea(
         child: Column(
@@ -98,11 +126,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'When should it start?',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                      style: AppTextStyles.heading1.copyWith(
                         color: textColor,
                         height: 1.2,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -135,17 +162,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     const SizedBox(height: 48),
                     Text(
                       'Expiration',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
+                      style: AppTextStyles.heading2.copyWith(color: textColor),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'When should this task stop accepting offers?',
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: AppTextStyles.bodyLarge.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
@@ -161,49 +183,53 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         _buildChip('Custom', textColor, cardColor),
                       ],
                     ),
+
+                    if (_expirationOption == 'Custom') ...[
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _customDaysController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        style: AppTextStyles.heading2.copyWith(
+                          color: textColor,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'e.g. 10',
+                          hintStyle: AppTextStyles.heading3.copyWith(
+                            color: AppColors.textSecondary.withOpacity(0.4),
+                            fontWeight: FontWeight.normal,
+                          ),
+                          filled: true,
+                          fillColor: cardColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.all(20),
+                          suffixText: 'days',
+                          suffixStyle: AppTextStyles.bodyLarge.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.all(24.0),
-              child: PrimaryButton(
-                text: 'Continue',
-                onPressed: () {
-                  DateTime? startAt;
-                  if (!_asSoonAsPossible &&
-                      _selectedDate != null &&
-                      _selectedTime != null) {
-                    startAt = DateTime(
-                      _selectedDate!.year,
-                      _selectedDate!.month,
-                      _selectedDate!.day,
-                      _selectedTime!.hour,
-                      _selectedTime!.minute,
-                    );
-                  }
-
-                  DateTime expiresAt = DateTime.now();
-                  if (_expirationOption == '3 days')
-                    expiresAt = expiresAt.add(const Duration(days: 3));
-                  else if (_expirationOption == '5 days')
-                    expiresAt = expiresAt.add(const Duration(days: 5));
-                  else if (_expirationOption == '1 week')
-                    expiresAt = expiresAt.add(const Duration(days: 7));
-                  else if (_expirationOption == 'Custom' &&
-                      _customExpirationDate != null)
-                    expiresAt = _customExpirationDate!;
-                  else
-                    expiresAt = expiresAt.add(
-                      const Duration(days: 3),
-                    ); // Fallback
-
-                  ref
-                      .read(taskCreationProvider.notifier)
-                      .updateSchedule(startAt: startAt, expiresAt: expiresAt);
-                  context.pushNamed(RouteNames.taskReview.name);
-                },
-              ),
+              child: PrimaryButton(text: 'Continue', onPressed: _onContinue),
             ),
           ],
         ),
@@ -220,12 +246,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   ) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? AppColors.primary : Colors.transparent,
             width: 2,
@@ -238,14 +264,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
               color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              size: 24,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                   color: textColor,
                 ),
               ),
@@ -278,9 +304,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: AppTextStyles.bodyMedium.copyWith(
             color: isSelected ? Colors.white : textColor,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
           ),
         ),
       ),
