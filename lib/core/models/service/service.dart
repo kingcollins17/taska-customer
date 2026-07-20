@@ -36,6 +36,7 @@ class ServiceCategory {
 class Service {
   final String? id;
   final String? name;
+  final String? description;
   @JsonKey(name: 'image_url')
   final String? imageUrl;
   @JsonKey(name: 'take_rate')
@@ -53,6 +54,7 @@ class Service {
   Service({
     this.id,
     this.name,
+    this.description,
     this.imageUrl,
     this.takeRate,
     this.isActive,

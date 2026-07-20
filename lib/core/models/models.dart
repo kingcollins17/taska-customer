@@ -7,3 +7,4 @@ export 'tasks/task_models.dart';
 export 'service/service.dart';
 export 'region/region.dart';
 export 'address/address.dart';
+export 'notifications/notifications.dart';

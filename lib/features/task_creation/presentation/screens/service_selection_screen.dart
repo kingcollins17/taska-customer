@@ -15,7 +15,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
 import 'package:seeker_app/core/providers/location_provider.dart';
-
+import 'package:seeker_app/core/designs/widgets/primary_button.dart';
 class ServiceSelectionScreen extends ConsumerStatefulWidget {
   final String? categoryId;
   const ServiceSelectionScreen({super.key, this.categoryId});
@@ -59,13 +59,6 @@ class _ServiceSelectionScreenState
       }
 
       await ref.read(taskCreationProvider.notifier).updateService(service.id!);
-
-      if (mounted) {
-        context.pushNamed(
-          RouteNames.taskDescription.name,
-          queryParameters: {'service': service.name ?? ''},
-        );
-      }
     } catch (err) {
       if (mounted) {
         context.showMessage(
@@ -177,25 +170,29 @@ class _ServiceSelectionScreenState
                         ),
                       );
                     }
-                    return ListView.separated(
+                    return ListView.builder(
                       itemCount: services.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 1, color: Colors.transparent),
+                      padding: EdgeInsets.only(bottom: 24.h),
                       itemBuilder: (context, index) {
                         final service = services[index];
-                        return _ServiceTile(
-                          service: service,
-                          onTap: () => _handleServiceTap(service),
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: _ServiceTile(
+                            service: service,
+                            isSelected: service.id == draft.value?.serviceId,
+                            onTap: () => _handleServiceTap(service),
+                          ),
                         );
                       },
                     );
                   },
-                  loading: () => ListView.separated(
+                  loading: () => ListView.builder(
                     itemCount: 8,
-                    separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: Colors.transparent),
                     itemBuilder: (context, index) {
-                      return const _ServiceTile(service: null);
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 12.h),
+                        child: const _ServiceTile(service: null),
+                      );
                     },
                   ),
                   error: (error, stack) => Center(
@@ -208,6 +205,20 @@ class _ServiceSelectionScreenState
                   ),
                 ),
               ),
+              if (servicesAsync.hasValue && draft.value?.serviceId != null) ...[
+                const SizedBox(height: 16),
+                PrimaryButton(
+                  text: 'Continue',
+                  onPressed: () {
+                    final selectedService = servicesAsync.value!.firstWhere((s) => s.id == draft.value!.serviceId);
+                    context.pushNamed(
+                      RouteNames.taskDescription.name,
+                      queryParameters: {'service': selectedService.name ?? ''},
+                    );
+                  },
+                ),
+                SizedBox(height: 16.h),
+              ],
             ],
           ),
         ),
@@ -218,9 +229,10 @@ class _ServiceSelectionScreenState
 
 class _ServiceTile extends ConsumerWidget {
   final md.Service? service;
+  final bool isSelected;
   final VoidCallback? onTap;
 
-  const _ServiceTile({this.service, this.onTap});
+  const _ServiceTile({this.service, this.isSelected = false, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -229,27 +241,31 @@ class _ServiceTile extends ConsumerWidget {
 
     if (service == null) {
       return Shimmer.fromColors(
-        baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-        highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
+        baseColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[300]!,
+        highlightColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100]!,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.black : Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
           child: Row(
             children: [
               Container(
-                width: 24,
-                height: 24,
+                width: 40.w,
+                height: 40.w,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16.w),
               Container(
-                height: 20,
-                width: 200,
+                height: 16.h,
+                width: 150.w,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(4.r),
                 ),
               ),
             ],
@@ -263,53 +279,82 @@ class _ServiceTile extends ConsumerWidget {
     );
 
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16.r),
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        padding: EdgeInsets.all(16.w),
         child: Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
+              padding: EdgeInsets.all(10.w),
               decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.textSecondary.withOpacity(0.3),
-                  width: 2,
-                ),
+              ),
+              child: Icon(
+                Icons.handyman_outlined,
+                color: isSelected ? AppColors.primary : (isDark ? Colors.white : AppColors.textPrimary),
+                size: 20.sp,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16.w),
             Expanded(
-              child: Text(
-                service!.name ?? 'Unknown Service',
-                style: AppTextStyles.heading3.copyWith(
-                  fontSize: 18.sp,
-                  color: textColor,
-                ),
-              ),
-            ),
-            availabilityAsync.when(
-              data: (isAvailable) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isAvailable
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isAvailable ? 'Available' : 'Unavailable',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: isAvailable ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.w600,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    service!.name ?? 'Unknown Service',
+                    style: AppTextStyles.heading3.copyWith(
+                      fontSize: 15.sp,
+                      color: textColor,
+                    ),
                   ),
-                ),
+                  SizedBox(height: 4.h),
+                  availabilityAsync.when(
+                    data: (isAvailable) {
+                      if (!isAvailable) {
+                        return Text(
+                          'Unavailable in your region',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: Colors.redAccent,
+                            fontSize: 13.sp,
+                          ),
+                        );
+                      }
+                      return Text(
+                        'Available',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.green,
+                          fontSize: 13.sp,
+                        ),
+                      );
+                    },
+                    loading: () => Shimmer.fromColors(
+                      baseColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[300]!,
+                      highlightColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100]!,
+                      child: Container(
+                        height: 12.h,
+                        width: 80.w,
+                        color: Colors.white,
+                      ),
+                    ),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                ],
               ),
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox(),
             ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: AppColors.primary, size: 24.sp)
+            else
+              Icon(Icons.chevron_right, color: isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3), size: 20.sp),
           ],
         ),
       ),

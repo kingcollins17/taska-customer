@@ -122,37 +122,41 @@ class _CategorySelectionScreenState
                         ),
                       );
                     }
-                    return ListView.separated(
+                    return GridView.builder(
+                      padding: EdgeInsets.only(bottom: 24.h),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 12.w,
+                        mainAxisSpacing: 12.h,
+                        childAspectRatio: 1.0,
+                      ),
                       itemCount: categories.length,
-                      separatorBuilder: (context, index) =>
-                          const Divider(height: 1, color: Colors.transparent),
                       itemBuilder: (context, index) {
                         final category = categories[index];
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          title: Text(
-                            category.name ?? 'Unknown Category',
-                            style: AppTextStyles.heading3.copyWith(
-                              fontSize: 18.sp,
-                              color: textColor,
-                            ),
-                          ),
-                          trailing: Icon(
-                            Icons.chevron_right,
-                            color: AppColors.textSecondary.withOpacity(0.5),
-                          ),
+                        IconData icon = Icons.category;
+                        
+                        if (category.name?.toLowerCase().contains('plumb') == true) {
+                          icon = Icons.plumbing;
+                        } else if (category.name?.toLowerCase().contains('clean') == true) {
+                          icon = Icons.cleaning_services;
+                        } else if (category.name?.toLowerCase().contains('electric') == true) {
+                          icon = Icons.electrical_services;
+                        } else if (category.name?.toLowerCase().contains('mov') == true) {
+                          icon = Icons.local_shipping;
+                        } else if (category.name?.toLowerCase().contains('beaut') == true) {
+                          icon = Icons.face_retouching_natural;
+                        } else if (category.name?.toLowerCase().contains('deliver') == true) {
+                          icon = Icons.delivery_dining;
+                        }
+
+                        return InkWell(
                           onTap: () {
                             if (category.id != null) {
                               ref
                                   .read(taskCreationProvider.notifier)
                                   .updateCategory(category.id!)
                                   .then((_) {
+                                    if (!context.mounted) return;
                                     context.pushNamed(
                                       RouteNames.taskService.name,
                                       queryParameters: {
@@ -162,47 +166,61 @@ class _CategorySelectionScreenState
                                   });
                             }
                           },
+                          borderRadius: BorderRadius.circular(16.r),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                              borderRadius: BorderRadius.circular(16.r),
+                              border: Border.all(
+                                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  icon,
+                                  color: isDark ? Colors.white : AppColors.primary,
+                                  size: 28.sp,
+                                ),
+                                SizedBox(height: 8.h),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                                  child: Text(
+                                    category.name ?? 'Unknown Category',
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyles.heading3.copyWith(
+                                      color: isDark ? Colors.white.withValues(alpha: 0.8) : AppColors.textPrimary,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         );
                       },
                     );
                   },
-                  loading: () => ListView.separated(
-                    itemCount: 8,
-                    separatorBuilder: (context, index) =>
-                        const Divider(height: 1, color: Colors.transparent),
+                  loading: () => GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12.w,
+                      mainAxisSpacing: 12.h,
+                      childAspectRatio: 1.0,
+                    ),
+                    itemCount: 9,
                     itemBuilder: (context, index) {
                       return Shimmer.fromColors(
-                        baseColor: isDark
-                            ? Colors.grey[800]!
-                            : Colors.grey[300]!,
-                        highlightColor: isDark
-                            ? Colors.grey[700]!
-                            : Colors.grey[100]!,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16.0,
-                            horizontal: 16,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                height: 20,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                              Container(
-                                height: 24,
-                                width: 24,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ],
+                        baseColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[300]!,
+                        highlightColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100]!,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.black : Colors.white,
+                            borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
                       );

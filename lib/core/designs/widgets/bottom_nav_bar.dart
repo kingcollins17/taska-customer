@@ -29,7 +29,7 @@ class BottomNavBar extends StatelessWidget {
         color: bgColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -48,25 +48,17 @@ class BottomNavBar extends StatelessWidget {
           ),
           _buildNavItem(
             1,
-            HugeIcons.strokeRoundedChatting01,
-            HugeIcons.strokeRoundedChatting01,
-            'Messages',
+            HugeIcons.strokeRoundedTask01, // Trying Task01
+            HugeIcons.strokeRoundedTask01,
+            'Tasks',
             activeColor,
             inactiveColor,
           ),
           _buildNavItem(
             2,
-            HugeIcons.strokeRoundedCalendar01,
-            HugeIcons.strokeRoundedCalendar01,
-            'Bookings',
-            activeColor,
-            inactiveColor,
-          ),
-          _buildNavItem(
-            3,
             HugeIcons.strokeRoundedUser,
             HugeIcons.strokeRoundedUser,
-            'Profile',
+            'Accounts',
             activeColor,
             inactiveColor,
           ),

@@ -7,6 +7,7 @@ import '../features/auth/routes.dart';
 import '../features/home/routes.dart';
 import '../features/profile/routes.dart';
 import '../features/task_creation/routes.dart';
+import '../features/notifications/routes.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -21,6 +22,7 @@ class AppRoutes {
       ...homeRoutes,
       ...profileRoutes,
       ...taskCreationRoutes,
+      ...notificationsRoutes,
     ],
   );
 

@@ -3,28 +3,35 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeker_app/core/providers/user_provider.dart';
+import 'package:seeker_app/core/providers/notification_providers.dart';
+import 'widgets/home_app_bar.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(userProvider);
+    final notificationCountsAsync = ref.watch(notificationCountsProvider);
+    final user = userAsync.value;
+    final String name = user?.customerProfile != null
+        ? '${user!.customerProfile!.firstName ?? ''} ${user.customerProfile!.lastName ?? ''}'
+              .trim()
+        : 'Guest';
+    final String greeting = _getGreeting();
+    final int unreadCount = notificationCountsAsync.value?.unread ?? 0;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.push('/task-creation/category');
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(
-          'Post Task',
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.only(
@@ -36,189 +43,35 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTopBar(),
-              SizedBox(height: 32.h),
-              _buildHeader(),
-              SizedBox(height: 24.h),
-              _buildPostInput(),
-              SizedBox(height: 32.h),
-              _buildSectionTitle('Activity Overview', 'View all'),
-              SizedBox(height: 16.h),
-              _buildPostCard(
-                name: 'Sarah Johnson',
-                title: '10 Essential Stock Market Tips',
-                description:
-                    'Learn the core rules every beginner needs to invest with before confidence.',
-                likes: 250,
-                comments: 105,
-                hours: 20,
+              HomeAppBar(
+                name: name,
+                greeting: greeting,
+                unreadCount: unreadCount,
               ),
-              SizedBox(height: 16.h),
-              _buildPostCard(
-                name: 'Sarah Johnson',
-                title: 'Smarter Diversification with REITs',
-                description:
-                    'REITs help you spread risk while unlocking steady real estate returns.',
-                likes: 250,
-                comments: 105,
-                hours: 20,
-              ),
+              SizedBox(height: 32.h),
+              const _MainHero(),
+              SizedBox(height: 32.h),
+              const _ActiveWork(),
+              SizedBox(height: 32.h),
+              const _PopularCategories(),
+              SizedBox(height: 32.h),
+              const _RecentMessages(),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildTopBar() {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 20.r,
-          backgroundColor: Colors.white.withValues(alpha: 0.1),
-          child: Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 24.sp,
-          ), // Placeholder for image
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Sarah Johnson',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                'Good Morning',
-                style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 12.sp,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-          ),
-          child: Icon(
-            Icons.notifications_none_outlined,
-            color: Colors.white,
-            size: 20.sp,
-          ),
-        ),
-      ],
-    );
-  }
+class _MainHero extends StatelessWidget {
+  const _MainHero();
 
-  Widget _buildHeader() {
-    return Text(
-      'Let\'s Talk About Your\nBusiness Idea Today',
-      style: GoogleFonts.inter(
-        color: Colors.white,
-        fontSize: 28.sp,
-        fontWeight: FontWeight.w700,
-        height: 1.3,
-        letterSpacing: -0.5,
-      ),
-    );
-  }
-
-  Widget _buildPostInput() {
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(left: 20.w, right: 6.w, top: 6.h, bottom: 6.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(40.r),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Type name here....',
-              style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontSize: 14.sp,
-              ),
-            ),
-          ),
-          Builder(
-            builder: (context) {
-              return InkWell(
-                onTap: () {
-                  context.push('/task-creation/category');
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 24.w,
-                    vertical: 14.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30.r),
-                  ),
-                  child: Text(
-                    'Post now',
-                    style: GoogleFonts.inter(
-                      color: Colors.black,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, String action) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Text(
-          action,
-          style: GoogleFonts.inter(
-            color: Colors.white.withValues(alpha: 0.6),
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPostCard({
-    required String name,
-    required String title,
-    required String description,
-    required int likes,
-    required int comments,
-    required int hours,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
+      width: double.infinity,
+      padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(24.r),
@@ -227,118 +80,341 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18.r,
-                backgroundColor: Colors.white.withValues(alpha: 0.1),
-                child: Icon(Icons.person, color: Colors.white, size: 20.sp),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      'Good Morning',
-                      style: GoogleFonts.inter(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.05),
-                ),
-                child: Icon(Icons.more_horiz, color: Colors.white, size: 20.sp),
-              ),
-            ],
-          ),
-          SizedBox(height: 20.h),
           Text(
-            title,
+            'What do you need help with today?',
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 24.sp,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 12.h),
           Text(
-            description,
+            'Post a task and get offers from nearby professionals.',
             style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: Colors.white.withValues(alpha: 0.7),
               fontSize: 14.sp,
               height: 1.5,
             ),
           ),
           SizedBox(height: 24.h),
-          Row(
-            children: [
-              _buildInteractionButton(
-                Icons.thumb_up_alt_outlined,
-                likes.toString(),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                context.push('/task-creation/category');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
               ),
-              SizedBox(width: 12.w),
-              _buildInteractionButton(
-                Icons.chat_bubble_outline,
-                comments.toString(),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(
+                'Post a Task',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              const Spacer(),
-              Row(
-                children: [
-                  Icon(
-                    Icons.access_time,
-                    color: Colors.white.withValues(alpha: 0.5),
-                    size: 16.sp,
-                  ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    '$hours Hrs',
-                    style: GoogleFonts.inter(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 12.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildInteractionButton(IconData icon, String text) {
+class _ActiveWork extends StatelessWidget {
+  const _ActiveWork();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Active Work',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        SizedBox(height: 16.h),
+        const _ActiveWorkItem(
+          title: 'Fix leaking kitchen sink',
+          status: '3 offers',
+          statusColor: AppColors.primary,
+        ),
+        SizedBox(height: 12.h),
+        const _ActiveWorkItem(
+          title: 'Apartment cleaning',
+          status: 'In Progress',
+          statusColor: Colors.orangeAccent,
+        ),
+        SizedBox(height: 12.h),
+        const _ActiveWorkItem(
+          title: 'Generator repair',
+          status: 'Provider arriving at 2:00 PM',
+          statusColor: Colors.green,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActiveWorkItem extends StatelessWidget {
+  final String title;
+  final String status;
+  final Color statusColor;
+
+  const _ActiveWorkItem({
+    required this.title,
+    required this.status,
+    required this.statusColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Mock navigation to task details
+      },
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.handyman_outlined,
+                color: Colors.white,
+                size: 20.sp,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    status,
+                    style: GoogleFonts.inter(
+                      color: statusColor,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withValues(alpha: 0.3),
+              size: 20.sp,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PopularCategories extends StatelessWidget {
+  const _PopularCategories();
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = [
+      {'icon': Icons.plumbing, 'label': 'Plumbing'},
+      {'icon': Icons.cleaning_services, 'label': 'Cleaning'},
+      {'icon': Icons.electrical_services, 'label': 'Electrical'},
+      {'icon': Icons.local_shipping, 'label': 'Moving'},
+      {'icon': Icons.face_retouching_natural, 'label': 'Beauty'},
+      {'icon': Icons.delivery_dining, 'label': 'Delivery'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Popular Categories',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        SizedBox(height: 16.h),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 12.w,
+            mainAxisSpacing: 12.h,
+            childAspectRatio: 1.0,
+          ),
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            return GestureDetector(
+              onTap: () {
+                context.push('/task-creation/category');
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      category['icon'] as IconData,
+                      color: Colors.white,
+                      size: 28.sp,
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      category['label'] as String,
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentMessages extends StatelessWidget {
+  const _RecentMessages();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Messages',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              'View all',
+              style: GoogleFonts.inter(
+                color: AppColors.primary,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16.h),
+        const _MessageItem(name: 'Sarah', message: 'I\'m on my way.'),
+        SizedBox(height: 12.h),
+        const _MessageItem(
+          name: 'James',
+          message: 'Can you send a photo of the sink?',
+        ),
+      ],
+    );
+  }
+}
+
+class _MessageItem extends StatelessWidget {
+  final String name;
+  final String message;
+
+  const _MessageItem({required this.name, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 16.sp),
-          SizedBox(width: 6.w),
-          Text(
-            text,
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 12.sp,
+          CircleAvatar(
+            radius: 18.r,
+            backgroundColor: Colors.white.withValues(alpha: 0.1),
+            child: Text(
+              name[0],
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  message,
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 13.sp,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],

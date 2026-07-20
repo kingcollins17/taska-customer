@@ -35,6 +35,7 @@ Map<String, dynamic> _$ServiceCategoryToJson(ServiceCategory instance) =>
 Service _$ServiceFromJson(Map<String, dynamic> json) => Service(
   id: json['id'] as String?,
   name: json['name'] as String?,
+  description: json['description'] as String?,
   imageUrl: json['image_url'] as String?,
   takeRate: (json['take_rate'] as num?)?.toDouble(),
   isActive: json['is_active'] as bool?,
@@ -53,6 +54,7 @@ Service _$ServiceFromJson(Map<String, dynamic> json) => Service(
 Map<String, dynamic> _$ServiceToJson(Service instance) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
+  'description': instance.description,
   'image_url': instance.imageUrl,
   'take_rate': instance.takeRate,
   'is_active': instance.isActive,

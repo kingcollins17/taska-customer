@@ -7,4 +7,5 @@ enum RouteNames {
   taskSchedule,
   taskReview,
   taskSuccess,
+  notifications,
 }
