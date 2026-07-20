@@ -25,18 +25,9 @@ final List<RouteBase> homeRoutes = [
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: '/messages',
+            path: '/tasks',
             builder: (context, state) =>
-                const Scaffold(body: Center(child: Text('Messages'))),
-          ),
-        ],
-      ),
-      StatefulShellBranch(
-        routes: [
-          GoRoute(
-            path: '/calendar',
-            builder: (context, state) =>
-                const Scaffold(body: Center(child: Text('Calendar'))),
+                const Scaffold(body: Center(child: Text('Tasks'))),
           ),
         ],
       ),

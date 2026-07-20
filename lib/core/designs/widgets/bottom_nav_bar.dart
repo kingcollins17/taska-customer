@@ -58,7 +58,7 @@ class BottomNavBar extends StatelessWidget {
             2,
             HugeIcons.strokeRoundedUser,
             HugeIcons.strokeRoundedUser,
-            'Accounts',
+            'Account',
             activeColor,
             inactiveColor,
           ),
