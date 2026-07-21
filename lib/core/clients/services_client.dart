@@ -54,4 +54,14 @@ abstract class ServicesClient {
 
   @GET('/categories/{category_id}')
   Future<GenericResponse<ServiceCategory>> getCategory(@Path('category_id') String categoryId);
+
+  @GET('/services/top')
+  Future<GenericResponse<List<Service>>> getTopServices({
+    @Query('limit') int? limit = 10,
+  });
+
+  @GET('/services/categories/top')
+  Future<GenericResponse<List<ServiceCategory>>> getTopCategories({
+    @Query('limit') int? limit = 10,
+  });
 }

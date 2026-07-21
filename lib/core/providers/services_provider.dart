@@ -177,3 +177,21 @@ final isServiceAvailableInCurrentRegionProvider =
 
       return isAvailable;
     });
+
+final topServicesProvider = FutureProvider<List<Service>>((ref) async {
+  final client = ref.read(servicesClientProvider);
+  final response = await client.getTopServices(limit: 10);
+  if (response.data == null) {
+    throw Exception(response.detail ?? 'Failed to load top services');
+  }
+  return response.data!;
+});
+
+final topCategoriesProvider = FutureProvider<List<ServiceCategory>>((ref) async {
+  final client = ref.read(servicesClientProvider);
+  final response = await client.getTopCategories(limit: 10);
+  if (response.data == null) {
+    throw Exception(response.detail ?? 'Failed to load top categories');
+  }
+  return response.data!;
+});

@@ -157,9 +157,6 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
   locations: (json['locations'] as List<dynamic>?)
       ?.map((e) => TaskLocation.fromJson(e as Map<String, dynamic>))
       .toList(),
-  bids: (json['bids'] as List<dynamic>?)
-      ?.map((e) => Bid.fromJson(e as Map<String, dynamic>))
-      .toList(),
   assignment: json['assignment'] == null
       ? null
       : Assignment.fromJson(json['assignment'] as Map<String, dynamic>),
@@ -187,7 +184,6 @@ Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
   'completion_pin': instance.completionPin,
   'updated_at': instance.updatedAt?.toIso8601String(),
   'locations': instance.locations?.map((e) => e.toJson()).toList(),
-  'bids': instance.bids?.map((e) => e.toJson()).toList(),
   'assignment': instance.assignment?.toJson(),
   'attachments': instance.attachments?.map((e) => e.toJson()).toList(),
 };

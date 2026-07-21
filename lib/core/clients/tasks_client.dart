@@ -29,4 +29,26 @@ abstract class TasksClient {
     @Path('task_id') String taskId,
     @Part(name: 'file') File file,
   );
+
+  @GET('/tasks/active')
+  Future<GenericResponse<PaginatedResponse<TaskLite>>> getActiveTasks({
+    @Query('page') int? page = 1,
+    @Query('per_page') int? perPage = 20,
+    @Query('category_id') String? categoryId,
+    @Query('service_id') String? serviceId,
+    @Query('search') String? search,
+    @Query('sort_by') String? sortBy = 'scheduled_start_at',
+    @Query('sort_desc') bool? sortDesc = true,
+  });
+
+  @GET('/tasks/pending')
+  Future<GenericResponse<PaginatedResponse<TaskLite>>> getPendingTasks({
+    @Query('page') int? page = 1,
+    @Query('per_page') int? perPage = 20,
+    @Query('category_id') String? categoryId,
+    @Query('service_id') String? serviceId,
+    @Query('search') String? search,
+    @Query('sort_by') String? sortBy = 'scheduled_start_at',
+    @Query('sort_desc') bool? sortDesc = true,
+  });
 }

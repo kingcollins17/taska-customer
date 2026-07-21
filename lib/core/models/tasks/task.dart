@@ -184,7 +184,6 @@ class Task {
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
   final List<TaskLocation>? locations;
-  final List<Bid>? bids;
   final Assignment? assignment;
   final List<TaskAttachment>? attachments;
 
@@ -207,7 +206,6 @@ class Task {
     this.completionPin,
     this.updatedAt,
     this.locations,
-    this.bids,
     this.assignment,
     this.attachments,
   });
