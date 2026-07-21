@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:seeker_app/core/core.dart';
@@ -116,44 +117,23 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 12.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black26
-                              : Colors.black.withOpacity(0.05),
-                          offset: const Offset(0, -4),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: SizedBox(
-                      height: 48,
-                      width: double.infinity,
-                      child: PrimaryButton(
-                        text: 'Post Task',
-                        isLoading: _isPosting,
-                        onPressed: () async {
-                          final confirm = await ConfirmationDialog.show(
-                            context: context,
-                            title: 'Post Task',
-                            description:
-                                'Are you sure you want to post this task? Please review the details carefully.',
-                            confirmText: 'Post',
-                            icon: Icons.check_circle_outline_rounded,
-                          );
-                          if (confirm) {
-                            _handlePostTask(attachments);
-                          }
-                        },
-                      ),
-                    ),
+                  PrimaryButton(
+                    text: 'Post Task',
+                    margin: EdgeInsets.symmetric(horizontal: 16.0.w),
+                    isLoading: _isPosting,
+                    onPressed: () async {
+                      final confirm = await ConfirmationDialog.show(
+                        context: context,
+                        title: 'Post Task',
+                        description:
+                            'Are you sure you want to post this task? Please review the details carefully.',
+                        confirmText: 'Post',
+                        icon: Icons.check_circle_outline_rounded,
+                      );
+                      if (confirm) {
+                        _handlePostTask(attachments);
+                      }
+                    },
                   ),
                 ],
               ),

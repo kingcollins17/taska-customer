@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 import 'package:seeker_app/core/providers/notification_providers.dart';
+import 'package:seeker_app/core/providers/websocket_provider.dart';
+import 'package:seeker_app/core/services/device_tray.dart';
 import 'widgets/home_app_bar.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -23,6 +25,7 @@ class HomeScreen extends ConsumerWidget {
     final userAsync = ref.watch(userProvider);
     final notificationCountsAsync = ref.watch(notificationCountsProvider);
     final user = userAsync.value;
+    ref.watch(deviceTrayNotificationsProvider);
     final String name = user?.customerProfile != null
         ? '${user!.customerProfile!.firstName ?? ''} ${user.customerProfile!.lastName ?? ''}'
               .trim()
