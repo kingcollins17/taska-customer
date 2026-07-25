@@ -5,12 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeker_app/core/designs/designs.dart';
+import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 import 'package:seeker_app/core/providers/notification_providers.dart';
 import 'package:seeker_app/core/providers/websocket_provider.dart';
 import 'package:seeker_app/core/services/device_tray.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
+import 'package:seeker_app/core/utils/utils.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'widgets/home_app_bar.dart';
@@ -38,6 +41,10 @@ class HomeScreen extends ConsumerWidget {
     final String greeting = _getGreeting();
     final int unreadCount = notificationCountsAsync.value?.unread ?? 0;
 
+    // Future.delayed(Duration(seconds: 3), () {
+    //   PaymentPage.show(amount: 12500);
+    // });
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
@@ -63,6 +70,7 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // CurrentLocation(),
                 HomeAppBar(
                   name: name,
                   greeting: greeting,

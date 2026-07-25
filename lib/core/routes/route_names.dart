@@ -8,4 +8,5 @@ enum RouteNames {
   taskReview,
   taskSuccess,
   notifications,
+  updatePayoutAccount,
 }

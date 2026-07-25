@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 import 'package:seeker_app/core/services/local_storage_service.dart';
+import 'package:seeker_app/core/utils/app_ready_manager.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -173,6 +174,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               } else {
                 context.go('/login');
               }
+              
+              // App is now fully loaded, and we are transitioning to the first real screen
+              AppReadyManager.instance.markAsReady();
             }
           }
         }

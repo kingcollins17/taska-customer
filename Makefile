@@ -16,6 +16,8 @@ setup:
 	flutter clean
 	flutter pub get
 
+sim:
+	open -a Simulator
 gen:
 	dart run build_runner build -d
 
