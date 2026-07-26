@@ -49,6 +49,7 @@ dev_dependencies:
   json_serializable: ^6.11.2
   retrofit_generator: ^10.2.0
   freezed: ^3.2.3
+  flutter_launcher_icons: ^0.14.4
 
 dependency_overrides:
   retrofit: 4.9.1

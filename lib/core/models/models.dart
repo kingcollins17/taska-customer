@@ -9,3 +9,4 @@ export 'region/region.dart';
 export 'address/address.dart';
 export 'notifications/notifications.dart';
 export 'payout/payout_models.dart';
+export 'payout/webhook_payload.dart';

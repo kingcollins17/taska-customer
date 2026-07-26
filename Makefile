@@ -11,6 +11,7 @@ help:
 	@echo "  make install-apk-release  - Install release APK on connected device using adb"
 	@echo "  make build-appbundle      - Build release AppBundle"
 	@echo "  make create-keystore      - Create a keystore for Android release in android/app"
+	@echo "  make icons                - Generate launcher icons for the app"
 
 setup:
 	flutter clean
@@ -41,3 +42,6 @@ build-appbundle:
 
 create-keystore:
 	keytool -genkey -v -keystore android/app/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+
+icons:
+	dart run flutter_launcher_icons

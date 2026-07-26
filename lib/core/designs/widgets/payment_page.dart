@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeker_app/core/models/models.dart';
+import 'package:seeker_app/core/clients/clients.dart';
+import 'package:seeker_app/core/utils/flushbar_message.dart';
+
 import '../../constants.dart';
 import '../../utils/loading_overlay.dart';
 import '../app_colors.dart';
@@ -67,14 +72,16 @@ const _testCards = [
 // Widget
 // ──────────────────────────────────────────────
 
-class PaymentPage extends StatefulWidget {
+class PaymentPage extends ConsumerStatefulWidget {
   /// Pre-filled amount. User can still edit it if null.
   final double? amount;
+  final String? userId;
+  final String? taskId;
 
-  const PaymentPage({super.key, this.amount});
+  const PaymentPage({super.key, this.amount, this.userId, this.taskId});
 
   /// Show the payment bottom sheet and return the result.
-  static Future<PaymentInfo> show({double? amount}) async {
+  static Future<PaymentInfo> show({double? amount, String? userId, String? taskId}) async {
     final context = rootNavigatorKey.currentContext!;
 
     final result = await showModalBottomSheet<PaymentInfo>(
@@ -85,7 +92,7 @@ class PaymentPage extends StatefulWidget {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: PaymentPage(amount: amount),
+        child: PaymentPage(amount: amount, userId: userId, taskId: taskId),
       ),
     );
 
@@ -94,10 +101,10 @@ class PaymentPage extends StatefulWidget {
   }
 
   @override
-  State<PaymentPage> createState() => _PaymentPageState();
+  ConsumerState<PaymentPage> createState() => _PaymentPageState();
 }
 
-class _PaymentPageState extends State<PaymentPage> {
+class _PaymentPageState extends ConsumerState<PaymentPage> {
   // Card fields
   final _cardNumberCtrl = TextEditingController();
   final _expiryCtrl = TextEditingController();
@@ -160,18 +167,36 @@ class _PaymentPageState extends State<PaymentPage> {
     if (!mounted) return;
     context.showLoading();
 
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final paymentsClient = ref.read(paymentsClientProvider);
+      final payload = WebhookPayload.payment(
+        _amount.toInt(),
+        userId: widget.userId,
+        taskId: widget.taskId,
+      );
 
-    // Hide loading overlay
-    if (!mounted) return;
-    context.hideLoading();
+      final response = await paymentsClient.processPaymentWebhook(payload);
 
-    if (!mounted) return;
+      if (!mounted) return;
+      context.hideLoading();
 
-    final info = PaymentInfo(isSuccessful: true, amount: _amount);
-
-    Navigator.of(context).pop(info);
+      if (response.success) {
+        final info = PaymentInfo(isSuccessful: true, amount: _amount);
+        Navigator.of(context).pop(info);
+      } else {
+        context.showMessage(
+          response.detail ?? "Unable to process payment",
+          type: MessageType.error,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      context.hideLoading();
+      context.showMessage(
+        "Unable to process payment",
+        type: MessageType.error,
+      );
+    }
   }
 
   // ── Build ──
