@@ -9,6 +9,8 @@ import 'presentation/screens/location_screen.dart';
 import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/review_screen.dart';
 import 'presentation/screens/success_screen.dart';
+import 'presentation/screens/matching_screen.dart';
+
 
 final List<RouteBase> taskCreationRoutes = [
   GoRoute(
@@ -60,5 +62,13 @@ final List<RouteBase> taskCreationRoutes = [
     path: '/task-creation/success',
     name: RouteNames.taskSuccess.name,
     builder: (context, state) => const SuccessScreen(),
+  ),
+  GoRoute(
+    path: '/task-creation/matching/:taskId',
+    name: RouteNames.taskMatching.name,
+    builder: (context, state) {
+      final taskId = state.pathParameters['taskId']!;
+      return MatchingScreen(taskId: taskId);
+    },
   ),
 ];

@@ -213,8 +213,8 @@ class _ActiveWork extends ConsumerWidget {
                 String statusText,
                 Color statusColor,
               ) = switch (task.status) {
-                'open' || 'bidding' => (
-                  '${task.bidsCount ?? 0} ${task.bidsCount == 1 ? 'Bid' : 'Bids'}',
+                'open' || 'pending' => (
+                  'Searching for provider',
                   AppColors.primary,
                 ),
                 'in_progress' => ('In Progress', Colors.orangeAccent),

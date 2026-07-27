@@ -41,12 +41,7 @@ WebhookPayloadMeta _$WebhookPayloadMetaFromJson(Map<String, dynamic> json) =>
     WebhookPayloadMeta(
       userId: json['user_id'] as String?,
       taskId: json['task_id'] as String?,
-      bidId: json['bid_id'] as String?,
     );
 
 Map<String, dynamic> _$WebhookPayloadMetaToJson(WebhookPayloadMeta instance) =>
-    <String, dynamic>{
-      'user_id': instance.userId,
-      'task_id': instance.taskId,
-      'bid_id': instance.bidId,
-    };
+    <String, dynamic>{'user_id': instance.userId, 'task_id': instance.taskId};

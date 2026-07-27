@@ -86,9 +86,9 @@ class SuccessScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     _StepItem(
                       icon: Icons.assignment_outlined,
-                      title: 'Receive bids',
+                      title: 'Provider Matching',
                       description:
-                          'We will let you know when you receive bids.',
+                          'We will let you know when a provider accepts your request.',
                       isDark: isDark,
                     ),
                     const SizedBox(height: 24),
@@ -96,7 +96,7 @@ class SuccessScreen extends StatelessWidget {
                       icon: Icons.payment_outlined,
                       title: 'Review & book',
                       description:
-                          'Review bids and make a payment to book the task.',
+                          'Confirm the provider and make a payment to book the task.',
                       isDark: isDark,
                     ),
                     const SizedBox(height: 24),

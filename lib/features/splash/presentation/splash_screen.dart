@@ -170,11 +170,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             );
             if (mounted) {
               if (isAuthenticated) {
-                context.go('/');
+                // context.go('/');
+                context.go(
+                  '/task-creation/matching/0b4a1cf4-716e-4a63-8fd1-f0b61272c00b',
+                );
               } else {
                 context.go('/login');
               }
-              
+
               // App is now fully loaded, and we are transitioning to the first real screen
               AppReadyManager.instance.markAsReady();
             }

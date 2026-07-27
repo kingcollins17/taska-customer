@@ -26,7 +26,6 @@ TaskLite _$TaskLiteFromJson(Map<String, dynamic> json) => TaskLite(
   category: json['category'] == null
       ? null
       : ServiceCategory.fromJson(json['category'] as Map<String, dynamic>),
-  bidsCount: (json['bids_count'] as num?)?.toInt(),
   assignment: json['assignment'] == null
       ? null
       : Assignment.fromJson(json['assignment'] as Map<String, dynamic>),
@@ -46,6 +45,5 @@ Map<String, dynamic> _$TaskLiteToJson(TaskLite instance) => <String, dynamic>{
   'scheduled_start_at': instance.scheduledStartAt?.toIso8601String(),
   'distance_km': instance.distanceKm,
   'category': instance.category?.toJson(),
-  'bids_count': instance.bidsCount,
   'assignment': instance.assignment?.toJson(),
 };

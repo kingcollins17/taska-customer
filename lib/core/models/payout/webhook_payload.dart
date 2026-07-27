@@ -78,7 +78,7 @@ class WebhookPayloadData {
 
 @JsonSerializable()
 class WebhookPayloadMeta {
-  WebhookPayloadMeta({this.userId, this.taskId, this.bidId});
+  WebhookPayloadMeta({this.userId, this.taskId});
 
   @JsonKey(name: 'user_id')
   final String? userId;
@@ -86,14 +86,10 @@ class WebhookPayloadMeta {
   @JsonKey(name: 'task_id')
   final String? taskId;
 
-  @JsonKey(name: 'bid_id')
-  final String? bidId;
-
-  WebhookPayloadMeta copyWith({String? userId, String? taskId, String? bidId}) {
+  WebhookPayloadMeta copyWith({String? userId, String? taskId}) {
     return WebhookPayloadMeta(
       userId: userId ?? this.userId,
       taskId: taskId ?? this.taskId,
-      bidId: bidId ?? this.bidId,
     );
   }
 
