@@ -76,7 +76,10 @@ class ProfileScreen extends ConsumerWidget {
                   padding: EdgeInsets.only(bottom: 24.h),
                   child: Column(
                     children: accountIssues
-                        .map((issue) => _buildIssueBanner(context, issue, user))
+                        .map(
+                          (issue) =>
+                              _buildIssueBanner(context, ref, issue, user),
+                        )
                         .toList(),
                   ),
                 ),
@@ -275,6 +278,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildIssueBanner(
     BuildContext context,
+    WidgetRef ref,
     AccountIssue issue,
     User user,
   ) {
@@ -285,7 +289,7 @@ class ProfileScreen extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           rootNavigatorKey.currentContext;
-          issue.handler?.call(context, user);
+          issue.handler?.call(context, ref, user);
         },
         borderRadius: BorderRadius.circular(12.r),
         child: Container(

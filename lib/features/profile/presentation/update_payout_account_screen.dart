@@ -75,10 +75,7 @@ class _UpdatePayoutAccountScreenState
             ),
             onSuccess: () {
               context.hideLoading();
-              context.showMessage(
-                'Payout account updated successfully',
-                type: MessageType.success,
-              );
+
               Navigator.pop(context);
             },
             onError: (msg) {

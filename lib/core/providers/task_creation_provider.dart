@@ -94,13 +94,8 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
   /// Parameters:
   /// - [categoryId]: The unique identifier of the selected category.
   Future<void> updateCategory(String categoryId) async {
-    if (!state.hasValue || state.value == null) {
-      await reset();
-    }
-    final current = state.value;
-    if (current != null) {
-      _updateState(current.copyWith(categoryId: categoryId, serviceId: null));
-    }
+    final current = state.value ?? CreateTaskRequest();
+    _updateState(current.copyWith(categoryId: categoryId, serviceId: null));
   }
 
   /// Updates the selected service for the task draft.
@@ -110,13 +105,8 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
   /// Parameters:
   /// - [serviceId]: The unique identifier of the selected service.
   Future<void> updateService(String serviceId) async {
-    if (!state.hasValue || state.value == null) {
-      await reset();
-    }
-    final current = state.value;
-    if (current != null) {
-      _updateState(current.copyWith(serviceId: serviceId));
-    }
+    final current = state.value ?? CreateTaskRequest();
+    _updateState(current.copyWith(serviceId: serviceId));
   }
 
   /// Updates the title and description of the task draft.
@@ -130,13 +120,8 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     required String title,
     String? description,
   }) async {
-    if (!state.hasValue || state.value == null) {
-      await reset();
-    }
-    final current = state.value;
-    if (current != null) {
-      _updateState(current.copyWith(title: title, description: description));
-    }
+    final current = state.value ?? CreateTaskRequest();
+    _updateState(current.copyWith(title: title, description: description));
   }
 
   /// Updates the budget details and pricing model for the task draft.
@@ -152,19 +137,14 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     double? max,
     String? pricingModel,
   }) async {
-    if (!state.hasValue || state.value == null) {
-      await reset();
-    }
-    final current = state.value;
-    if (current != null) {
-      _updateState(
-        current.copyWith(
-          budgetMin: min,
-          budgetMax: max,
-          pricingModel: pricingModel,
-        ),
-      );
-    }
+    final current = state.value ?? CreateTaskRequest();
+    _updateState(
+      current.copyWith(
+        budgetMin: min,
+        budgetMax: max,
+        pricingModel: pricingModel,
+      ),
+    );
   }
 
   /// Updates the location required for the task.
@@ -175,17 +155,12 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
   /// Parameters:
   /// - [location]: The [CreateTaskLocationRequest] object representing the task location.
   Future<void> updateLocation(CreateTaskLocationRequest location) async {
-    if (!state.hasValue || state.value == null) {
-      await reset();
-    }
-    final current = state.value;
-    if (current != null) {
-      _updateState(
-        current.copyWith(
-          locations: [location.copyWith(locationType: 'service')],
-        ),
-      );
-    }
+    final current = state.value ?? CreateTaskRequest();
+    _updateState(
+      current.copyWith(
+        locations: [location.copyWith(locationType: 'service')],
+      ),
+    );
   }
 
   /// Updates the scheduling timeline for the task draft.
@@ -196,15 +171,10 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
   /// - [startAt]: Optional date and time when the task is scheduled to start.
   /// - [expiresAt]: Optional date and time when the task request expires.
   Future<void> updateSchedule({DateTime? startAt, DateTime? expiresAt}) async {
-    if (!state.hasValue || state.value == null) {
-      await reset();
-    }
-    final current = state.value;
-    if (current != null) {
-      _updateState(
-        current.copyWith(scheduledStartAt: startAt, expiresAt: expiresAt),
-      );
-    }
+    final current = state.value ?? CreateTaskRequest();
+    _updateState(
+      current.copyWith(scheduledStartAt: startAt, expiresAt: expiresAt),
+    );
   }
 
   /// Submits the completed task draft to the backend API.
@@ -228,6 +198,7 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
       final response = await ref.read(tasksClientProvider).createTask(request);
       if (response.success) {
         await _delete();
+        state = const AsyncData(null);
         final data = response.data ?? {};
         onSuccess?.call(data['id']?.toString());
       } else {

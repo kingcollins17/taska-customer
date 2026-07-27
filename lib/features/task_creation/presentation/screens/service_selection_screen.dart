@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:seeker_app/core/core.dart';
-import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/models/service/service.dart' as md;
 import 'package:shimmer/shimmer.dart';
 
@@ -14,8 +13,6 @@ import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
-import 'package:seeker_app/core/providers/location_provider.dart';
-import 'package:seeker_app/core/designs/widgets/primary_button.dart';
 
 class ServiceSelectionScreen extends ConsumerStatefulWidget {
   final String? categoryId;
