@@ -58,4 +58,18 @@ abstract class UserClient {
   Future<GenericResponse<dynamic>> updateSeekerProfile(
     @Body() UpdateProfileRequest request,
   );
+
+  @POST('/users/payouts/account')
+  Future<GenericResponse<dynamic>> createOrUpdatePayoutAccount(
+    @Body() PayoutAccountPayload payload,
+  );
+
+  @GET('/users/payouts/verify-account')
+  Future<GenericResponse<BankAccountVerification>> verifyBankAccount(
+    @Query('account_number') String accountNumber,
+    @Query('bank_code') String bankCode,
+  );
+
+  @GET('/users/payouts/banks')
+  Future<GenericResponse<List<SupportedBank>>> getSupportedBanks();
 }

@@ -5,7 +5,7 @@ import '../models/models.dart';
 
 final locationProvider = FutureProvider<Address?>((ref) async {
   final location = Location();
-  final geo.Geocoding geocoding = geo.Geocoding();
+  // final geocoding = geo.GeocodingPlatform.instance;
 
   bool serviceEnabled;
   PermissionStatus permissionGranted;
@@ -28,12 +28,8 @@ final locationProvider = FutureProvider<Address?>((ref) async {
 
   final locationData = await location.getLocation();
 
-  if (locationData.latitude == null || locationData.longitude == null) {
-    return null;
-  }
-
   try {
-    final placemarks = await geocoding.placemarkFromCoordinates(
+    final placemarks = await geo.placemarkFromCoordinates(
       locationData.latitude!,
       locationData.longitude!,
     );

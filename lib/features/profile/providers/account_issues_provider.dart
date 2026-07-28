@@ -5,14 +5,13 @@ import 'package:seeker_app/core/constants.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
-import 'package:seeker_app/core/designs/widgets/phone_number_sheet.dart';
 import 'package:seeker_app/features/auth/presentation/verify_otp_screen.dart';
 
 class AccountIssue {
   final String title;
   final String description;
   final dynamic icon;
-  final void Function(BuildContext context, User user)? handler;
+  final void Function(BuildContext context, WidgetRef ref, User user)? handler;
 
   AccountIssue({
     required this.title,
@@ -33,7 +32,8 @@ final accountIssuesProvider = Provider<List<AccountIssue>>((ref) {
           title: 'Verify Phone Number',
           description: 'Tap to verify your phone number.',
           icon: Icons.warning_amber_rounded,
-          handler: (context, user) => _handleVerifyPhone(context, ref, user),
+          handler: (context, widgetRef, user) =>
+              _handleVerifyPhone(context, widgetRef, user),
         ),
       );
     }
@@ -46,7 +46,7 @@ final accountIssuesProvider = Provider<List<AccountIssue>>((ref) {
 
 Future<void> _handleVerifyPhone(
   BuildContext context,
-  Ref ref,
+  WidgetRef ref,
   User user,
 ) async {
   String? phoneToVerify = user.phoneNumber;

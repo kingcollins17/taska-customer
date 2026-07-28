@@ -41,39 +41,11 @@ Map<String, dynamic> _$TaskLocationToJson(TaskLocation instance) =>
       'distance_km': instance.distanceKm,
     };
 
-Bid _$BidFromJson(Map<String, dynamic> json) => Bid(
-  id: json['id'] as String?,
-  taskId: json['task_id'] as String?,
-  providerId: json['provider_id'] as String?,
-  price: (json['price'] as num?)?.toDouble(),
-  message: json['message'] as String?,
-  estimatedDuration: json['estimated_duration'] as String?,
-  status: json['status'] as String?,
-  createdAt: json['created_at'] == null
-      ? null
-      : DateTime.parse(json['created_at'] as String),
-  updatedAt: json['updated_at'] == null
-      ? null
-      : DateTime.parse(json['updated_at'] as String),
-);
-
-Map<String, dynamic> _$BidToJson(Bid instance) => <String, dynamic>{
-  'id': instance.id,
-  'task_id': instance.taskId,
-  'provider_id': instance.providerId,
-  'price': instance.price,
-  'message': instance.message,
-  'estimated_duration': instance.estimatedDuration,
-  'status': instance.status,
-  'created_at': instance.createdAt?.toIso8601String(),
-  'updated_at': instance.updatedAt?.toIso8601String(),
-};
-
 Assignment _$AssignmentFromJson(Map<String, dynamic> json) => Assignment(
   id: json['id'] as String?,
   taskId: json['task_id'] as String?,
   providerId: json['provider_id'] as String?,
-  acceptedBidId: json['accepted_bid_id'] as String?,
+  acceptedDispatchAttemptId: json['accepted_dispatch_attempt_id'] as String?,
   acceptedPrice: (json['accepted_price'] as num?)?.toDouble(),
   assignedAt: json['assigned_at'] == null
       ? null
@@ -92,7 +64,7 @@ Map<String, dynamic> _$AssignmentToJson(Assignment instance) =>
       'id': instance.id,
       'task_id': instance.taskId,
       'provider_id': instance.providerId,
-      'accepted_bid_id': instance.acceptedBidId,
+      'accepted_dispatch_attempt_id': instance.acceptedDispatchAttemptId,
       'accepted_price': instance.acceptedPrice,
       'assigned_at': instance.assignedAt?.toIso8601String(),
       'started_at': instance.startedAt?.toIso8601String(),
@@ -128,6 +100,27 @@ Map<String, dynamic> _$TaskAttachmentToJson(TaskAttachment instance) =>
       'created_at': instance.createdAt?.toIso8601String(),
     };
 
+TaskCustomer _$TaskCustomerFromJson(Map<String, dynamic> json) => TaskCustomer(
+  id: json['id'] as String?,
+  fullname: json['fullname'] as String?,
+  email: json['email'] as String?,
+  phoneNumber: json['phone_number'] as String?,
+  averageRatings: (json['average_ratings'] as num?)?.toDouble(),
+  credibilityScore: (json['credibility_score'] as num?)?.toDouble(),
+  gender: json['gender'] as String?,
+);
+
+Map<String, dynamic> _$TaskCustomerToJson(TaskCustomer instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'fullname': instance.fullname,
+      'email': instance.email,
+      'phone_number': instance.phoneNumber,
+      'average_ratings': instance.averageRatings,
+      'credibility_score': instance.credibilityScore,
+      'gender': instance.gender,
+    };
+
 Task _$TaskFromJson(Map<String, dynamic> json) => Task(
   id: json['id'] as String?,
   customerId: json['customer_id'] as String?,
@@ -136,9 +129,15 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
   description: json['description'] as String?,
   categoryId: json['category_id'] as String?,
   serviceId: json['service_id'] as String?,
-  budgetMin: (json['budget_min'] as num?)?.toDouble(),
-  budgetMax: (json['budget_max'] as num?)?.toDouble(),
-  pricingModel: json['pricing_model'] as String?,
+  basePrice: (json['base_price'] as num?)?.toDouble(),
+  distanceFee: (json['distance_fee'] as num?)?.toDouble(),
+  timeFee: (json['time_fee'] as num?)?.toDouble(),
+  urgencyFee: (json['urgency_fee'] as num?)?.toDouble(),
+  complexityFee: (json['complexity_fee'] as num?)?.toDouble(),
+  surgeMultiplier: (json['surge_multiplier'] as num?)?.toDouble(),
+  customerTotalPrice: (json['customer_total_price'] as num?)?.toDouble(),
+  platformFee: (json['platform_fee'] as num?)?.toDouble(),
+  providerPayout: (json['provider_payout'] as num?)?.toDouble(),
   status: json['status'] as String?,
   createdAt: json['created_at'] == null
       ? null
@@ -163,6 +162,9 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
   attachments: (json['attachments'] as List<dynamic>?)
       ?.map((e) => TaskAttachment.fromJson(e as Map<String, dynamic>))
       .toList(),
+  customer: json['customer'] == null
+      ? null
+      : TaskCustomer.fromJson(json['customer'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
@@ -173,9 +175,15 @@ Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
   'description': instance.description,
   'category_id': instance.categoryId,
   'service_id': instance.serviceId,
-  'budget_min': instance.budgetMin,
-  'budget_max': instance.budgetMax,
-  'pricing_model': instance.pricingModel,
+  'base_price': instance.basePrice,
+  'distance_fee': instance.distanceFee,
+  'time_fee': instance.timeFee,
+  'urgency_fee': instance.urgencyFee,
+  'complexity_fee': instance.complexityFee,
+  'surge_multiplier': instance.surgeMultiplier,
+  'customer_total_price': instance.customerTotalPrice,
+  'platform_fee': instance.platformFee,
+  'provider_payout': instance.providerPayout,
   'status': instance.status,
   'created_at': instance.createdAt?.toIso8601String(),
   'expires_at': instance.expiresAt?.toIso8601String(),
@@ -186,7 +194,42 @@ Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
   'locations': instance.locations?.map((e) => e.toJson()).toList(),
   'assignment': instance.assignment?.toJson(),
   'attachments': instance.attachments?.map((e) => e.toJson()).toList(),
+  'customer': instance.customer?.toJson(),
 };
+
+DispatchAttempt _$DispatchAttemptFromJson(Map<String, dynamic> json) =>
+    DispatchAttempt(
+      id: json['id'] as String?,
+      taskId: json['task_id'] as String?,
+      providerId: json['provider_id'] as String?,
+      sequenceOrder: (json['sequence_order'] as num?)?.toInt(),
+      matchScore: (json['match_score'] as num?)?.toDouble(),
+      offeredPayout: (json['offered_payout'] as num?)?.toDouble(),
+      pingedAt: json['pinged_at'] == null
+          ? null
+          : DateTime.parse(json['pinged_at'] as String),
+      expiresAt: json['expires_at'] == null
+          ? null
+          : DateTime.parse(json['expires_at'] as String),
+      respondedAt: json['responded_at'] == null
+          ? null
+          : DateTime.parse(json['responded_at'] as String),
+      status: json['status'] as String?,
+    );
+
+Map<String, dynamic> _$DispatchAttemptToJson(DispatchAttempt instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'task_id': instance.taskId,
+      'provider_id': instance.providerId,
+      'sequence_order': instance.sequenceOrder,
+      'match_score': instance.matchScore,
+      'offered_payout': instance.offeredPayout,
+      'pinged_at': instance.pingedAt?.toIso8601String(),
+      'expires_at': instance.expiresAt?.toIso8601String(),
+      'responded_at': instance.respondedAt?.toIso8601String(),
+      'status': instance.status,
+    };
 
 _CreateTaskLocationRequest _$CreateTaskLocationRequestFromJson(
   Map<String, dynamic> json,

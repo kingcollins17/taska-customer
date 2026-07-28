@@ -20,6 +20,8 @@ class LocalStorageService {
     }
     return await Hive.openBox(boxName);
   }
+  
+  Box get syncBox => Hive.box(boxName);
 
   Future<dynamic> get(StorageKey key, {dynamic defaultValue}) async {
     final box = await _getBox();

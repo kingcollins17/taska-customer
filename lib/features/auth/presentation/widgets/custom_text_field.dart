@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:seeker_app/core/designs/app_colors.dart';
 
 class CustomTextField extends StatefulWidget {
   final String hintText;
@@ -28,12 +27,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E), // Slightly lighter than background
+        color: colorScheme.onSurface.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
+          color: colorScheme.onSurface.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -42,18 +43,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
         obscureText: widget.isPassword ? _obscureText : false,
         keyboardType: widget.keyboardType,
         style: GoogleFonts.inter(
-          color: Colors.white,
+          color: colorScheme.onSurface,
           fontSize: 14.sp,
         ),
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: GoogleFonts.inter(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: colorScheme.onSurface.withValues(alpha: 0.5),
             fontSize: 14.sp,
           ),
           prefixIcon: Icon(
             widget.leadingIcon,
-            color: Colors.white.withValues(alpha: 0.5),
+            color: colorScheme.onSurface.withValues(alpha: 0.5),
             size: 20.sp,
           ),
           suffixIcon: widget.isPassword
@@ -62,7 +63,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     _obscureText
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
                     size: 20.sp,
                   ),
                   onPressed: () {

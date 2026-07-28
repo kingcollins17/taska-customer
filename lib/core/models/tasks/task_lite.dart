@@ -28,8 +28,6 @@ class TaskLite {
   @JsonKey(name: 'distance_km')
   final double? distanceKm;
   final ServiceCategory? category;
-  @JsonKey(name: 'bids_count')
-  final int? bidsCount;
   final Assignment? assignment;
 
   TaskLite({
@@ -46,7 +44,6 @@ class TaskLite {
     this.scheduledStartAt,
     this.distanceKm,
     this.category,
-    this.bidsCount,
     this.assignment,
   });
 

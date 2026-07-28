@@ -193,6 +193,26 @@ class UserNotifier extends AsyncNotifier<User?> {
     }
   }
 
+  Future<void> updatePayoutAccount({
+    required PayoutAccountPayload payload,
+    void Function()? onSuccess,
+    void Function(String message)? onError,
+  }) async {
+    try {
+      final client = ref.read(userClientProvider);
+      final response = await client.createOrUpdatePayoutAccount(payload);
+
+      if (response.success) {
+        onSuccess?.call();
+      } else {
+        throw response.detail ?? 'Failed to update payout account.';
+      }
+    } catch (e, st) {
+      onError?.call(e.toFriendlyMessage());
+      AppErrorHandler.instance.handleError(e, st);
+    }
+  }
+
   /// Logs out the user and clears the token.
   Future<void> logout({
     void Function()? onSuccess,
@@ -214,3 +234,28 @@ final isAuthenticatedProvider = FutureProvider<bool>((ref) async {
   final user = await ref.watch(userProvider.future);
   return user != null;
 });
+
+final supportedBanksProvider = FutureProvider<List<SupportedBank>>((ref) async {
+  final client = ref.read(userClientProvider);
+  final response = await client.getSupportedBanks();
+  if (response.success && response.data != null) {
+    return response.data!;
+  }
+  throw response.detail ?? 'Failed to fetch supported banks.';
+});
+
+final verifyBankAccountProvider =
+    FutureProvider.family<
+      BankAccountVerification,
+      ({String accountNumber, String bankCode})
+    >((ref, args) async {
+      final client = ref.read(userClientProvider);
+      final response = await client.verifyBankAccount(
+        args.accountNumber,
+        args.bankCode,
+      );
+      if (response.success && response.data != null) {
+        return response.data!;
+      }
+      throw response.detail ?? 'Failed to verify bank account.';
+    });

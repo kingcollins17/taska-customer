@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/clients/tasks_client.dart';
+import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 
 class ActiveTasksNotifier extends AsyncNotifier<List<TaskLite>> {
@@ -169,3 +170,82 @@ final allTasksAggregatedProvider = FutureProvider<List<TaskLite>>((ref) async {
 
   return allTasks;
 });
+
+final pendingDispatchProvider = FutureProvider.family<DispatchAttempt, String>((
+  ref,
+  taskId,
+) async {
+  final client = ref.read(tasksClientProvider);
+  final response = await client.getPendingDispatch(taskId);
+
+  if (response.success && response.data != null) {
+    return response.data!;
+  }
+
+  throw Exception(response.detail ?? 'Failed to load pending dispatch');
+  // return DispatchAttempt(
+  //   id: 'mock_id',
+  //   taskId: taskId,
+  //   providerId: 'provider_id',
+  //   sequenceOrder: 1,
+  //   matchScore: 99.0,
+  //   offeredPayout: 10.0,
+  //   pingedAt: DateTime.now(),
+  //   expiresAt: DateTime.now().add(const Duration(minutes: 5)),
+  //   respondedAt: null,
+  //   status: 'pending',
+  // );
+});
+
+class TaskDraftActionNotifier extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {}
+
+  Future<void> confirmDraft({
+    required String taskId,
+    void Function()? onSuccess,
+    void Function(String error)? onError,
+  }) async {
+    try {
+      final client = ref.read(tasksClientProvider);
+      final response = await client.confirmDraftTask(taskId);
+
+      if (response.success) {
+        onSuccess?.call();
+      } else {
+        final error = response.detail ?? 'Failed to confirm draft';
+
+        onError?.call(error);
+      }
+    } catch (e, st) {
+      AppErrorHandler.instance.handleError(e, st);
+      onError?.call(e.toString());
+    }
+  }
+
+  Future<void> cancelDraft({
+    required String taskId,
+    void Function()? onSuccess,
+    void Function(String error)? onError,
+  }) async {
+    try {
+      final client = ref.read(tasksClientProvider);
+      final response = await client.cancelDraftTask(taskId);
+
+      if (response.success) {
+        onSuccess?.call();
+      } else {
+        final error = response.detail ?? 'Failed to cancel draft';
+        onError?.call(error);
+      }
+    } catch (e, st) {
+      AppErrorHandler.instance.handleError(e, st);
+      onError?.call(e.toString());
+    }
+  }
+}
+
+final taskDraftActionProvider =
+    AsyncNotifierProvider<TaskDraftActionNotifier, void>(
+      () => TaskDraftActionNotifier(),
+    );

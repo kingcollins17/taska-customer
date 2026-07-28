@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 import 'package:seeker_app/core/services/local_storage_service.dart';
+import 'package:seeker_app/core/utils/app_ready_manager.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -169,10 +170,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             );
             if (mounted) {
               if (isAuthenticated) {
-                context.go('/');
+                // context.go('/');
+                context.go(
+                  '/task-creation/matching/0b4a1cf4-716e-4a63-8fd1-f0b61272c00b',
+                );
               } else {
                 context.go('/login');
               }
+
+              // App is now fully loaded, and we are transitioning to the first real screen
+              AppReadyManager.instance.markAsReady();
             }
           }
         }

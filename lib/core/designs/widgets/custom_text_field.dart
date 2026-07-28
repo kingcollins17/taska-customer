@@ -40,10 +40,20 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(24.r),
       borderSide: BorderSide(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: colorScheme.onSurface.withValues(alpha: 0.1),
+        width: 1,
+      ),
+    );
+
+    final focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(24.r),
+      borderSide: BorderSide(
+        color: colorScheme.onSurface.withValues(alpha: 0.3),
         width: 1,
       ),
     );
@@ -51,7 +61,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
     final errorBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(24.r),
       borderSide: BorderSide(
-        color: Theme.of(context).colorScheme.error,
+        color: colorScheme.error,
         width: 1,
       ),
     );
@@ -64,20 +74,20 @@ class _CustomTextFieldState extends State<CustomTextField> {
       readOnly: widget.readOnly,
       onTap: widget.onTap,
       validator: widget.validator,
-      style: GoogleFonts.inter(color: Colors.white, fontSize: 14.sp),
+      style: GoogleFonts.inter(color: colorScheme.onSurface, fontSize: 14.sp),
       decoration: InputDecoration(
-        fillColor: const Color(0xFF1E1E1E),
+        fillColor: colorScheme.onSurface.withValues(alpha: 0.05),
         filled: true,
         hintText: widget.hintText,
         hintStyle: GoogleFonts.inter(
-          color: Colors.white.withValues(alpha: 0.5),
+          color: colorScheme.onSurface.withValues(alpha: 0.5),
           fontSize: 14.sp,
         ),
         prefixIcon: widget.prefixIconWidget ??
             (widget.leadingIcon != null
                 ? Icon(
                     widget.leadingIcon,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
                     size: 20.sp,
                   )
                 : null),
@@ -87,7 +97,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   _obscureText
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
                   size: 20.sp,
                 ),
                 onPressed: () {
@@ -99,7 +109,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             : widget.suffix,
         border: border,
         enabledBorder: border,
-        focusedBorder: border,
+        focusedBorder: focusedBorder,
         errorBorder: errorBorder,
         focusedErrorBorder: errorBorder,
         contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),

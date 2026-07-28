@@ -51,4 +51,19 @@ abstract class TasksClient {
     @Query('sort_by') String? sortBy = 'scheduled_start_at',
     @Query('sort_desc') bool? sortDesc = true,
   });
+
+  @GET('/tasks/{task_id}/dispatch/pending')
+  Future<GenericResponse<DispatchAttempt>> getPendingDispatch(
+    @Path('task_id') String taskId,
+  );
+
+  @PUT('/tasks/{task_id}/draft/confirm')
+  Future<GenericResponse<Task>> confirmDraftTask(
+    @Path('task_id') String taskId,
+  );
+
+  @DELETE('/tasks/{task_id}/draft/cancel')
+  Future<GenericResponse> cancelDraftTask(
+    @Path('task_id') String taskId,
+  );
 }

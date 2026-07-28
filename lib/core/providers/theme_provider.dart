@@ -7,7 +7,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     // Synchronously read from the already-opened Hive box
-    final box = Hive.box(HiveBox.defaultBox.name);
+    final box = appStorage.syncBox;
     final storedTheme = box.get(StorageKey.themeMode.name);
 
     if (storedTheme == 'light') {
@@ -27,7 +27,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
     } else if (mode == ThemeMode.dark) {
       modeString = 'dark';
     }
-    Hive.box(HiveBox.defaultBox.name).put(StorageKey.themeMode.name, modeString);
+    appStorage.syncBox.put(StorageKey.themeMode.name, modeString);
   }
 
   void toggleTheme() {

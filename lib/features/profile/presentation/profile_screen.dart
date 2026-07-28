@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:seeker_app/core/constants.dart';
+import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/designs/widgets/confirmation_dialog.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/utils/flushbar_message.dart';
 import 'package:seeker_app/core/utils/loading_overlay.dart';
 import 'package:seeker_app/features/auth/presentation/verify_otp_screen.dart';
 import 'package:seeker_app/features/profile/providers/account_issues_provider.dart';
+import 'package:seeker_app/core/providers/theme_provider.dart';
 import '../../../../core/designs/app_colors.dart';
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/designs/widgets/phone_number_sheet.dart';
@@ -74,7 +76,10 @@ class ProfileScreen extends ConsumerWidget {
                   padding: EdgeInsets.only(bottom: 24.h),
                   child: Column(
                     children: accountIssues
-                        .map((issue) => _buildIssueBanner(context, issue, user))
+                        .map(
+                          (issue) =>
+                              _buildIssueBanner(context, ref, issue, user),
+                        )
                         .toList(),
                   ),
                 ),
@@ -192,7 +197,9 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.account_balance_wallet_outlined,
                 title: 'Update Bank Details',
                 iconColor: Colors.green,
-                onTap: () {},
+                onTap: () {
+                  context.pushNamed(RouteNames.updatePayoutAccount.name);
+                },
               ),
               _MenuItem(
                 icon: Icons.payments_outlined,
@@ -211,6 +218,33 @@ class ProfileScreen extends ConsumerWidget {
                 title: 'About us',
                 iconColor: Colors.purple,
                 onTap: () {},
+              ),
+              _MenuItem(
+                icon: isDark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+                title: 'Dark Mode',
+                iconColor: Colors.deepPurple,
+                trailing: Consumer(
+                  builder: (context, ref, child) {
+                    final themeMode = ref.watch(themeProvider);
+                    final isDarkMode =
+                        themeMode == ThemeMode.dark ||
+                        (themeMode == ThemeMode.system &&
+                            MediaQuery.platformBrightnessOf(context) ==
+                                Brightness.dark);
+                    return Switch(
+                      value: isDarkMode,
+                      onChanged: (val) {
+                        ref.read(themeProvider.notifier).toggleTheme();
+                      },
+                      activeColor: AppColors.primary,
+                    );
+                  },
+                ),
+                onTap: () {
+                  ref.read(themeProvider.notifier).toggleTheme();
+                },
               ),
 
               SizedBox(height: 24.h),
@@ -244,6 +278,7 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildIssueBanner(
     BuildContext context,
+    WidgetRef ref,
     AccountIssue issue,
     User user,
   ) {
@@ -254,7 +289,7 @@ class ProfileScreen extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           rootNavigatorKey.currentContext;
-          issue.handler?.call(context, user);
+          issue.handler?.call(context, ref, user);
         },
         borderRadius: BorderRadius.circular(12.r),
         child: Container(
@@ -349,7 +384,10 @@ class _MenuItem extends StatelessWidget {
     required this.iconColor,
     this.isLogout = false,
     this.onTap,
+    this.trailing,
   });
+
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -376,13 +414,14 @@ class _MenuItem extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: isLogout
-                  ? Colors.red
-                  : AppColors.textSecondary.withOpacity(0.5),
-              size: 24.sp,
-            ),
+            trailing ??
+                Icon(
+                  Icons.chevron_right,
+                  color: isLogout
+                      ? Colors.red
+                      : AppColors.textSecondary.withOpacity(0.5),
+                  size: 24.sp,
+                ),
           ],
         ),
       ),
