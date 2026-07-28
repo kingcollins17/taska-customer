@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:seeker_app/core/constants.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/models/tasks/task.dart';
@@ -20,6 +21,7 @@ import '../../../../core/designs/app_colors.dart';
 import '../../../../core/designs/app_text_styles.dart';
 import '../../../../core/designs/widgets/primary_button.dart';
 import '../../../../core/designs/widgets/confirmation_dialog.dart';
+import '../../../../core/designs/widgets/confirm_task_sheet.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   const ReviewScreen({super.key});
@@ -51,7 +53,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Review Task',
+          'Review',
           style: AppTextStyles.heading3.copyWith(
             color: textColor,
             fontSize: 18,
@@ -118,20 +120,21 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     ),
                   ),
                   PrimaryButton(
-                    text: 'Post Task',
+                    text: 'Continue',
+                    height: 48.h,
                     margin: EdgeInsets.symmetric(horizontal: 16.0.w),
                     isLoading: _isPosting,
                     onPressed: () async {
                       final confirm = await ConfirmationDialog.show(
                         context: context,
-                        title: 'Post Task',
+                        title: 'Ready to go?',
                         description:
-                            'Are you sure you want to post this task? Please review the details carefully.',
-                        confirmText: 'Post',
+                            'Once you confirm, we\'ll start looking for someone to help you out.',
+                        confirmText: 'Yes',
                         icon: Icons.check_circle_outline_rounded,
                       );
                       if (confirm) {
-                        _handlePostTask(attachments);
+                        _handleSubmit(attachments);
                       }
                     },
                   ),
@@ -141,7 +144,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     );
   }
 
-  Future<void> _handlePostTask(List<File> attachments) async {
+  Future<void> _handleSubmit(List<File> attachments) async {
     setState(() => _isPosting = true);
     context.showLoading();
 
@@ -159,9 +162,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                       taskId: taskId,
                       onSuccess: () {
                         completer.complete();
-                        if (mounted) {
-                          context.go('/task-creation/success');
-                        }
+                        context.go('/');
+                        // Root Context
+                        Future.delayed(Duration(seconds: 1), () {
+                          final rc = rootNavigatorKey.currentContext;
+                          if (rc?.mounted ?? false) {
+                            ConfirmTaskSheet.show(rc!, taskId);
+                          }
+                        });
                       },
                       onError: (err) {
                         completer.completeError(err);
@@ -169,8 +177,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     );
               } else {
                 completer.complete();
-                if (mounted) {
-                  context.go('/task-creation/success');
+                if (mounted && taskId != null) {
+                  ConfirmTaskSheet.show(context, taskId);
                 }
               }
             },
@@ -298,16 +306,6 @@ class _InfoSection extends StatelessWidget {
     required this.isDark,
   });
 
-  String _formatBudget(double? min, double? max) {
-    final format = NumberFormat.currency(symbol: '₦', decimalDigits: 0);
-    if (min == null && max == null) return 'Not specified';
-    if (min != null && max != null) {
-      if (min == max) return format.format(min);
-      return '${format.format(min)} - ${format.format(max)}';
-    }
-    return format.format(min ?? max);
-  }
-
   String _formatLocation(CreateTaskRequest draft) {
     final locations = draft.locations;
     if (locations == null || locations.isEmpty) return 'Not specified';
@@ -355,14 +353,6 @@ class _InfoSection extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _CompactInfoTile(
-            icon: Icons.account_balance_wallet_rounded,
-            title: 'Budget',
-            value: _formatBudget(draft.budgetMin, draft.budgetMax),
-            iconColor: AppColors.primary,
-            isDark: isDark,
-          ),
-          const SizedBox(height: 12),
           _CompactInfoTile(
             icon: Icons.location_on_rounded,
             title: 'Location',

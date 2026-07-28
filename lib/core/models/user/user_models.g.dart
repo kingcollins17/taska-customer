@@ -29,6 +29,8 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
   location: json['location'] == null
       ? null
       : UserLocation.fromJson(json['location'] as Map<String, dynamic>),
+  averageRatings: (json['average_ratings'] as num?)?.toDouble(),
+  credibility: (json['credibility'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -44,6 +46,8 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
   'region_id': instance.regionId,
   'customer_profile': instance.customerProfile,
   'location': instance.location,
+  'average_ratings': instance.averageRatings,
+  'credibility': instance.credibility,
 };
 
 CustomerProfile _$CustomerProfileFromJson(Map<String, dynamic> json) =>

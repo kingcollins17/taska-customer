@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,7 @@ class HomeScreen extends ConsumerWidget {
     final String greeting = _getGreeting();
     final int unreadCount = notificationCountsAsync.value?.unread ?? 0;
 
-    // Future.delayed(Duration(seconds: 3), () {
+    // Future.delayed(Duration(seconds: 1), () {
     //   PaymentPage.show(amount: 12500);
     // });
 
@@ -213,10 +214,8 @@ class _ActiveWork extends ConsumerWidget {
                 String statusText,
                 Color statusColor,
               ) = switch (task.status) {
-                'open' || 'pending' => (
-                  'Searching for provider',
-                  AppColors.primary,
-                ),
+                'open' ||
+                'pending' => ('Searching for provider', AppColors.primary),
                 'in_progress' => ('In Progress', Colors.orangeAccent),
                 'assigned' => (
                   task.scheduledStartAt != null

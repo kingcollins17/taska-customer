@@ -22,9 +22,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
 
-  String _expirationOption = '3 days'; // '3 days', '5 days', '1 week', 'Custom'
-  final _customDaysController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -34,12 +31,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       _selectedDate = draft!.scheduledStartAt;
       _selectedTime = TimeOfDay.fromDateTime(draft.scheduledStartAt!);
     }
-  }
-
-  @override
-  void dispose() {
-    _customDaysController.dispose();
-    super.dispose();
   }
 
   Future<void> _pickDateTime() async {
@@ -77,21 +68,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }
 
     DateTime baseTime = startAt ?? DateTime.now();
-    DateTime expiresAt;
-
-    if (_expirationOption == '3 days') {
-      expiresAt = baseTime.add(const Duration(days: 3));
-    } else if (_expirationOption == '5 days') {
-      expiresAt = baseTime.add(const Duration(days: 5));
-    } else if (_expirationOption == '1 week') {
-      expiresAt = baseTime.add(const Duration(days: 7));
-    } else if (_expirationOption == 'Custom') {
-      int customDays = int.tryParse(_customDaysController.text.trim()) ?? 3;
-      if (customDays < 1) customDays = 1;
-      expiresAt = baseTime.add(Duration(days: customDays));
-    } else {
-      expiresAt = baseTime.add(const Duration(days: 3)); // Fallback
-    }
+    DateTime expiresAt = baseTime.add(const Duration(days: 3));
 
     ref
         .read(taskCreationProvider.notifier)
@@ -125,7 +102,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   children: [
                     const SizedBox(height: 16),
                     Text(
-                      'When should it start?',
+                      'When do you need this done?',
                       style: AppTextStyles.heading1.copyWith(
                         color: textColor,
                         height: 1.2,
@@ -158,71 +135,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       cardColor,
                       textColor,
                     ),
-
-                    const SizedBox(height: 48),
-                    Text(
-                      'Expiration',
-                      style: AppTextStyles.heading2.copyWith(color: textColor),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'When should this task stop accepting offers?',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        _buildChip('3 days', textColor, cardColor),
-                        _buildChip('5 days', textColor, cardColor),
-                        _buildChip('1 week', textColor, cardColor),
-                        _buildChip('Custom', textColor, cardColor),
-                      ],
-                    ),
-
-                    if (_expirationOption == 'Custom') ...[
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _customDaysController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        style: AppTextStyles.heading2.copyWith(
-                          color: textColor,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'e.g. 10',
-                          hintStyle: AppTextStyles.heading3.copyWith(
-                            color: AppColors.textSecondary.withOpacity(0.4),
-                            fontWeight: FontWeight.normal,
-                          ),
-                          filled: true,
-                          fillColor: cardColor,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: AppColors.primary,
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.all(20),
-                          suffixText: 'days',
-                          suffixStyle: AppTextStyles.bodyLarge.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -277,37 +189,6 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChip(String label, Color textColor, Color cardColor) {
-    final isSelected = _expirationOption == label;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _expirationOption = label;
-        });
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : cardColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.textSecondary.withOpacity(0.2),
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: isSelected ? Colors.white : textColor,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-          ),
         ),
       ),
     );

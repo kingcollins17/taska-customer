@@ -1,4 +1,5 @@
 export 'bottom_nav_bar.dart';
+export 'confirm_task_sheet.dart';
 export 'confirmation_dialog.dart';
 export 'current_location.dart';
 export 'custom_back_button.dart';

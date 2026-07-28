@@ -296,7 +296,7 @@ as String?,
 /// @nodoc
 mixin _$CreateTaskRequest {
 
- String? get title; String? get description;@JsonKey(name: 'category_id') String? get categoryId;@JsonKey(name: 'service_id') String? get serviceId;@JsonKey(name: 'budget_min') double? get budgetMin;@JsonKey(name: 'budget_max') double? get budgetMax;@JsonKey(name: 'pricing_model') String? get pricingModel;@JsonKey(name: 'expires_at') DateTime? get expiresAt;@JsonKey(name: 'scheduled_start_at') DateTime? get scheduledStartAt; List<CreateTaskLocationRequest>? get locations;
+ String? get title; String? get description;@JsonKey(name: 'category_id') String? get categoryId;@JsonKey(name: 'service_id') String? get serviceId;@JsonKey(name: 'expires_at') DateTime? get expiresAt;@JsonKey(name: 'scheduled_start_at') DateTime? get scheduledStartAt; List<CreateTaskLocationRequest>? get locations;
 /// Create a copy of CreateTaskRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -309,16 +309,16 @@ $CreateTaskRequestCopyWith<CreateTaskRequest> get copyWith => _$CreateTaskReques
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateTaskRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.budgetMin, budgetMin) || other.budgetMin == budgetMin)&&(identical(other.budgetMax, budgetMax) || other.budgetMax == budgetMax)&&(identical(other.pricingModel, pricingModel) || other.pricingModel == pricingModel)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt)&&(identical(other.scheduledStartAt, scheduledStartAt) || other.scheduledStartAt == scheduledStartAt)&&const DeepCollectionEquality().equals(other.locations, locations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateTaskRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt)&&(identical(other.scheduledStartAt, scheduledStartAt) || other.scheduledStartAt == scheduledStartAt)&&const DeepCollectionEquality().equals(other.locations, locations));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,description,categoryId,serviceId,budgetMin,budgetMax,pricingModel,expiresAt,scheduledStartAt,const DeepCollectionEquality().hash(locations));
+int get hashCode => Object.hash(runtimeType,title,description,categoryId,serviceId,expiresAt,scheduledStartAt,const DeepCollectionEquality().hash(locations));
 
 @override
 String toString() {
-  return 'CreateTaskRequest(title: $title, description: $description, categoryId: $categoryId, serviceId: $serviceId, budgetMin: $budgetMin, budgetMax: $budgetMax, pricingModel: $pricingModel, expiresAt: $expiresAt, scheduledStartAt: $scheduledStartAt, locations: $locations)';
+  return 'CreateTaskRequest(title: $title, description: $description, categoryId: $categoryId, serviceId: $serviceId, expiresAt: $expiresAt, scheduledStartAt: $scheduledStartAt, locations: $locations)';
 }
 
 
@@ -329,7 +329,7 @@ abstract mixin class $CreateTaskRequestCopyWith<$Res>  {
   factory $CreateTaskRequestCopyWith(CreateTaskRequest value, $Res Function(CreateTaskRequest) _then) = _$CreateTaskRequestCopyWithImpl;
 @useResult
 $Res call({
- String? title, String? description,@JsonKey(name: 'category_id') String? categoryId,@JsonKey(name: 'service_id') String? serviceId,@JsonKey(name: 'budget_min') double? budgetMin,@JsonKey(name: 'budget_max') double? budgetMax,@JsonKey(name: 'pricing_model') String? pricingModel,@JsonKey(name: 'expires_at') DateTime? expiresAt,@JsonKey(name: 'scheduled_start_at') DateTime? scheduledStartAt, List<CreateTaskLocationRequest>? locations
+ String? title, String? description,@JsonKey(name: 'category_id') String? categoryId,@JsonKey(name: 'service_id') String? serviceId,@JsonKey(name: 'expires_at') DateTime? expiresAt,@JsonKey(name: 'scheduled_start_at') DateTime? scheduledStartAt, List<CreateTaskLocationRequest>? locations
 });
 
 
@@ -346,15 +346,12 @@ class _$CreateTaskRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateTaskRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? title = freezed,Object? description = freezed,Object? categoryId = freezed,Object? serviceId = freezed,Object? budgetMin = freezed,Object? budgetMax = freezed,Object? pricingModel = freezed,Object? expiresAt = freezed,Object? scheduledStartAt = freezed,Object? locations = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? title = freezed,Object? description = freezed,Object? categoryId = freezed,Object? serviceId = freezed,Object? expiresAt = freezed,Object? scheduledStartAt = freezed,Object? locations = freezed,}) {
   return _then(_self.copyWith(
 title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,serviceId: freezed == serviceId ? _self.serviceId : serviceId // ignore: cast_nullable_to_non_nullable
-as String?,budgetMin: freezed == budgetMin ? _self.budgetMin : budgetMin // ignore: cast_nullable_to_non_nullable
-as double?,budgetMax: freezed == budgetMax ? _self.budgetMax : budgetMax // ignore: cast_nullable_to_non_nullable
-as double?,pricingModel: freezed == pricingModel ? _self.pricingModel : pricingModel // ignore: cast_nullable_to_non_nullable
 as String?,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,scheduledStartAt: freezed == scheduledStartAt ? _self.scheduledStartAt : scheduledStartAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,locations: freezed == locations ? _self.locations : locations // ignore: cast_nullable_to_non_nullable
@@ -443,10 +440,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? description, @JsonKey(name: 'category_id')  String? categoryId, @JsonKey(name: 'service_id')  String? serviceId, @JsonKey(name: 'budget_min')  double? budgetMin, @JsonKey(name: 'budget_max')  double? budgetMax, @JsonKey(name: 'pricing_model')  String? pricingModel, @JsonKey(name: 'expires_at')  DateTime? expiresAt, @JsonKey(name: 'scheduled_start_at')  DateTime? scheduledStartAt,  List<CreateTaskLocationRequest>? locations)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? description, @JsonKey(name: 'category_id')  String? categoryId, @JsonKey(name: 'service_id')  String? serviceId, @JsonKey(name: 'expires_at')  DateTime? expiresAt, @JsonKey(name: 'scheduled_start_at')  DateTime? scheduledStartAt,  List<CreateTaskLocationRequest>? locations)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateTaskRequest() when $default != null:
-return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_that.budgetMin,_that.budgetMax,_that.pricingModel,_that.expiresAt,_that.scheduledStartAt,_that.locations);case _:
+return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_that.expiresAt,_that.scheduledStartAt,_that.locations);case _:
   return orElse();
 
 }
@@ -464,10 +461,10 @@ return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? description, @JsonKey(name: 'category_id')  String? categoryId, @JsonKey(name: 'service_id')  String? serviceId, @JsonKey(name: 'budget_min')  double? budgetMin, @JsonKey(name: 'budget_max')  double? budgetMax, @JsonKey(name: 'pricing_model')  String? pricingModel, @JsonKey(name: 'expires_at')  DateTime? expiresAt, @JsonKey(name: 'scheduled_start_at')  DateTime? scheduledStartAt,  List<CreateTaskLocationRequest>? locations)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? description, @JsonKey(name: 'category_id')  String? categoryId, @JsonKey(name: 'service_id')  String? serviceId, @JsonKey(name: 'expires_at')  DateTime? expiresAt, @JsonKey(name: 'scheduled_start_at')  DateTime? scheduledStartAt,  List<CreateTaskLocationRequest>? locations)  $default,) {final _that = this;
 switch (_that) {
 case _CreateTaskRequest():
-return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_that.budgetMin,_that.budgetMax,_that.pricingModel,_that.expiresAt,_that.scheduledStartAt,_that.locations);case _:
+return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_that.expiresAt,_that.scheduledStartAt,_that.locations);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -484,10 +481,10 @@ return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? description, @JsonKey(name: 'category_id')  String? categoryId, @JsonKey(name: 'service_id')  String? serviceId, @JsonKey(name: 'budget_min')  double? budgetMin, @JsonKey(name: 'budget_max')  double? budgetMax, @JsonKey(name: 'pricing_model')  String? pricingModel, @JsonKey(name: 'expires_at')  DateTime? expiresAt, @JsonKey(name: 'scheduled_start_at')  DateTime? scheduledStartAt,  List<CreateTaskLocationRequest>? locations)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? description, @JsonKey(name: 'category_id')  String? categoryId, @JsonKey(name: 'service_id')  String? serviceId, @JsonKey(name: 'expires_at')  DateTime? expiresAt, @JsonKey(name: 'scheduled_start_at')  DateTime? scheduledStartAt,  List<CreateTaskLocationRequest>? locations)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateTaskRequest() when $default != null:
-return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_that.budgetMin,_that.budgetMax,_that.pricingModel,_that.expiresAt,_that.scheduledStartAt,_that.locations);case _:
+return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_that.expiresAt,_that.scheduledStartAt,_that.locations);case _:
   return null;
 
 }
@@ -499,16 +496,13 @@ return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_
 
 @JsonSerializable(explicitToJson: true)
 class _CreateTaskRequest implements CreateTaskRequest {
-  const _CreateTaskRequest({this.title, this.description, @JsonKey(name: 'category_id') this.categoryId, @JsonKey(name: 'service_id') this.serviceId, @JsonKey(name: 'budget_min') this.budgetMin, @JsonKey(name: 'budget_max') this.budgetMax, @JsonKey(name: 'pricing_model') this.pricingModel, @JsonKey(name: 'expires_at') this.expiresAt, @JsonKey(name: 'scheduled_start_at') this.scheduledStartAt, final  List<CreateTaskLocationRequest>? locations}): _locations = locations;
+  const _CreateTaskRequest({this.title, this.description, @JsonKey(name: 'category_id') this.categoryId, @JsonKey(name: 'service_id') this.serviceId, @JsonKey(name: 'expires_at') this.expiresAt, @JsonKey(name: 'scheduled_start_at') this.scheduledStartAt, final  List<CreateTaskLocationRequest>? locations}): _locations = locations;
   factory _CreateTaskRequest.fromJson(Map<String, dynamic> json) => _$CreateTaskRequestFromJson(json);
 
 @override final  String? title;
 @override final  String? description;
 @override@JsonKey(name: 'category_id') final  String? categoryId;
 @override@JsonKey(name: 'service_id') final  String? serviceId;
-@override@JsonKey(name: 'budget_min') final  double? budgetMin;
-@override@JsonKey(name: 'budget_max') final  double? budgetMax;
-@override@JsonKey(name: 'pricing_model') final  String? pricingModel;
 @override@JsonKey(name: 'expires_at') final  DateTime? expiresAt;
 @override@JsonKey(name: 'scheduled_start_at') final  DateTime? scheduledStartAt;
  final  List<CreateTaskLocationRequest>? _locations;
@@ -534,16 +528,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateTaskRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.budgetMin, budgetMin) || other.budgetMin == budgetMin)&&(identical(other.budgetMax, budgetMax) || other.budgetMax == budgetMax)&&(identical(other.pricingModel, pricingModel) || other.pricingModel == pricingModel)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt)&&(identical(other.scheduledStartAt, scheduledStartAt) || other.scheduledStartAt == scheduledStartAt)&&const DeepCollectionEquality().equals(other._locations, _locations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateTaskRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.serviceId, serviceId) || other.serviceId == serviceId)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt)&&(identical(other.scheduledStartAt, scheduledStartAt) || other.scheduledStartAt == scheduledStartAt)&&const DeepCollectionEquality().equals(other._locations, _locations));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,description,categoryId,serviceId,budgetMin,budgetMax,pricingModel,expiresAt,scheduledStartAt,const DeepCollectionEquality().hash(_locations));
+int get hashCode => Object.hash(runtimeType,title,description,categoryId,serviceId,expiresAt,scheduledStartAt,const DeepCollectionEquality().hash(_locations));
 
 @override
 String toString() {
-  return 'CreateTaskRequest(title: $title, description: $description, categoryId: $categoryId, serviceId: $serviceId, budgetMin: $budgetMin, budgetMax: $budgetMax, pricingModel: $pricingModel, expiresAt: $expiresAt, scheduledStartAt: $scheduledStartAt, locations: $locations)';
+  return 'CreateTaskRequest(title: $title, description: $description, categoryId: $categoryId, serviceId: $serviceId, expiresAt: $expiresAt, scheduledStartAt: $scheduledStartAt, locations: $locations)';
 }
 
 
@@ -554,7 +548,7 @@ abstract mixin class _$CreateTaskRequestCopyWith<$Res> implements $CreateTaskReq
   factory _$CreateTaskRequestCopyWith(_CreateTaskRequest value, $Res Function(_CreateTaskRequest) _then) = __$CreateTaskRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String? title, String? description,@JsonKey(name: 'category_id') String? categoryId,@JsonKey(name: 'service_id') String? serviceId,@JsonKey(name: 'budget_min') double? budgetMin,@JsonKey(name: 'budget_max') double? budgetMax,@JsonKey(name: 'pricing_model') String? pricingModel,@JsonKey(name: 'expires_at') DateTime? expiresAt,@JsonKey(name: 'scheduled_start_at') DateTime? scheduledStartAt, List<CreateTaskLocationRequest>? locations
+ String? title, String? description,@JsonKey(name: 'category_id') String? categoryId,@JsonKey(name: 'service_id') String? serviceId,@JsonKey(name: 'expires_at') DateTime? expiresAt,@JsonKey(name: 'scheduled_start_at') DateTime? scheduledStartAt, List<CreateTaskLocationRequest>? locations
 });
 
 
@@ -571,15 +565,12 @@ class __$CreateTaskRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateTaskRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? title = freezed,Object? description = freezed,Object? categoryId = freezed,Object? serviceId = freezed,Object? budgetMin = freezed,Object? budgetMax = freezed,Object? pricingModel = freezed,Object? expiresAt = freezed,Object? scheduledStartAt = freezed,Object? locations = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? title = freezed,Object? description = freezed,Object? categoryId = freezed,Object? serviceId = freezed,Object? expiresAt = freezed,Object? scheduledStartAt = freezed,Object? locations = freezed,}) {
   return _then(_CreateTaskRequest(
 title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,categoryId: freezed == categoryId ? _self.categoryId : categoryId // ignore: cast_nullable_to_non_nullable
 as String?,serviceId: freezed == serviceId ? _self.serviceId : serviceId // ignore: cast_nullable_to_non_nullable
-as String?,budgetMin: freezed == budgetMin ? _self.budgetMin : budgetMin // ignore: cast_nullable_to_non_nullable
-as double?,budgetMax: freezed == budgetMax ? _self.budgetMax : budgetMax // ignore: cast_nullable_to_non_nullable
-as double?,pricingModel: freezed == pricingModel ? _self.pricingModel : pricingModel // ignore: cast_nullable_to_non_nullable
 as String?,expiresAt: freezed == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,scheduledStartAt: freezed == scheduledStartAt ? _self.scheduledStartAt : scheduledStartAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,locations: freezed == locations ? _self._locations : locations // ignore: cast_nullable_to_non_nullable

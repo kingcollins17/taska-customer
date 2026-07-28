@@ -1,0 +1,309 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:seeker_app/core/designs/app_colors.dart';
+import 'package:seeker_app/core/designs/widgets/app_search_bar.dart';
+import 'package:seeker_app/core/designs/widgets/current_location.dart';
+import 'package:seeker_app/core/providers/task_providers.dart';
+import 'package:seeker_app/features/task/presentation/widgets/task_card.dart';
+import 'package:seeker_app/features/task/presentation/widgets/task_card_shimmer.dart';
+
+class TasksScreen extends ConsumerStatefulWidget {
+  const TasksScreen({super.key});
+
+  @override
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends ConsumerState<TasksScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
+  String _selectedStatus = 'All';
+
+  final List<String> _statuses = [
+    'All',
+    'Draft',
+    'Open',
+    'Matched',
+    'In Progress',
+    'Completed',
+    'Cancelled',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(tasksProvider.notifier).loadMore();
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      ref
+          .read(tasksProvider.notifier)
+          .setFilters(search: query.isNotEmpty ? query : null);
+    });
+  }
+
+  void _onStatusChanged(String status) {
+    setState(() {
+      _selectedStatus = status;
+    });
+
+    if (status == 'All') {
+      ref.read(tasksProvider.notifier).setFilters(status: null);
+    } else {
+      ref.read(tasksProvider.notifier).setFilters(status: status.toLowerCase());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
+    final tasksAsync = ref.watch(tasksProvider);
+
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'My Tasks',
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  const CurrentLocation(),
+                ],
+              ),
+            ),
+            // Search Bar
+            AppSearchBar(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              hintText: 'Search tasks...',
+            ),
+
+            // Status Chips
+            SizedBox(
+              height: 36.h,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                itemCount: _statuses.length,
+                itemBuilder: (context, index) {
+                  final status = _statuses[index];
+                  final isSelected = status == _selectedStatus;
+
+                  return Padding(
+                    padding: EdgeInsets.only(right: 8.w),
+                    child: ChoiceChip(
+                      label: Text(
+                        status,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark
+                                    ? Colors.white70
+                                    : AppColors.textPrimary),
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          _onStatusChanged(status);
+                        }
+                      },
+                      selectedColor: AppColors.primary,
+                      backgroundColor: isDark
+                          ? AppColors.darkerBackground
+                          : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppColors.primary
+                              : (isDark
+                                    ? Colors.white24
+                                    : Colors.grey.shade300),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            SizedBox(height: 8.h),
+
+            // Task List
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () async {
+                  await ref.read(tasksProvider.notifier).refresh();
+                },
+                child: tasksAsync.when(
+                  data: (tasks) {
+                    if (tasks.isEmpty) {
+                      return ListView(
+                        children: [
+                          SizedBox(height: 100.h),
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                HugeIcon(
+                                  icon: HugeIcons.strokeRoundedTask01,
+                                  color: isDark
+                                      ? Colors.white24
+                                      : Colors.grey.shade300,
+                                  size: 80.sp,
+                                ),
+                                SizedBox(height: 16.h),
+                                Text(
+                                  'No tasks found',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white54
+                                        : AppColors.textSecondary,
+                                    fontSize: 16.sp,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      itemCount:
+                          tasks.length +
+                          1, // +1 for loading indicator at bottom
+                      itemBuilder: (context, index) {
+                        if (index == tasks.length) {
+                          if (ref.read(tasksProvider.notifier).hasMore) {
+                            return const TaskCardShimmer();
+                          }
+                          return const SizedBox.shrink();
+                        }
+
+                        final task = tasks[index];
+                        return TaskCard(
+                          task: task,
+                          onTap: () {
+                            // Future: Navigate to task details
+                          },
+                        );
+                      },
+                    );
+                  },
+                  loading: () => ListView.builder(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    itemCount: 5,
+                    itemBuilder: (context, index) => const TaskCardShimmer(),
+                  ),
+                  error: (error, stack) => Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.w),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedAlert01,
+                            color: AppColors.error,
+                            size: 48.sp,
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'Oops, something went wrong',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            error.toString(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white54
+                                  : AppColors.textSecondary,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                          SizedBox(height: 24.h),
+                          ElevatedButton(
+                            onPressed: () {
+                              ref.read(tasksProvider.notifier).refresh();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 24.w,
+                                vertical: 12.h,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                            ),
+                            child: const Text('Try Again'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

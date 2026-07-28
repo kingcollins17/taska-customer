@@ -165,15 +165,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           if (!isOnboardingComplete) {
             context.go('/onboarding');
           } else {
-            final isAuthenticated = await ref.read(
-              isAuthenticatedProvider.future,
-            );
+            final accessToken = await appStorage.get(StorageKey.accessToken);
+            final isAuthenticated = accessToken != null && accessToken.toString().isNotEmpty;
             if (mounted) {
               if (isAuthenticated) {
-                // context.go('/');
-                context.go(
-                  '/task-creation/matching/0b4a1cf4-716e-4a63-8fd1-f0b61272c00b',
-                );
+                context.go('/');
+                // context.go(
+                //   '/task-creation/matching/0b4a1cf4-716e-4a63-8fd1-f0b61272c00b',
+                // );
               } else {
                 context.go('/login');
               }
@@ -285,7 +284,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     return CustomPaint(
       painter: _BackgroundPainter(
         pulse: _pulseAnim.value,
-        accentColor: AppColors.accentPurple,
+        accentColor: AppColors.accentGreen,
       ),
     );
   }
@@ -306,7 +305,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.accentPurple.withValues(
+                  color: AppColors.accentGreen.withValues(
                     alpha: _ringOpacity.value,
                   ),
                   width: 2.w,
@@ -325,7 +324,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accentPurple.withValues(alpha: 0.25),
+                    color: AppColors.accentGreen.withValues(alpha: 0.25),
                     blurRadius: 40.r,
                     spreadRadius: 8.r,
                   ),
@@ -355,7 +354,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.accentPurple.withValues(alpha: 0.3),
+                      color: AppColors.accentGreen.withValues(alpha: 0.3),
                       blurRadius: 20.r,
                     ),
                   ],
@@ -373,7 +372,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       painter: _ParticlePainter(
         particles: _particles,
         progress: _particleController.value,
-        accentColor: AppColors.accentPurple,
+        accentColor: AppColors.accentGreen,
       ),
     );
   }
@@ -394,7 +393,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               child: LinearProgressIndicator(
                 backgroundColor: Colors.white.withValues(alpha: 0.08),
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.accentPurple.withValues(alpha: 0.5),
+                  AppColors.accentGreen.withValues(alpha: 0.5),
                 ),
               ),
             ),

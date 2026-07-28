@@ -4,7 +4,6 @@ import 'package:seeker_app/core/routes/route_names.dart';
 import 'presentation/screens/category_selection_screen.dart';
 import 'presentation/screens/service_selection_screen.dart';
 import 'presentation/screens/task_description_screen.dart';
-import 'presentation/screens/budget_screen.dart';
 import 'presentation/screens/location_screen.dart';
 import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/review_screen.dart';
@@ -38,11 +37,7 @@ final List<RouteBase> taskCreationRoutes = [
       );
     },
   ),
-  GoRoute(
-    path: '/task-creation/budget',
-    name: RouteNames.taskBudget.name,
-    builder: (context, state) => const BudgetScreen(),
-  ),
+
   GoRoute(
     path: '/task-creation/location',
     name: RouteNames.taskLocation.name,

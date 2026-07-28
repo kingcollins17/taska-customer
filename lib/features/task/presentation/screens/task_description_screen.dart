@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/designs/widgets/current_location.dart';
+import 'package:seeker_app/core/providers/services_provider.dart';
 import 'package:seeker_app/core/providers/task_attachment_upload_provider.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
@@ -57,6 +58,15 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
   Widget build(BuildContext context) {
     final draft = ref.watch(taskCreationProvider);
     final attachments = ref.watch(taskAttachmentUploadProvider).value ?? [];
+
+    final serviceId = draft.value?.serviceId;
+    final serviceAsync = serviceId != null
+        ? ref.watch(serviceByIdProvider(serviceId))
+        : null;
+    final hintText =
+        (serviceAsync?.value?.data?['eg'] as String?) ??
+        'Let us know exactly what you need, including any special requirements or instructions.';
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
@@ -83,7 +93,7 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                     children: [
                       const SizedBox(height: 16),
                       Text(
-                        'Tell us what you need',
+                        'Describe what you need',
                         style: AppTextStyles.heading1.copyWith(
                           color: textColor,
                           height: 1.2,
@@ -115,7 +125,7 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                         maxLines: null,
                         minLines: 4,
                         decoration: InputDecoration(
-                          hintText: 'Tell us about your task in details',
+                          hintText: hintText,
                           hintStyle: AppTextStyles.bodyLarge.copyWith(
                             color: AppColors.textSecondary.withOpacity(0.5),
                           ),
@@ -239,7 +249,7 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                             description: _descriptionController.text.trim(),
                           )
                           .then((_) {
-                            context.pushNamed(RouteNames.taskBudget.name);
+                            context.pushNamed(RouteNames.taskLocation.name);
                           });
                     }
                   },

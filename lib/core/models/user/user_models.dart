@@ -24,6 +24,10 @@ class User {
   @JsonKey(name: 'customer_profile')
   final CustomerProfile? customerProfile;
   final UserLocation? location;
+  @JsonKey(name: 'average_ratings')
+  final double? averageRatings;
+  @JsonKey(name: 'credibility')
+  final double? credibility;
 
   User({
     this.id,
@@ -38,6 +42,8 @@ class User {
     this.regionId,
     this.customerProfile,
     this.location,
+    this.averageRatings,
+    this.credibility,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -55,12 +61,7 @@ class CustomerProfile {
   @JsonKey(name: 'address_line')
   final String? addressLine;
 
-  CustomerProfile({
-    this.id,
-    this.firstName,
-    this.lastName,
-    this.addressLine,
-  });
+  CustomerProfile({this.id, this.firstName, this.lastName, this.addressLine});
 
   factory CustomerProfile.fromJson(Map<String, dynamic> json) =>
       _$CustomerProfileFromJson(json);

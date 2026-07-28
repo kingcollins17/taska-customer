@@ -16,6 +16,8 @@ import 'package:seeker_app/core/providers/theme_provider.dart';
 import '../../../../core/designs/app_colors.dart';
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/designs/widgets/phone_number_sheet.dart';
+import 'package:seeker_app/core/designs/widgets/current_location.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -53,21 +55,35 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'My profile',
-                style: TextStyle(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                'View and manage your profile details below.',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColors.textSecondary,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'My profile',
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          'View and manage your profile details below.',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const CurrentLocation(),
+                ],
               ),
               SizedBox(height: 32.h),
 
@@ -111,15 +127,18 @@ class ProfileScreen extends ConsumerWidget {
                               color: Colors.white,
                             ),
                             SizedBox(width: 16.w),
-                            const _StatCard(
+                            _StatCard(
                               label: 'Average Rating',
-                              value: '0.0',
+                              value:
+                                  user?.averageRatings?.toStringAsFixed(1) ??
+                                  '0.0',
                               color: Colors.white,
                             ),
                             SizedBox(width: 16.w),
-                            const _StatCard(
+                            _StatCard(
                               label: 'Credibility',
-                              value: '0',
+                              value:
+                                  user?.credibility?.toStringAsFixed(0) ?? '0',
                               color: Colors.white,
                             ),
                           ],
@@ -128,58 +147,102 @@ class ProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  Positioned(
-                    bottom: -30.h,
-                    left: 20.w,
-                    child: Container(
-                      width: 60.w,
-                      height: 60.w,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: bgColor, width: 3),
-                        color: AppColors.primary,
-                      ),
-                      child: Text(
-                        _getInitials(
-                          user?.customerProfile?.firstName,
-                          user?.customerProfile?.lastName,
-                        ),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 24.sp,
-                        ),
-                      ),
+                  if (userState is! AsyncError)
+                    Positioned(
+                      bottom: -30.h,
+                      left: 20.w,
+                      child: userState.isLoading
+                          ? Shimmer.fromColors(
+                              baseColor: isDark
+                                  ? Colors.grey[800]!
+                                  : Colors.grey[300]!,
+                              highlightColor: isDark
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[100]!,
+                              child: Container(
+                                width: 60.w,
+                                height: 60.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                  border: Border.all(color: bgColor, width: 3),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              width: 60.w,
+                              height: 60.w,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: bgColor, width: 3),
+                                color: AppColors.primary,
+                              ),
+                              child: Text(
+                                _getInitials(
+                                  user?.customerProfile?.firstName,
+                                  user?.customerProfile?.lastName,
+                                ),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 24.sp,
+                                ),
+                              ),
+                            ),
                     ),
-                  ),
                 ],
               ),
               SizedBox(height: 40.h),
 
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
+                child: userState.isLoading
+                    ? Shimmer.fromColors(
+                        baseColor: isDark
+                            ? Colors.grey[800]!
+                            : Colors.grey[300]!,
+                        highlightColor: isDark
+                            ? Colors.grey[700]!
+                            : Colors.grey[100]!,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 150.w,
+                              height: 20.h,
+                              color: Colors.white,
+                            ),
+                            SizedBox(height: 8.h),
+                            Container(
+                              width: 200.w,
+                              height: 14.h,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            email,
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      email,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
               ),
 
               SizedBox(height: 40.h),

@@ -44,7 +44,7 @@ class PrimaryButton extends StatelessWidget {
             backgroundColor: bg,
             foregroundColor: fg,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28.r),
+              borderRadius: BorderRadius.circular(12.r),
             ),
           ),
           child: isLoading

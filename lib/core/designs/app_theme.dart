@@ -34,25 +34,26 @@ class AppTheme {
         foregroundColor: AppColors.onPrimary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTextStyles.heading3.copyWith(color: AppColors.onPrimary),
+        titleTextStyle: AppTextStyles.heading3.copyWith(
+          color: AppColors.onPrimary,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           textStyle: AppTextStyles.label,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
   }
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.accentPurple,
+        primary: AppColors.primary,
         secondary: AppColors.accentOrange,
         surface: AppColors.darkBackground,
         error: AppColors.error,
@@ -63,11 +64,19 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.darkBackground,
       textTheme: TextTheme(
-        displayLarge: AppTextStyles.heading1.copyWith(color: AppColors.onPrimary),
-        displayMedium: AppTextStyles.heading2.copyWith(color: AppColors.onPrimary),
-        displaySmall: AppTextStyles.heading3.copyWith(color: AppColors.onPrimary),
+        displayLarge: AppTextStyles.heading1.copyWith(
+          color: AppColors.onPrimary,
+        ),
+        displayMedium: AppTextStyles.heading2.copyWith(
+          color: AppColors.onPrimary,
+        ),
+        displaySmall: AppTextStyles.heading3.copyWith(
+          color: AppColors.onPrimary,
+        ),
         bodyLarge: AppTextStyles.bodyLarge.copyWith(color: AppColors.onPrimary),
-        bodyMedium: AppTextStyles.bodyMedium.copyWith(color: AppColors.onPrimary),
+        bodyMedium: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.onPrimary,
+        ),
         bodySmall: AppTextStyles.bodySmall.copyWith(color: AppColors.onPrimary),
         labelLarge: AppTextStyles.label.copyWith(color: AppColors.onPrimary),
       ),
@@ -76,16 +85,16 @@ class AppTheme {
         foregroundColor: AppColors.onPrimary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTextStyles.heading3.copyWith(color: AppColors.onPrimary),
+        titleTextStyle: AppTextStyles.heading3.copyWith(
+          color: AppColors.onPrimary,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accentPurple,
+          backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           textStyle: AppTextStyles.label,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );

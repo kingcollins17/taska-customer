@@ -293,104 +293,90 @@ class _ServiceTile extends ConsumerWidget {
       isServiceAvailableInCurrentRegionProvider(service!.id!),
     );
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(16.r),
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : (isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.05)),
-            width: isSelected ? 2 : 1,
+    final isAvailable = availabilityAsync.value ?? true;
+    final isLoading = availabilityAsync.isLoading;
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 300),
+      opacity: (!isAvailable && !isLoading) ? 0.5 : 1.0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16.r),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary
+                  : (isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05)),
+              width: isSelected ? 2 : 1,
+            ),
           ),
-        ),
-        padding: EdgeInsets.all(16.w),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withValues(alpha: 0.1)
-                    : (isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.05)),
-                shape: BoxShape.circle,
+          padding: EdgeInsets.all(16.w),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : (isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.05)),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.handyman_outlined,
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isDark ? Colors.white : AppColors.textPrimary),
+                  size: 20.sp,
+                ),
               ),
-              child: Icon(
-                Icons.handyman_outlined,
-                color: isSelected
-                    ? AppColors.primary
-                    : (isDark ? Colors.white : AppColors.textPrimary),
-                size: 20.sp,
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Text(
+                  service!.name ?? 'Unknown Service',
+                  style: AppTextStyles.heading3.copyWith(
+                    fontSize: 15.sp,
+                    color: textColor,
+                  ),
+                ),
               ),
-            ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    service!.name ?? 'Unknown Service',
-                    style: AppTextStyles.heading3.copyWith(
-                      fontSize: 15.sp,
-                      color: textColor,
+              SizedBox(width: 12.w),
+              if (isLoading)
+                SizedBox(
+                  width: 12.w,
+                  height: 12.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isDark ? Colors.white54 : Colors.black54,
                     ),
                   ),
-                  SizedBox(height: 4.h),
-                  availabilityAsync.when(
-                    data: (isAvailable) {
-                      if (!isAvailable) {
-                        return Text(
-                          'Unavailable in your region',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: Colors.redAccent,
-                            fontSize: 13.sp,
-                          ),
-                        );
-                      }
-                      return Text(
-                        'Available',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: Colors.green,
-                          fontSize: 13.sp,
-                        ),
-                      );
-                    },
-                    loading: () => Shimmer.fromColors(
-                      baseColor: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.grey[300]!,
-                      highlightColor: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.grey[100]!,
-                      child: Container(
-                        height: 12.h,
-                        width: 80.w,
-                        color: Colors.white,
+                )
+              else
+                Container(
+                  width: 8.w,
+                  height: 8.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isAvailable ? Colors.green : Colors.redAccent,
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isAvailable ? Colors.green : Colors.redAccent)
+                            .withValues(alpha: 0.3),
+                        blurRadius: 4,
+                        spreadRadius: 1,
                       ),
-                    ),
-                    error: (_, __) => const SizedBox.shrink(),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            // if (isSelected)
-            //   Icon(Icons.check_circle, color: AppColors.primary, size: 24.sp)
-            // else
-            //   Icon(
-            //     Icons.chevron_right,
-            //     color: isDark
-            //         ? Colors.white.withValues(alpha: 0.3)
-            //         : Colors.black.withValues(alpha: 0.3),
-            //     size: 20.sp,
-            //   ),
-          ],
+                ),
+            ],
+          ),
         ),
       ),
     );

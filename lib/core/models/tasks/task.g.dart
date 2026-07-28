@@ -261,9 +261,6 @@ _CreateTaskRequest _$CreateTaskRequestFromJson(Map<String, dynamic> json) =>
       description: json['description'] as String?,
       categoryId: json['category_id'] as String?,
       serviceId: json['service_id'] as String?,
-      budgetMin: (json['budget_min'] as num?)?.toDouble(),
-      budgetMax: (json['budget_max'] as num?)?.toDouble(),
-      pricingModel: json['pricing_model'] as String?,
       expiresAt: json['expires_at'] == null
           ? null
           : DateTime.parse(json['expires_at'] as String),
@@ -284,9 +281,6 @@ Map<String, dynamic> _$CreateTaskRequestToJson(_CreateTaskRequest instance) =>
       'description': instance.description,
       'category_id': instance.categoryId,
       'service_id': instance.serviceId,
-      'budget_min': instance.budgetMin,
-      'budget_max': instance.budgetMax,
-      'pricing_model': instance.pricingModel,
       'expires_at': instance.expiresAt?.toIso8601String(),
       'scheduled_start_at': instance.scheduledStartAt?.toIso8601String(),
       'locations': instance.locations?.map((e) => e.toJson()).toList(),

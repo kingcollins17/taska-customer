@@ -14,13 +14,25 @@ class TaskLite {
   final String? categoryId;
   @JsonKey(name: 'service_id')
   final String? serviceId;
-  @JsonKey(name: 'budget_min')
-  final double? budgetMin;
-  @JsonKey(name: 'budget_max')
-  final double? budgetMax;
-  @JsonKey(name: 'pricing_model')
-  final String? pricingModel;
   final String? status;
+  @JsonKey(name: 'base_price')
+  final double? basePrice;
+  @JsonKey(name: 'distance_fee')
+  final double? distanceFee;
+  @JsonKey(name: 'time_fee')
+  final double? timeFee;
+  @JsonKey(name: 'urgency_fee')
+  final double? urgencyFee;
+  @JsonKey(name: 'complexity_fee')
+  final double? complexityFee;
+  @JsonKey(name: 'surge_multiplier')
+  final double? surgeMultiplier;
+  @JsonKey(name: 'customer_total_price')
+  final double? customerTotalPrice;
+  @JsonKey(name: 'platform_fee')
+  final double? platformFee;
+  @JsonKey(name: 'provider_payout')
+  final double? providerPayout;
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
   @JsonKey(name: 'scheduled_start_at')
@@ -36,10 +48,16 @@ class TaskLite {
     this.title,
     this.categoryId,
     this.serviceId,
-    this.budgetMin,
-    this.budgetMax,
-    this.pricingModel,
     this.status,
+    this.basePrice,
+    this.distanceFee,
+    this.timeFee,
+    this.urgencyFee,
+    this.complexityFee,
+    this.surgeMultiplier,
+    this.customerTotalPrice,
+    this.platformFee,
+    this.providerPayout,
     this.createdAt,
     this.scheduledStartAt,
     this.distanceKm,

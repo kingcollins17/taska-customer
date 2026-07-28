@@ -49,6 +49,7 @@ Service _$ServiceFromJson(Map<String, dynamic> json) => Service(
   updatedAt: json['updated_at'] == null
       ? null
       : DateTime.parse(json['updated_at'] as String),
+  data: json['data'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$ServiceToJson(Service instance) => <String, dynamic>{
@@ -62,6 +63,7 @@ Map<String, dynamic> _$ServiceToJson(Service instance) => <String, dynamic>{
   'category': instance.category?.toJson(),
   'created_at': instance.createdAt?.toIso8601String(),
   'updated_at': instance.updatedAt?.toIso8601String(),
+  'data': instance.data,
 };
 
 ServiceAvailability _$ServiceAvailabilityFromJson(Map<String, dynamic> json) =>

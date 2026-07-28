@@ -102,7 +102,7 @@ class _UpdatePayoutAccountScreenState
       appBar: AppBar(
         leading: const CustomBackButton(),
         title: Text(
-          'Update Payout Account',
+          'Update Bank Detais',
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,

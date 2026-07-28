@@ -124,28 +124,6 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     _updateState(current.copyWith(title: title, description: description));
   }
 
-  /// Updates the budget details and pricing model for the task draft.
-  ///
-  /// If the draft hasn't been initialized, it calls [reset] first.
-  ///
-  /// Parameters:
-  /// - [min]: The optional minimum budget amount.
-  /// - [max]: The optional maximum budget amount.
-  /// - [pricingModel]: The pricing model string (e.g., 'fixed', 'hourly').
-  Future<void> updateBudget({
-    double? min,
-    double? max,
-    String? pricingModel,
-  }) async {
-    final current = state.value ?? CreateTaskRequest();
-    _updateState(
-      current.copyWith(
-        budgetMin: min,
-        budgetMax: max,
-        pricingModel: pricingModel,
-      ),
-    );
-  }
 
   /// Updates the location required for the task.
   ///

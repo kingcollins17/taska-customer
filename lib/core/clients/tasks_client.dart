@@ -66,4 +66,23 @@ abstract class TasksClient {
   Future<GenericResponse> cancelDraftTask(
     @Path('task_id') String taskId,
   );
+
+  @GET('/tasks')
+  Future<GenericResponse<PaginatedResponse<TaskLite>>> listTasks({
+    @Query('page') int? page = 1,
+    @Query('per_page') int? perPage = 20,
+    @Query('status') String? status,
+    @Query('category_id') String? categoryId,
+    @Query('service_id') String? serviceId,
+    @Query('search') String? search,
+    @Query('latitude') double? latitude,
+    @Query('longitude') double? longitude,
+    @Query('radius_km') double? radiusKm,
+    @Query('sort_by') String? sortBy = 'created_at',
+    @Query('sort_desc') bool? sortDesc = true,
+    @Query('region_id') String? regionId,
+    @Query('scheduled_start_at') String? scheduledStartAt,
+    @Query('expires_at') String? expiresAt,
+    @Query('customer_id') String? customerId,
+  });
 }

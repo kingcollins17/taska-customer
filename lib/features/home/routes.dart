@@ -4,6 +4,7 @@ import '../../core/constants.dart';
 import 'presentation/main_layout.dart';
 import 'presentation/home_screen.dart';
 import '../profile/presentation/profile_screen.dart';
+import '../task/presentation/screens/tasks_screen.dart';
 
 final List<RouteBase> homeRoutes = [
   StatefulShellRoute.indexedStack(
@@ -26,8 +27,7 @@ final List<RouteBase> homeRoutes = [
         routes: [
           GoRoute(
             path: '/tasks',
-            builder: (context, state) =>
-                const Scaffold(body: Center(child: Text('Tasks'))),
+            builder: (context, state) => const TasksScreen(),
           ),
         ],
       ),

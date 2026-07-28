@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/clients/clients.dart';
 import 'package:seeker_app/core/utils/flushbar_message.dart';
+import 'package:seeker_app/core/designs/widgets/primary_button.dart';
+import 'package:seeker_app/core/designs/app_text_styles.dart';
 
 import '../../constants.dart';
 import '../../utils/loading_overlay.dart';
@@ -120,10 +122,16 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     if (widget.amount != null) {
       _amountCtrl.text = widget.amount!.toStringAsFixed(2);
     }
+    _amountCtrl.addListener(_onAmountChanged);
+  }
+
+  void _onAmountChanged() {
+    setState(() {});
   }
 
   @override
   void dispose() {
+    _amountCtrl.removeListener(_onAmountChanged);
     _cardNumberCtrl.dispose();
     _expiryCtrl.dispose();
     _cvvCtrl.dispose();
@@ -207,33 +215,61 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
+      padding: EdgeInsets.only(
+        top: 16.h,
+        bottom: 32.h,
+      ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A22) : Colors.white,
+        color: isDark ? AppColors.darkBackground : AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: SafeArea(
         top: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: 12.h),
-            _buildDragHandle(colorScheme),
+            Center(child: _buildDragHandle(isDark)),
             SizedBox(height: 16.h),
-            Text(
-              'Card Payment',
-              style: GoogleFonts.inter(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Card Payment',
+                    style: AppTextStyles.heading3.copyWith(
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      color: AppColors.textSecondary,
+                      size: 20.sp,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 24.h),
             Flexible(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      'Please provide your payment details. Transactions are securely processed.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
                     _buildAmountField(colorScheme, isDark),
                     SizedBox(height: 20.h),
                     _buildTestCardSelector(colorScheme, isDark),
@@ -245,7 +281,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 16.h),
+              padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 0),
               child: _buildPayButton(colorScheme),
             ),
           ],
@@ -254,13 +290,15 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     );
   }
 
-  Widget _buildDragHandle(ColorScheme colorScheme) {
+  Widget _buildDragHandle(bool isDark) {
     return Container(
-      width: 40.w,
-      height: 4.h,
+      width: 48.w,
+      height: 5.h,
       decoration: BoxDecoration(
-        color: colorScheme.onSurface.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(2.r),
+        color: isDark
+            ? Colors.white.withOpacity(0.2)
+            : Colors.black.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(2.5.r),
       ),
     );
   }
@@ -428,27 +466,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   // ── Pay Button ──
 
   Widget _buildPayButton(ColorScheme colorScheme) {
-    return GestureDetector(
-      onTap: _onPayNow,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        height: 50.h,
-        decoration: BoxDecoration(
-          color: colorScheme.primary,
-          borderRadius: BorderRadius.circular(25.r),
-        ),
-        child: Center(
-          child: Text(
-            _amount > 0 ? 'Pay ₦${_amount.toStringAsFixed(2)}' : 'Pay Now',
-            style: GoogleFonts.inter(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onPrimary,
-            ),
-          ),
-        ),
-      ),
+    return PrimaryButton(
+      text: _amount > 0 ? 'Pay ₦${_amount.toStringAsFixed(2)}' : 'Pay Now',
+      onPressed: _onPayNow,
     );
   }
 

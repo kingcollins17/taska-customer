@@ -29,7 +29,7 @@ final locationProvider = FutureProvider<Address?>((ref) async {
   final locationData = await location.getLocation();
 
   try {
-    final placemarks = await geo.placemarkFromCoordinates(
+    final placemarks = await geo.Geocoding().placemarkFromCoordinates(
       locationData.latitude!,
       locationData.longitude!,
     );

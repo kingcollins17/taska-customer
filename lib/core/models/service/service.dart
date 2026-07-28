@@ -50,6 +50,7 @@ class Service {
   final DateTime? createdAt;
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
+  final Map<String, dynamic>? data;
 
   Service({
     this.id,
@@ -62,6 +63,7 @@ class Service {
     this.category,
     this.createdAt,
     this.updatedAt,
+    this.data,
   });
 
   factory Service.fromJson(Map<String, dynamic> json) =>
