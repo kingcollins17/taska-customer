@@ -322,6 +322,7 @@ class ConfirmTaskSheet extends ConsumerWidget {
                       .confirmDraft(
                         taskId: taskId,
                         onSuccess: () {
+                          ref.invalidate(taskDetailProvider(taskId));
                           context.hideLoading();
                           context.pop();
                           context.pushNamed(

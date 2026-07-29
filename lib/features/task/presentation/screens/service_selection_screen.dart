@@ -11,8 +11,10 @@ import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
+import 'package:seeker_app/core/utils/service_icon_helper.dart';
 
 class ServiceSelectionScreen extends ConsumerStatefulWidget {
   final String? categoryId;
@@ -295,6 +297,7 @@ class _ServiceTile extends ConsumerWidget {
 
     final isAvailable = availabilityAsync.value ?? true;
     final isLoading = availabilityAsync.isLoading;
+    final icon = getServiceIcon(service?.name);
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
@@ -328,8 +331,8 @@ class _ServiceTile extends ConsumerWidget {
                             : Colors.black.withValues(alpha: 0.05)),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.handyman_outlined,
+                child: HugeIcon(
+                  icon: icon,
                   color: isSelected
                       ? AppColors.primary
                       : (isDark ? Colors.white : AppColors.textPrimary),

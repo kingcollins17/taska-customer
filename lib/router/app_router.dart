@@ -22,7 +22,7 @@ class AppRoutes {
       ...authRoutes,
       ...homeRoutes,
       ...profileRoutes,
-      ...taskCreationRoutes,
+      ...taskRoutes,
       ...notificationsRoutes,
     ],
   );

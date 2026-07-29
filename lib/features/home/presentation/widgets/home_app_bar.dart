@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:badges/badges.dart' as badges;
-import 'package:seeker_app/core/designs/app_colors.dart';
 
 class HomeAppBar extends StatelessWidget {
   final String name;
@@ -19,16 +18,18 @@ class HomeAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       children: [
         CircleAvatar(
           radius: 20.r,
-          backgroundColor: Colors.white.withValues(alpha: 0.1),
+          backgroundColor: colorScheme.onSurface.withValues(alpha: 0.08),
           child: Icon(
             Icons.person,
-            color: Colors.white,
+            color: colorScheme.onSurface,
             size: 24.sp,
-          ), // Placeholder for image
+          ),
         ),
         SizedBox(width: 12.w),
         Expanded(
@@ -38,15 +39,15 @@ class HomeAppBar extends StatelessWidget {
               Text(
                 name.isNotEmpty ? name : 'Guest',
                 style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 14.sp,
+                  color: colorScheme.onSurface,
+                  fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 greeting,
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                   fontSize: 12.sp,
                 ),
               ),
@@ -61,18 +62,24 @@ class HomeAppBar extends StatelessWidget {
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              border: Border.all(
+                color: colorScheme.onSurface.withValues(alpha: 0.15),
+              ),
             ),
             child: badges.Badge(
               showBadge: unreadCount > 0,
-              badgeStyle: badges.BadgeStyle(badgeColor: AppColors.primary),
+              badgeStyle: badges.BadgeStyle(badgeColor: colorScheme.primary),
               badgeContent: Text(
                 unreadCount > 99 ? '99+' : unreadCount.toString(),
-                style: TextStyle(color: Colors.white, fontSize: 10.sp),
+                style: TextStyle(
+                  color: colorScheme.onPrimary,
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               child: Icon(
                 Icons.notifications_none_outlined,
-                color: Colors.white,
+                color: colorScheme.onSurface,
                 size: 20.sp,
               ),
             ),

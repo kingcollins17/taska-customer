@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
+import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/designs/widgets/app_search_bar.dart';
 import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
@@ -89,14 +92,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'My Tasks',
-                    style: TextStyle(
-                      fontSize: 24.sp,
+                    style: AppTextStyles.heading2.copyWith(
+                      fontSize: 22.sp,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
@@ -112,9 +115,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               hintText: 'Search tasks...',
             ),
 
+            SizedBox(height: 6.h),
+
             // Status Chips
             SizedBox(
-              height: 36.h,
+              height: 32.h,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -124,11 +129,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   final isSelected = status == _selectedStatus;
 
                   return Padding(
-                    padding: EdgeInsets.only(right: 8.w),
+                    padding: EdgeInsets.only(right: 6.w),
                     child: ChoiceChip(
                       label: Text(
                         status,
-                        style: TextStyle(
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize: 12.sp,
                           color: isSelected
                               ? Colors.white
                               : (isDark
@@ -139,6 +145,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                               : FontWeight.normal,
                         ),
                       ),
+                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      visualDensity: VisualDensity.compact,
+                      showCheckmark: false,
                       selected: isSelected,
                       onSelected: (selected) {
                         if (selected) {
@@ -150,7 +159,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           ? AppColors.darkerBackground
                           : Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20.r),
+                        borderRadius: BorderRadius.circular(16.r),
                         side: BorderSide(
                           color: isSelected
                               ? AppColors.primary
@@ -165,7 +174,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               ),
             ),
 
-            SizedBox(height: 8.h),
+            SizedBox(height: 6.h),
 
             // Task List
             Expanded(
@@ -179,7 +188,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     if (tasks.isEmpty) {
                       return ListView(
                         children: [
-                          SizedBox(height: 100.h),
+                          SizedBox(height: 80.h),
                           Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -189,16 +198,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                   color: isDark
                                       ? Colors.white24
                                       : Colors.grey.shade300,
-                                  size: 80.sp,
+                                  size: 64.sp,
                                 ),
-                                SizedBox(height: 16.h),
+                                SizedBox(height: 12.h),
                                 Text(
                                   'No tasks found',
-                                  style: TextStyle(
+                                  style: AppTextStyles.bodyMedium.copyWith(
                                     color: isDark
                                         ? Colors.white54
                                         : AppColors.textSecondary,
-                                    fontSize: 16.sp,
+                                    fontSize: 15.sp,
                                   ),
                                 ),
                               ],
@@ -212,7 +221,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       controller: _scrollController,
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
-                        vertical: 8.h,
+                        vertical: 4.h,
                       ),
                       itemCount:
                           tasks.length +
@@ -229,7 +238,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         return TaskCard(
                           task: task,
                           onTap: () {
-                            // Future: Navigate to task details
+                            if (task.id != null) {
+                              context.pushNamed(
+                                RouteNames.taskDetail.name,
+                                pathParameters: {'taskId': task.id!},
+                              );
+                            }
                           },
                         );
                       },
@@ -238,9 +252,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   loading: () => ListView.builder(
                     padding: EdgeInsets.symmetric(
                       horizontal: 16.w,
-                      vertical: 8.h,
+                      vertical: 4.h,
                     ),
-                    itemCount: 5,
+                    itemCount: 8,
                     itemBuilder: (context, index) => const TaskCardShimmer(),
                   ),
                   error: (error, stack) => Center(
@@ -252,31 +266,31 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           HugeIcon(
                             icon: HugeIcons.strokeRoundedAlert01,
                             color: AppColors.error,
-                            size: 48.sp,
+                            size: 40.sp,
                           ),
-                          SizedBox(height: 16.h),
+                          SizedBox(height: 12.h),
                           Text(
                             'Oops, something went wrong',
-                            style: TextStyle(
-                              fontSize: 16.sp,
+                            style: AppTextStyles.heading3.copyWith(
+                              fontSize: 15.sp,
                               fontWeight: FontWeight.bold,
                               color: isDark
                                   ? Colors.white
                                   : AppColors.textPrimary,
                             ),
                           ),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: 6.h),
                           Text(
                             error.toString(),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: AppTextStyles.bodySmall.copyWith(
                               color: isDark
                                   ? Colors.white54
                                   : AppColors.textSecondary,
-                              fontSize: 14.sp,
+                              fontSize: 13.sp,
                             ),
                           ),
-                          SizedBox(height: 24.h),
+                          SizedBox(height: 20.h),
                           ElevatedButton(
                             onPressed: () {
                               ref.read(tasksProvider.notifier).refresh();
@@ -285,8 +299,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(
-                                horizontal: 24.w,
-                                vertical: 12.h,
+                                horizontal: 20.w,
+                                vertical: 10.h,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.r),

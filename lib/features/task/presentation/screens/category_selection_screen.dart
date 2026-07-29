@@ -11,6 +11,8 @@ import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:seeker_app/core/utils/category_icon_helper.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
 
@@ -133,21 +135,7 @@ class _CategorySelectionScreenState
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
                         final category = categories[index];
-                        IconData icon = Icons.category;
-                        
-                        if (category.name?.toLowerCase().contains('plumb') == true) {
-                          icon = Icons.plumbing;
-                        } else if (category.name?.toLowerCase().contains('clean') == true) {
-                          icon = Icons.cleaning_services;
-                        } else if (category.name?.toLowerCase().contains('electric') == true) {
-                          icon = Icons.electrical_services;
-                        } else if (category.name?.toLowerCase().contains('mov') == true) {
-                          icon = Icons.local_shipping;
-                        } else if (category.name?.toLowerCase().contains('beaut') == true) {
-                          icon = Icons.face_retouching_natural;
-                        } else if (category.name?.toLowerCase().contains('deliver') == true) {
-                          icon = Icons.delivery_dining;
-                        }
+                        final icon = getCategoryIcon(category.name);
 
                         return InkWell(
                           onTap: () {
@@ -169,28 +157,38 @@ class _CategorySelectionScreenState
                           borderRadius: BorderRadius.circular(16.r),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                              color: isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(16.r),
                               border: Border.all(
-                                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.05)
+                                    : Colors.black.withValues(alpha: 0.05),
                               ),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  icon,
-                                  color: isDark ? Colors.white : AppColors.primary,
-                                  size: 28.sp,
+                                HugeIcon(
+                                  icon: icon,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.primary,
+                                  size: 26.sp,
                                 ),
                                 SizedBox(height: 8.h),
                                 Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 4.w,
+                                  ),
                                   child: Text(
                                     category.name ?? 'Unknown Category',
                                     textAlign: TextAlign.center,
                                     style: AppTextStyles.heading3.copyWith(
-                                      color: isDark ? Colors.white.withValues(alpha: 0.8) : AppColors.textPrimary,
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.8)
+                                          : AppColors.textPrimary,
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -215,8 +213,12 @@ class _CategorySelectionScreenState
                     itemCount: 9,
                     itemBuilder: (context, index) {
                       return Shimmer.fromColors(
-                        baseColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[300]!,
-                        highlightColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100]!,
+                        baseColor: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.grey[300]!,
+                        highlightColor: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.grey[100]!,
                         child: Container(
                           decoration: BoxDecoration(
                             color: isDark ? Colors.black : Colors.white,

@@ -9,9 +9,17 @@ import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/review_screen.dart';
 import 'presentation/screens/success_screen.dart';
 import 'presentation/screens/matching_screen.dart';
+import 'presentation/screens/task_detail_screen.dart';
 
-
-final List<RouteBase> taskCreationRoutes = [
+final List<RouteBase> taskRoutes = [
+  GoRoute(
+    path: '/task/detail/:taskId',
+    name: RouteNames.taskDetail.name,
+    builder: (context, state) {
+      final taskId = state.pathParameters['taskId']!;
+      return TaskDetailScreen(taskId: taskId);
+    },
+  ),
   GoRoute(
     path: '/task-creation/category',
     name: RouteNames.taskCategory.name,

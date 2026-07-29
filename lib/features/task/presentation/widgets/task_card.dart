@@ -16,15 +16,16 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    // Improved contrast using theme and AppColors
-    final cardColor = isDark ? AppColors.darkerBackground : theme.colorScheme.surface;
+
+    final cardColor = isDark
+        ? AppColors.darkerBackground
+        : theme.colorScheme.surface;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
     final textSecondary = isDark ? Colors.white70 : AppColors.textSecondary;
     final priceColor = isDark ? Colors.white : AppColors.primary;
 
     final dateStr = task.scheduledStartAt != null
-        ? DateFormat('MMM d, y h:mm a').format(task.scheduledStartAt!)
+        ? DateFormat('MMM d, h:mm a').format(task.scheduledStartAt!)
         : 'Flexible time';
 
     final priceStr = task.customerTotalPrice != null
@@ -34,11 +35,11 @@ class TaskCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.only(bottom: 16.h),
-        padding: EdgeInsets.all(16.r),
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: isDark ? Colors.white12 : Colors.grey.shade200,
             width: 1,
@@ -48,62 +49,60 @@ class TaskCard extends StatelessWidget {
               : [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _buildCategoryAvatar(task.category?.imageUrl),
-            SizedBox(width: 12.w),
+            SizedBox(width: 10.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              task.title ?? 'No title provided',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 6.h),
-                            Text(
-                              '${task.category?.name ?? 'General'} • $dateStr',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontSize: 13.sp,
-                                color: textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          task.title ?? 'No title provided',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                            height: 1.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: 6.w),
                       _buildStatusBadge(context, task.status ?? 'open'),
                     ],
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 3.h),
+                  Text(
+                    '${task.category?.name ?? 'General'} • $dateStr',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontSize: 11.sp,
+                      color: textSecondary,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         priceStr,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w800,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
                           color: priceColor,
                         ),
                       ),
@@ -113,15 +112,15 @@ class TaskCard extends StatelessWidget {
                             HugeIcon(
                               icon: HugeIcons.strokeRoundedLocation01,
                               color: textSecondary,
-                              size: 16.sp,
+                              size: 12.sp,
                             ),
-                            SizedBox(width: 4.w),
+                            SizedBox(width: 2.w),
                             Text(
                               '${task.distanceKm!.toStringAsFixed(1)} km away',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 13.sp,
+                                fontSize: 11.sp,
                                 color: textSecondary,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                           ],
@@ -140,18 +139,18 @@ class TaskCard extends StatelessWidget {
   Widget _buildCategoryAvatar(String? imageUrl) {
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return CircleAvatar(
-        radius: 20.r,
+        radius: 16.r,
         backgroundImage: NetworkImage(imageUrl),
         backgroundColor: Colors.transparent,
       );
     }
     return CircleAvatar(
-      radius: 20.r,
+      radius: 16.r,
       backgroundColor: AppColors.primary.withValues(alpha: 0.1),
       child: HugeIcon(
         icon: HugeIcons.strokeRoundedTask01,
         color: AppColors.primary,
-        size: 20.sp,
+        size: 16.sp,
       ),
     );
   }
@@ -164,53 +163,53 @@ class TaskCard extends StatelessWidget {
 
     switch (status.toLowerCase()) {
       case 'draft':
-        bgColor = Colors.grey.withValues(alpha: 0.2);
+        bgColor = Colors.grey.withValues(alpha: 0.15);
         textColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
         displayStatus = 'Draft';
         break;
       case 'open':
-        bgColor = Colors.blue.withValues(alpha: 0.2);
+        bgColor = Colors.blue.withValues(alpha: 0.15);
         textColor = isDark ? Colors.blue.shade300 : Colors.blue.shade700;
         displayStatus = 'Open';
         break;
       case 'matched':
-        bgColor = Colors.orange.withValues(alpha: 0.2);
+        bgColor = Colors.orange.withValues(alpha: 0.15);
         textColor = isDark ? Colors.orange.shade300 : Colors.orange.shade800;
         displayStatus = 'Matched';
         break;
       case 'in progress':
       case 'inprogress':
-        bgColor = Colors.purple.withValues(alpha: 0.2);
+        bgColor = Colors.purple.withValues(alpha: 0.15);
         textColor = isDark ? Colors.purple.shade300 : Colors.purple.shade700;
         displayStatus = 'In Progress';
         break;
       case 'completed':
-        bgColor = Colors.green.withValues(alpha: 0.2);
+        bgColor = Colors.green.withValues(alpha: 0.15);
         textColor = isDark ? Colors.green.shade300 : Colors.green.shade700;
         displayStatus = 'Completed';
         break;
       case 'cancelled':
-        bgColor = Colors.red.withValues(alpha: 0.2);
+        bgColor = Colors.red.withValues(alpha: 0.15);
         textColor = isDark ? Colors.red.shade300 : Colors.red.shade700;
         displayStatus = 'Cancelled';
         break;
       default:
-        bgColor = Colors.grey.withValues(alpha: 0.2);
+        bgColor = Colors.grey.withValues(alpha: 0.15);
         textColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
         displayStatus = status;
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Text(
         displayStatus,
         style: TextStyle(
-          fontSize: 12.sp,
-          fontWeight: FontWeight.bold,
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w600,
           color: textColor,
         ),
       ),

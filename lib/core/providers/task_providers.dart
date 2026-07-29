@@ -212,6 +212,7 @@ class TaskDraftActionNotifier extends AsyncNotifier<void> {
       final response = await client.confirmDraftTask(taskId);
 
       if (response.success) {
+        // ref.invalidate(taskDetailProvider(taskId));
         onSuccess?.call();
       } else {
         final error = response.detail ?? 'Failed to confirm draft';
@@ -278,7 +279,7 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
   Future<List<TaskLite>> _fetchTasks() async {
     final client = ref.read(tasksClientProvider);
     final user = ref.read(userProvider).value;
-    
+
     final response = await client.listTasks(
       page: _page,
       perPage: _perPage,

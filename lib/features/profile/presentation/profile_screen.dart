@@ -14,6 +14,7 @@ import 'package:seeker_app/features/auth/presentation/verify_otp_screen.dart';
 import 'package:seeker_app/features/profile/providers/account_issues_provider.dart';
 import 'package:seeker_app/core/providers/theme_provider.dart';
 import '../../../../core/designs/app_colors.dart';
+import 'package:seeker_app/core/designs/app_text_styles.dart';
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/designs/widgets/phone_number_sheet.dart';
 import 'package:seeker_app/core/designs/widgets/current_location.dart';
@@ -65,7 +66,7 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         Text(
                           'My profile',
-                          style: TextStyle(
+                          style: AppTextStyles.heading1.copyWith(
                             fontSize: 24.sp,
                             fontWeight: FontWeight.bold,
                             color: textColor,
@@ -74,7 +75,7 @@ class ProfileScreen extends ConsumerWidget {
                         SizedBox(height: 4.h),
                         Text(
                           'View and manage your profile details below.',
-                          style: TextStyle(
+                          style: AppTextStyles.bodyMedium.copyWith(
                             fontSize: 14.sp,
                             color: AppColors.textSecondary,
                           ),
@@ -183,7 +184,7 @@ class ProfileScreen extends ConsumerWidget {
                                   user?.customerProfile?.firstName,
                                   user?.customerProfile?.lastName,
                                 ),
-                                style: TextStyle(
+                                style: AppTextStyles.heading1.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 24.sp,
@@ -227,7 +228,7 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           Text(
                             name,
-                            style: TextStyle(
+                            style: AppTextStyles.heading2.copyWith(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.bold,
                               color: textColor,
@@ -236,7 +237,7 @@ class ProfileScreen extends ConsumerWidget {
                           SizedBox(height: 4.h),
                           Text(
                             email,
-                            style: TextStyle(
+                            style: AppTextStyles.bodyMedium.copyWith(
                               fontSize: 14.sp,
                               color: AppColors.textSecondary,
                             ),
@@ -245,7 +246,7 @@ class ProfileScreen extends ConsumerWidget {
                       ),
               ),
 
-              SizedBox(height: 40.h),
+              SizedBox(height: 20.h),
 
               // Menu Items
               _MenuItem(
@@ -256,14 +257,15 @@ class ProfileScreen extends ConsumerWidget {
                   context.push('/profile-details');
                 },
               ),
-              _MenuItem(
-                icon: Icons.account_balance_wallet_outlined,
-                title: 'Update Bank Details',
-                iconColor: Colors.green,
-                onTap: () {
-                  context.pushNamed(RouteNames.updatePayoutAccount.name);
-                },
-              ),
+              // Bank Details Update not available for customer app
+              // _MenuItem(
+              //   icon: Icons.account_balance_wallet_outlined,
+              //   title: 'Update Bank Details',
+              //   iconColor: Colors.green,
+              //   onTap: () {
+              //     context.pushNamed(RouteNames.updatePayoutAccount.name);
+              //   },
+              // ),
               _MenuItem(
                 icon: Icons.payments_outlined,
                 title: 'See Transactions',
@@ -373,7 +375,7 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Text(
                       issue.title,
-                      style: TextStyle(
+                      style: AppTextStyles.bodyMedium.copyWith(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.orange,
@@ -381,7 +383,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     Text(
                       issue.description,
-                      style: TextStyle(
+                      style: AppTextStyles.bodySmall.copyWith(
                         fontSize: 12.sp,
                         color: isDark
                             ? Colors.white70
@@ -418,7 +420,7 @@ class _StatCard extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(
+          style: AppTextStyles.heading3.copyWith(
             fontSize: 18.sp,
             fontWeight: FontWeight.bold,
             color: color,
@@ -427,7 +429,10 @@ class _StatCard extends StatelessWidget {
         SizedBox(height: 2.h),
         Text(
           label,
-          style: TextStyle(fontSize: 10.sp, color: color.withOpacity(0.8)),
+          style: AppTextStyles.label.copyWith(
+            fontSize: 10.sp,
+            color: color.withValues(alpha: 0.8),
+          ),
         ),
       ],
     );
@@ -470,7 +475,7 @@ class _MenuItem extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(
+                style: AppTextStyles.bodyLarge.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w500,
                   color: textColor,

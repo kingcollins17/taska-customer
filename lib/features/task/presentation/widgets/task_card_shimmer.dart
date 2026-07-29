@@ -15,86 +15,81 @@ class TaskCardShimmer extends StatelessWidget {
     final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      padding: EdgeInsets.all(16.r),
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Shimmer.fromColors(
         baseColor: baseColor,
         highlightColor: highlightColor,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                // Avatar Shimmer
-                Container(
-                  width: 40.r,
-                  height: 40.r,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Container(
+              width: 32.r,
+              height: 32.r,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Category Shimmer
                       Container(
-                        width: 100.w,
-                        height: 14.h,
+                        width: 120.w,
+                        height: 12.h,
                         color: Colors.white,
                       ),
-                      SizedBox(height: 8.h),
-                      // Date Shimmer
                       Container(
-                        width: 140.w,
+                        width: 50.w,
+                        height: 16.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  Container(
+                    width: 100.w,
+                    height: 10.h,
+                    color: Colors.white,
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 60.w,
                         height: 12.h,
+                        color: Colors.white,
+                      ),
+                      Container(
+                        width: 40.w,
+                        height: 10.h,
                         color: Colors.white,
                       ),
                     ],
                   ),
-                ),
-                // Status Badge Shimmer
-                Container(
-                  width: 60.w,
-                  height: 24.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-            // Title Shimmer
-            Container(
-              width: double.infinity,
-              height: 16.h,
-              color: Colors.white,
-            ),
-            SizedBox(height: 8.h),
-            Container(width: 200.w, height: 16.h, color: Colors.white),
-            SizedBox(height: 16.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Location Shimmer
-                Container(width: 100.w, height: 14.h, color: Colors.white),
-                // Price Shimmer
-                Container(width: 60.w, height: 20.h, color: Colors.white),
-              ],
+                ],
+              ),
             ),
           ],
         ),
