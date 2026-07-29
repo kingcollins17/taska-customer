@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/providers/location_provider.dart';
@@ -15,6 +16,7 @@ class CurrentLocation extends ConsumerWidget {
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
 
     final locationAsync = ref.watch(locationProvider);
+    locationAsync.value?.toJson().debugLog();
     return locationAsync.when(
       data: (address) {
         if (address != null && address.city != null && address.state != null) {

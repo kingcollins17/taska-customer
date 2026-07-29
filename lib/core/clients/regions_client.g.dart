@@ -8,7 +8,7 @@ part of 'regions_client.dart';
 // RetrofitGenerator
 // **************************************************************************
 
-// ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element,unnecessary_string_interpolations,unused_element_parameter,avoid_unused_constructor_parameters,unreachable_from_main
+// ignore_for_file: unnecessary_brace_in_string_interps,no_leading_underscores_for_local_identifiers,unused_element,unnecessary_string_interpolations,unused_element_parameter,avoid_unused_constructor_parameters,unreachable_from_main,avoid_redundant_argument_values
 
 class _RegionsClient implements RegionsClient {
   _RegionsClient(this._dio, {this.baseUrl, this.errorLogger}) {
@@ -51,7 +51,7 @@ class _RegionsClient implements RegionsClient {
             : List.empty(),
       );
     } on Object catch (e, s) {
-      errorLogger?.logError(e, s, _options, _result);
+      errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
     }
     return _value;
