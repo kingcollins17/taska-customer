@@ -16,7 +16,7 @@ class CurrentLocation extends ConsumerWidget {
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
 
     final locationAsync = ref.watch(locationProvider);
-    locationAsync.value?.toJson().debugLog();
+    // locationAsync.value?.toJson().debugLog();
     return locationAsync.when(
       data: (address) {
         if (address != null && address.city != null && address.state != null) {

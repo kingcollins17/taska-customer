@@ -19,6 +19,8 @@ import '../../../../core/providers/user_provider.dart';
 import '../../../../core/designs/widgets/phone_number_sheet.dart';
 import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:flutter/foundation.dart';
+import 'package:seeker_app/core/designs/widgets/debug_console_view.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -111,7 +113,7 @@ class ProfileScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16.r),
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF2A0845), Color(0xFF6441A5)],
+                        colors: [AppColors.primaryVariant, AppColors.primary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -313,6 +315,16 @@ class ProfileScreen extends ConsumerWidget {
               ),
 
               SizedBox(height: 24.h),
+
+              if (kDebugMode)
+                _MenuItem(
+                  icon: Icons.bug_report_outlined,
+                  title: 'Debug Console',
+                  iconColor: Colors.teal,
+                  onTap: () {
+                    DebugConsoleView.show(context);
+                  },
+                ),
 
               // Log Out
               _MenuItem(

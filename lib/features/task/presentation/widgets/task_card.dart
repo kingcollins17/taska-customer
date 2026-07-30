@@ -17,9 +17,6 @@ class TaskCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardColor = isDark
-        ? AppColors.darkerBackground
-        : theme.colorScheme.surface;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
     final textSecondary = isDark ? Colors.white70 : AppColors.textSecondary;
     final priceColor = isDark ? Colors.white : AppColors.primary;
@@ -32,28 +29,10 @@ class TaskCard extends StatelessWidget {
         ? task.customerTotalPrice!.toNaira(2)
         : 'TBD';
 
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 8.h),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: isDark ? Colors.white12 : Colors.grey.shade200,
-            width: 1,
-          ),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 8.w),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

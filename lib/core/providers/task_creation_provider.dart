@@ -124,7 +124,6 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     _updateState(current.copyWith(title: title, description: description));
   }
 
-
   /// Updates the location required for the task.
   ///
   /// Currently replaces the existing locations array with a single new location.
@@ -135,9 +134,7 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
   Future<void> updateLocation(CreateTaskLocationRequest location) async {
     final current = state.value ?? CreateTaskRequest();
     _updateState(
-      current.copyWith(
-        locations: [location.copyWith(locationType: 'service')],
-      ),
+      current.copyWith(locations: [location.copyWith(locationType: 'service')]),
     );
   }
 
@@ -172,7 +169,7 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     try {
       final request = state.value;
       if (request == null) throw 'No draft to submit';
-
+      request.toJson().debugLog();
       final response = await ref.read(tasksClientProvider).createTask(request);
       if (response.success) {
         await _delete();

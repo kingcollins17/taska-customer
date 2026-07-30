@@ -867,28 +867,34 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
     final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+    final shimmerColor = isDark ? Colors.grey[700]! : Colors.white;
 
     return SingleChildScrollView(
-      child: Shimmer.fromColors(
-        baseColor: baseColor,
-        highlightColor: highlightColor,
-        child: Column(
-          children: [
-            Container(
+      child: Column(
+        children: [
+          Shimmer.fromColors(
+            baseColor: baseColor,
+            highlightColor: highlightColor,
+            child: Container(
               height: 280.h,
               width: double.infinity,
-              color: Colors.white,
+              color: shimmerColor,
             ),
-            Container(
-              transform: Matrix4.translationValues(0, -20.h, 0),
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-              ),
+          ),
+          Container(
+            transform: Matrix4.translationValues(0, -20.h, 0),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+            ),
+            child: Shimmer.fromColors(
+              baseColor: baseColor,
+              highlightColor: highlightColor,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -896,7 +902,10 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                     child: Container(
                       width: 40.w,
                       height: 4.h,
-                      color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: shimmerColor,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
                     ),
                   ),
                   SizedBox(height: 20.h),
@@ -906,21 +915,48 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                       Container(
                         width: 140.w,
                         height: 26.h,
-                        color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: shimmerColor,
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
                       ),
-                      Container(width: 80.w, height: 20.h, color: Colors.white),
+                      Container(
+                        width: 80.w, 
+                        height: 20.h, 
+                        decoration: BoxDecoration(
+                          color: shimmerColor,
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(height: 16.h),
-                  Container(width: 220.w, height: 22.h, color: Colors.white),
+                  Container(
+                    width: 220.w, 
+                    height: 22.h, 
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
                   SizedBox(height: 12.h),
                   Container(
                     width: double.infinity,
                     height: 14.h,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
                   ),
                   SizedBox(height: 6.h),
-                  Container(width: 260.w, height: 14.h, color: Colors.white),
+                  Container(
+                    width: 260.w, 
+                    height: 14.h, 
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
                   SizedBox(height: 24.h),
                   Row(
                     children: [
@@ -928,7 +964,7 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                         child: Container(
                           height: 70.h,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: shimmerColor,
                             borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
@@ -938,7 +974,7 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                         child: Container(
                           height: 70.h,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: shimmerColor,
                             borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
@@ -950,12 +986,19 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                     height: 120.h,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shimmerColor,
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                   ),
                   SizedBox(height: 24.h),
-                  Container(width: 120.w, height: 16.h, color: Colors.white),
+                  Container(
+                    width: 120.w, 
+                    height: 16.h, 
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
                   SizedBox(height: 12.h),
                   SizedBox(
                     height: 100.h,
@@ -965,7 +1008,7 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                           width: 100.w,
                           height: 100.h,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: shimmerColor,
                             borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
@@ -974,7 +1017,7 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                           width: 100.w,
                           height: 100.h,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: shimmerColor,
                             borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
@@ -984,8 +1027,8 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

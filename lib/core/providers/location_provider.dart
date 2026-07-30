@@ -44,14 +44,14 @@ final locationProvider = FutureProvider<Address?>((ref) async {
   final locationData = await location.getLocation();
 
   try {
-    final placemarks = await geo.Geocoding().placemarkFromCoordinates(
-      locationData.latitude!,
-      locationData.longitude!,
-    );
-    // final placemarks = await geo.placemarkFromCoordinates(
+    // final placemarks = await geo.Geocoding().placemarkFromCoordinates(
     //   locationData.latitude!,
     //   locationData.longitude!,
     // );
+    final placemarks = await geo.placemarkFromCoordinates(
+      locationData.latitude!,
+      locationData.longitude!,
+    );
 
     if (placemarks.isNotEmpty) {
       final place = placemarks.first;
