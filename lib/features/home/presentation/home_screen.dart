@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
@@ -14,7 +13,6 @@ import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:seeker_app/core/utils/category_icon_helper.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'widgets/home_app_bar.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -76,11 +74,11 @@ class HomeScreen extends ConsumerWidget {
                 SizedBox(height: 20.h),
                 const _SearchBar(),
                 SizedBox(height: 24.h),
+                const _ActiveWork(),
+                SizedBox(height: 28.h),
                 const _MainHero(),
                 SizedBox(height: 28.h),
                 const _PopularCategories(),
-                SizedBox(height: 28.h),
-                const _ActiveWork(),
               ],
             ),
           ),
@@ -471,17 +469,38 @@ class _ActiveWork extends ConsumerWidget {
               final (
                 String statusText,
                 Color statusColor,
+                Color chipColor,
               ) = switch (task.status) {
-                'open' ||
-                'pending' => ('Searching for provider', colorScheme.primary),
-                'in_progress' => ('In Progress', Colors.orangeAccent),
-                'assigned' => (
-                  task.scheduledStartAt != null
-                      ? 'Provider arriving at ${DateFormat('h:mm a').format(task.scheduledStartAt!.toLocal())}'
-                      : 'Booked: Provider arriving soon',
-                  Colors.green,
+                'open' || 'pending' => (
+                  'Searching',
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.12),
                 ),
-                _ => ('Assigned', colorScheme.primary),
+                'in_progress' || 'inprogress' => (
+                  'In Progress',
+                  Colors.purple.shade600,
+                  Colors.purple.withValues(alpha: 0.12),
+                ),
+                'assigned' || 'matched' => (
+                  'Booked',
+                  Colors.orange.shade700,
+                  Colors.orange.withValues(alpha: 0.12),
+                ),
+                'completed' => (
+                  'Completed',
+                  Colors.green.shade600,
+                  Colors.green.withValues(alpha: 0.12),
+                ),
+                'cancelled' => (
+                  'Cancelled',
+                  Colors.red.shade600,
+                  Colors.red.withValues(alpha: 0.12),
+                ),
+                _ => (
+                  'Assigned',
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.12),
+                ),
               };
 
               return Padding(
@@ -490,8 +509,10 @@ class _ActiveWork extends ConsumerWidget {
                 ),
                 child: _ActiveWorkItem(
                   title: task.title ?? 'N/A',
+                  taskId: task.id,
                   status: statusText,
                   statusColor: statusColor,
+                  statusChipColor: chipColor,
                 ),
               );
             }),
@@ -505,52 +526,44 @@ class _ActiveWork extends ConsumerWidget {
 }
 
 class _ActiveWorkItem extends StatelessWidget {
+  final String? taskId;
   final String title;
   final String status;
   final Color statusColor;
+  final Color statusChipColor;
 
   const _ActiveWorkItem({
+    this.taskId,
     required this.title,
     required this.status,
     required this.statusColor,
+    required this.statusChipColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
 
     return GestureDetector(
       onTap: () {
-        context.go('/tasks');
+        if (taskId != null) {
+          context.pushNamed(
+            RouteNames.taskDetail.name,
+            pathParameters: {'taskId': taskId!},
+          );
+        }
       },
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(
-            color: colorScheme.onSurface.withValues(alpha: 0.08),
-          ),
-          boxShadow: isDark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 6.h),
         child: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(10.w),
+              width: 40.w,
+              height: 40.w,
               decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                color: colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
                 Icons.handyman_outlined,
@@ -558,7 +571,7 @@ class _ActiveWorkItem extends StatelessWidget {
                 size: 20.sp,
               ),
             ),
-            SizedBox(width: 14.w),
+            SizedBox(width: 12.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -570,23 +583,27 @@ class _ActiveWorkItem extends StatelessWidget {
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    status,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: statusColor,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w500,
+                  SizedBox(height: 6.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: statusChipColor,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Text(
+                      status,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: statusColor,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: colorScheme.onSurface.withValues(alpha: 0.3),
-              size: 20.sp,
             ),
           ],
         ),

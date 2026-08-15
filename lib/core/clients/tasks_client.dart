@@ -23,6 +23,11 @@ abstract class TasksClient {
   @GET('/tasks/{task_id}')
   Future<GenericResponse<Task>> getTask(@Path('task_id') String taskId);
 
+  @GET('/tasks/{task_id}/assignment')
+  Future<GenericResponse<TaskAssignment>> getTaskAssignment(
+    @Path('task_id') String taskId,
+  );
+
   @POST('/tasks/{task_id}/attachments')
   @MultiPart()
   Future<GenericResponse<TaskAttachment>> uploadAttachment(

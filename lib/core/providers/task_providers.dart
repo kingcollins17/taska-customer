@@ -172,6 +172,7 @@ final allTasksAggregatedProvider = FutureProvider<List<TaskLite>>((ref) async {
   return allTasks;
 });
 
+// TODO: Remove this as backend will have multiple pending dispatches, instead query the taskDetailProvider for status, if its assigned, then get assigment
 final pendingDispatchProvider = FutureProvider.family<DispatchAttempt, String>((
   ref,
   taskId,
@@ -370,3 +371,18 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
 final tasksProvider = AsyncNotifierProvider<TasksNotifier, List<TaskLite>>(
   () => TasksNotifier(),
 );
+
+
+final taskAssignmentProvider = FutureProvider.family<TaskAssignment, String>((
+  ref,
+  taskId,
+) async {
+  final client = ref.read(tasksClientProvider);
+  final response = await client.getTaskAssignment(taskId);
+
+  if (response.success && response.data != null) {
+    return response.data!;
+  }
+
+  throw Exception(response.detail ?? 'Failed to load task assignment');
+});

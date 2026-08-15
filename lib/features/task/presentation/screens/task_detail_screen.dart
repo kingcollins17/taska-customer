@@ -12,6 +12,7 @@ import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/utils/num_extension.dart';
 import 'package:seeker_app/core/designs/widgets/confirm_task_sheet.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/task_detail_options_sheet.dart';
 
 class TaskDetailScreen extends ConsumerWidget {
@@ -40,13 +41,13 @@ class TaskDetailScreen extends ConsumerWidget {
   }
 }
 
-class _TaskDetailContent extends StatelessWidget {
+class _TaskDetailContent extends ConsumerWidget {
   final Task task;
 
   const _TaskDetailContent({required this.task});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -242,7 +243,11 @@ class _TaskDetailContent extends StatelessWidget {
                         height: 1.5,
                       ),
                     ),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 18.h),
+                  ],
+                  if (task.status?.toLowerCase() == 'assigned') ...[
+                    _TaskAssignmentDisplay(taskId: task.id ?? ''),
+                    SizedBox(height: 18.h),
                   ],
                   Text(
                     'Task Details',
@@ -264,14 +269,10 @@ class _TaskDetailContent extends StatelessWidget {
                     subtitle: locationStr,
                     icon: HugeIcons.strokeRoundedLocation01,
                   ),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 20.h),
                   _PriceBreakdownCard(task: task),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 20.h),
                   _AttachmentsSection(attachments: task.attachments ?? []),
-                  if (task.assignment != null) ...[
-                    SizedBox(height: 24.h),
-                    _AssignmentCard(assignment: task.assignment!),
-                  ],
                   SizedBox(height: 30.h),
                 ],
               ),
@@ -710,61 +711,293 @@ class _AttachmentsSection extends StatelessWidget {
   }
 }
 
+class _TaskAssignmentDisplay extends ConsumerWidget {
+  final String taskId;
+
+  const _TaskAssignmentDisplay({required this.taskId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final assignmentAsync = ref.watch(taskAssignmentProvider(taskId));
+
+    return assignmentAsync.when(
+      data: (assignment) {
+        if (assignment.provider == null) {
+          return const SizedBox.shrink();
+        }
+        return _AssignmentCard(assignment: assignment);
+      },
+      loading: () => const _AssignmentCardShimmer(),
+      error: (error, stack) => const SizedBox.shrink(),
+    );
+  }
+}
+
 class _AssignmentCard extends StatelessWidget {
-  final Assignment assignment;
+  final TaskAssignment assignment;
 
   const _AssignmentCard({required this.assignment});
+
+  Future<void> _makeCall(String phoneNumber) async {
+    final tel = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(tel)) {
+      await launchUrl(tel);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final provider = assignment.provider;
+
+    if (provider == null) {
+      return const SizedBox.shrink();
+    }
+
+    final totalTasks = provider.totalTasksCompleted ?? 0;
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppColors.primary,
-            radius: 20.r,
-            child: HugeIcon(
-              icon: HugeIcons.strokeRoundedUser,
-              color: Colors.white,
-              size: 20.sp,
-            ),
+        color: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Task Provider Assigned',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: colorScheme.onSurface,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 52.r,
+                height: 52.r,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    width: 1.5,
                   ),
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  assignment.status != null
-                      ? 'Status: ${assignment.status}'
-                      : 'Provider is active on this task',
+                child: provider.profilePictureUrl != null
+                    ? ClipOval(
+                        child: Image.network(
+                          provider.profilePictureUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Center(
+                            child: HugeIcon(
+                              icon: HugeIcons.strokeRoundedUser,
+                              color: AppColors.primary,
+                              size: 24.sp,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: HugeIcon(
+                          icon: HugeIcons.strokeRoundedUser,
+                          color: AppColors.primary,
+                          size: 24.sp,
+                        ),
+                      ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      provider.fullname ?? 'Provider',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        if (provider.averageRatings != null) ...[
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedStar,
+                            color: Colors.amber,
+                            size: 13.sp,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            '${provider.averageRatings?.toStringAsFixed(1) ?? '0.0'} rating',
+                            style: textTheme.bodySmall?.copyWith(
+                              fontSize: 11.sp,
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                        ],
+                        Text(
+                          '$totalTasks Tasks',
+                          style: textTheme.bodySmall?.copyWith(
+                            fontSize: 11.sp,
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          if (provider.phoneNumber != null && provider.phoneNumber!.isNotEmpty)
+            SizedBox(
+              width: double.infinity,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _makeCall(provider.phoneNumber!),
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        HugeIcon(
+                          icon: HugeIcons.strokeRoundedCall,
+                          color: Colors.white,
+                          size: 18.sp,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          'Call Provider',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Center(
+                child: Text(
+                  'Phone number not available',
                   style: textTheme.bodySmall?.copyWith(
                     fontSize: 12.sp,
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AssignmentCardShimmer extends StatelessWidget {
+  const _AssignmentCardShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = colorScheme.onSurface.withValues(alpha: 0.06);
+    final highlightColor = colorScheme.onSurface.withValues(alpha: 0.12);
+
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: Container(
+        padding: EdgeInsets.all(18.w),
+        decoration: BoxDecoration(
+          color: isDark
+              ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+              : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30.r,
+                  backgroundColor: Colors.white,
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 12.h,
+                        width: 100.w,
+                        color: Colors.white,
+                      ),
+                      SizedBox(height: 8.h),
+                      Container(
+                        height: 16.h,
+                        width: 150.w,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+            SizedBox(height: 16.h),
+            Container(
+              height: 48.h,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
