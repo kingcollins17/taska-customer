@@ -79,7 +79,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                         context.pop();
                       },
                       child: Text(
-                        'Cancel Matching',
+                        'Go Back',
                         style: theme.textTheme.labelLarge?.copyWith(
                           color: theme.colorScheme.error,
                         ),

@@ -156,7 +156,7 @@ class TaskCard extends StatelessWidget {
         textColor = isDark ? Colors.orange.shade300 : Colors.orange.shade800;
         displayStatus = 'Assigned';
         break;
-      case 'in progress':
+      case 'in progress' || 'in_progress':
       case 'inprogress':
         bgColor = Colors.purple.withValues(alpha: 0.15);
         textColor = isDark ? Colors.purple.shade300 : Colors.purple.shade700;

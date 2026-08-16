@@ -29,6 +29,8 @@ abstract class UserClient {
     @Field('scope') String? scope,
     @Field('client_id') String? clientId,
     @Field('client_secret') String? clientSecret,
+    @Query('user_type')
+    String? userType = 'customer', // Only allowed user type for this app
   });
 
   @POST('/users/request-email-otp')

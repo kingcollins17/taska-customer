@@ -588,7 +588,10 @@ class _ActiveWorkItem extends StatelessWidget {
                   ),
                   SizedBox(height: 6.h),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: statusChipColor,
                       borderRadius: BorderRadius.circular(10.r),
@@ -641,8 +644,8 @@ class _ActiveWorkShimmer extends StatelessWidget {
           child: Column(
             children: [
               _buildShimmerItem(colorScheme, isDark),
-              SizedBox(height: 12.h),
-              _buildShimmerItem(colorScheme, isDark),
+              // SizedBox(height: 12.h),
+              // _buildShimmerItem(colorScheme, isDark),
             ],
           ),
         ),

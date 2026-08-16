@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
+
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
+import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/utils/flushbar_message.dart';
+
 import 'package:seeker_app/core/utils/num_extension.dart';
 
 class TaskDetailOptionsSheet extends ConsumerWidget {
@@ -127,7 +131,7 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                         icon: HugeIcons.strokeRoundedTask01,
                         title: 'Get Start Pin',
                         // subtitle: task.startPin ?? 'Start pin not assigned yet',
-                              subtitle: '****',
+                        subtitle: '****',
                         iconBgColor: AppColors.primary.withValues(alpha: 0.12),
                         iconColor: AppColors.primary,
                         onTap: () {
@@ -154,23 +158,21 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                     ],
 
                     _OptionTile(
-                      icon: HugeIcons.strokeRoundedShare01,
-                      title: 'Share Task Details',
-                      subtitle: 'Send task details link or summary',
+                      icon: HugeIcons.strokeRoundedShield01,
+                      title: 'Verify Provider Identity',
+                      subtitle: 'Verify provider PIN for security & access',
                       iconBgColor: colorScheme.primaryContainer.withValues(
                         alpha: 0.6,
                       ),
                       iconColor: colorScheme.primary,
                       onTap: () {
                         Navigator.of(context).pop();
-                        final text =
-                            'Task: ${task.title ?? 'Service'}\nStatus: ${task.status}\nID: ${task.id}';
-                        Clipboard.setData(ClipboardData(text: text));
-                        context.showMessage(
-                          'Task summary copied for sharing',
-                          type: MessageType.success,
-                          title: 'Copied',
-                        );
+                        if (task.id != null) {
+                          context.pushNamed(
+                            RouteNames.verifyProvider.name,
+                            pathParameters: {'taskId': task.id!},
+                          );
+                        }
                       },
                     ),
 
@@ -333,8 +335,8 @@ class PinDisplaySheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(
-                      Icons.close,
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedCancel01,
                       color: AppColors.textSecondary,
                       size: 20.sp,
                     ),
@@ -366,11 +368,9 @@ class PinDisplaySheet extends StatelessWidget {
                     ),
                     width: 1.2,
                   ),
-             
                 ),
                 child: Column(
                   children: [
-                    
                     Text(
                       hasPin ? safePin : '—',
                       textAlign: TextAlign.center,
@@ -404,8 +404,8 @@ class PinDisplaySheet extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.copy_rounded,
+                        HugeIcon(
+                          icon: HugeIcons.strokeRoundedCopy01,
                           color: Colors.white,
                           size: 18.sp,
                         ),

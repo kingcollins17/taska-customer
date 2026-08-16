@@ -362,7 +362,7 @@ class _TasksClient implements TasksClient {
   Future<GenericResponse<PaginatedResponse<TaskLite>>> listTasks({
     int? page = 1,
     int? perPage = 20,
-    String? status,
+    List<String>? status,
     String? categoryId,
     String? serviceId,
     String? search,
@@ -419,6 +419,40 @@ class _TasksClient implements TasksClient {
           json as Map<String, dynamic>,
           (json) => TaskLite.fromJson(json as Map<String, dynamic>),
         ),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<GenericResponse<TaskAssignmentProvider>> verifyProviderPin(
+    String taskId,
+    Map<String, dynamic> body,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(body);
+    final _options = _setStreamType<GenericResponse<TaskAssignmentProvider>>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/tasks/${taskId}/verify-provider',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late GenericResponse<TaskAssignmentProvider> _value;
+    try {
+      _value = GenericResponse<TaskAssignmentProvider>.fromJson(
+        _result.data!,
+        (json) => TaskAssignmentProvider.fromJson(json as Map<String, dynamic>),
       );
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, _result);

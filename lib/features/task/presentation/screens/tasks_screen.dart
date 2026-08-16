@@ -25,15 +25,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _debounce;
-  String _selectedStatus = 'All';
 
   final List<String> _statuses = [
     'All',
     'Draft',
     'Open',
-    'Matched',
+    'Assigned',
     'In Progress',
-    'Completed',
     'Cancelled',
   ];
 
@@ -68,15 +66,21 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   }
 
   void _onStatusChanged(String status) {
-    setState(() {
-      _selectedStatus = status;
-    });
-
     if (status == 'All') {
-      ref.read(tasksProvider.notifier).setFilters(status: null);
-    } else {
-      ref.read(tasksProvider.notifier).setFilters(status: status.toLowerCase());
+      ref.read(taskStatusFilterProvider.notifier).state = [];
+      return;
     }
+
+    final key = status.toLowerCase().replaceAll(' ', '_');
+    final current = List<String>.from(ref.read(taskStatusFilterProvider));
+
+    if (current.contains(key)) {
+      current.remove(key);
+    } else {
+      current.add(key);
+    }
+
+    ref.read(taskStatusFilterProvider.notifier).state = current;
   }
 
   @override
@@ -84,6 +88,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
     final tasksAsync = ref.watch(tasksProvider);
+    final selectedStatuses = ref.watch(taskStatusFilterProvider);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -126,34 +131,46 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 itemCount: _statuses.length,
                 itemBuilder: (context, index) {
                   final status = _statuses[index];
-                  final isSelected = status == _selectedStatus;
+                  final statusKey = status.toLowerCase().replaceAll(' ', '_');
+                  final isSelected =
+                      (status == 'All' && selectedStatuses.isEmpty) ||
+                          selectedStatuses.contains(statusKey);
 
                   return Padding(
                     padding: EdgeInsets.only(right: 6.w),
                     child: ChoiceChip(
-                      label: Text(
-                        status,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: 12.sp,
-                          color: isSelected
-                              ? Colors.white
-                              : (isDark
-                                    ? Colors.white70
-                                    : AppColors.textPrimary),
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isSelected) ...[
+                            HugeIcon(
+                              icon: HugeIcons.strokeRoundedTick01,
+                              color: Colors.white,
+                              size: 13.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                          ],
+                          Text(
+                            status,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 12.sp,
+                              color: isSelected
+                                  ? Colors.white
+                                  : (isDark
+                                      ? Colors.white70
+                                      : AppColors.textPrimary),
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ],
                       ),
                       padding: EdgeInsets.symmetric(horizontal: 4.w),
                       visualDensity: VisualDensity.compact,
                       showCheckmark: false,
                       selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          _onStatusChanged(status);
-                        }
-                      },
+                      onSelected: (_) => _onStatusChanged(status),
                       selectedColor: AppColors.primary,
                       backgroundColor: isDark
                           ? AppColors.darkerBackground
@@ -164,8 +181,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           color: isSelected
                               ? AppColors.primary
                               : (isDark
-                                    ? Colors.white24
-                                    : Colors.grey.shade300),
+                                  ? Colors.white24
+                                  : Colors.grey.shade300),
                         ),
                       ),
                     ),
@@ -173,6 +190,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 },
               ),
             ),
+
 
             SizedBox(height: 6.h),
 

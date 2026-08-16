@@ -76,7 +76,7 @@ abstract class TasksClient {
   Future<GenericResponse<PaginatedResponse<TaskLite>>> listTasks({
     @Query('page') int? page = 1,
     @Query('per_page') int? perPage = 20,
-    @Query('status') String? status,
+    @Query('status') List<String>? status,
     @Query('category_id') String? categoryId,
     @Query('service_id') String? serviceId,
     @Query('search') String? search,
@@ -90,4 +90,11 @@ abstract class TasksClient {
     @Query('expires_at') String? expiresAt,
     @Query('customer_id') String? customerId,
   });
+
+  @POST('/tasks/{task_id}/verify-provider')
+  Future<GenericResponse<TaskAssignmentProvider>> verifyProviderPin(
+    @Path('task_id') String taskId,
+    @Body() Map<String, dynamic> body,
+  );
 }
+

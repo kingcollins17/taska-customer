@@ -10,6 +10,7 @@ import 'presentation/screens/review_screen.dart';
 import 'presentation/screens/success_screen.dart';
 import 'presentation/screens/matching_screen.dart';
 import 'presentation/screens/task_detail_screen.dart';
+import 'presentation/screens/verify_provider_screen.dart';
 
 final List<RouteBase> taskRoutes = [
   GoRoute(
@@ -20,6 +21,15 @@ final List<RouteBase> taskRoutes = [
       return TaskDetailScreen(taskId: taskId);
     },
   ),
+  GoRoute(
+    path: '/task/verify-provider/:taskId',
+    name: RouteNames.verifyProvider.name,
+    builder: (context, state) {
+      final taskId = state.pathParameters['taskId']!;
+      return VerifyProviderScreen(taskId: taskId);
+    },
+  ),
+
   GoRoute(
     path: '/task-creation/category',
     name: RouteNames.taskCategory.name,

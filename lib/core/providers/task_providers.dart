@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:seeker_app/core/clients/tasks_client.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
@@ -52,7 +55,7 @@ class ActiveTasksNotifier extends AsyncNotifier<List<TaskLite>> {
       final newItems = await _fetchTasks();
       final currentState = state.value ?? [];
       state = AsyncValue.data([...currentState, ...newItems]);
-    } catch (e, stack) {
+    } catch (_) {
       _page--;
     }
   }
@@ -63,7 +66,7 @@ class ActiveTasksNotifier extends AsyncNotifier<List<TaskLite>> {
     try {
       final items = await _fetchTasks();
       state = AsyncValue.data(items);
-    } catch (e, stack) {}
+    } catch (_) {}
   }
 }
 
@@ -118,7 +121,7 @@ class PendingTasksNotifier extends AsyncNotifier<List<TaskLite>> {
       final newItems = await _fetchTasks();
       final currentState = state.value ?? [];
       state = AsyncValue.data([...currentState, ...newItems]);
-    } catch (e, stack) {
+    } catch (_) {
       _page--;
     }
   }
@@ -129,7 +132,7 @@ class PendingTasksNotifier extends AsyncNotifier<List<TaskLite>> {
     try {
       final items = await _fetchTasks();
       state = AsyncValue.data(items);
-    } catch (e, stack) {}
+    } catch (_) {}
   }
 }
 
@@ -253,13 +256,14 @@ final taskDraftActionProvider =
       () => TaskDraftActionNotifier(),
     );
 
+final taskStatusFilterProvider = StateProvider<List<String>>((ref) => []);
+
 class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
   int _page = 1;
   final int _perPage = 20;
   bool _hasMore = true;
 
   // Filters
-  String? status;
   String? categoryId;
   String? serviceId;
   String? search;
@@ -272,19 +276,21 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
   @override
   FutureOr<List<TaskLite>> build() async {
     await ref.watch(userProvider.future);
+    final statusFilter = ref.watch(taskStatusFilterProvider);
     _page = 1;
     _hasMore = true;
-    return _fetchTasks();
+    return _fetchTasks(statusFilter);
   }
 
-  Future<List<TaskLite>> _fetchTasks() async {
+  Future<List<TaskLite>> _fetchTasks([List<String>? statusFilter]) async {
     final client = ref.read(tasksClientProvider);
     final user = ref.read(userProvider).value;
+    final statuses = statusFilter ?? ref.read(taskStatusFilterProvider);
 
     final response = await client.listTasks(
       page: _page,
       perPage: _perPage,
-      status: status,
+      status: statuses,
       categoryId: categoryId,
       serviceId: serviceId,
       search: search,
@@ -319,7 +325,7 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
       final newItems = await _fetchTasks();
       final currentState = state.value ?? [];
       state = AsyncValue.data([...currentState, ...newItems]);
-    } catch (e, stack) {
+    } catch (_) {
       _page--;
     }
   }
@@ -330,11 +336,10 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
     try {
       final items = await _fetchTasks();
       state = AsyncValue.data(items);
-    } catch (e, stack) {}
+    } catch (_) {}
   }
 
   void setFilters({
-    String? status,
     String? categoryId,
     String? serviceId,
     String? search,
@@ -342,7 +347,6 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
     String? sortBy,
     bool? sortDesc,
   }) {
-    this.status = status ?? this.status;
     this.categoryId = categoryId ?? this.categoryId;
     this.serviceId = serviceId ?? this.serviceId;
     this.search = search ?? this.search;
@@ -355,7 +359,7 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
   }
 
   void clearFilters() {
-    status = null;
+    ref.read(taskStatusFilterProvider.notifier).state = [];
     categoryId = null;
     serviceId = null;
     search = null;
@@ -372,7 +376,6 @@ final tasksProvider = AsyncNotifierProvider<TasksNotifier, List<TaskLite>>(
   () => TasksNotifier(),
 );
 
-
 final taskAssignmentProvider = FutureProvider.family<TaskAssignment, String>((
   ref,
   taskId,
@@ -386,3 +389,53 @@ final taskAssignmentProvider = FutureProvider.family<TaskAssignment, String>((
 
   throw Exception(response.detail ?? 'Failed to load task assignment');
 });
+
+final verifyProviderPinProvider = FutureProvider.family
+    .autoDispose<TaskAssignmentProvider, ({String? taskId, String? pin})>((
+      ref,
+      params,
+    ) async {
+      final taskId = params.taskId;
+      final pin = params.pin;
+
+      if (taskId == null || taskId.isEmpty) {
+        throw Exception('Task ID is required');
+      }
+      if (pin == null || pin.isEmpty) {
+        throw Exception('PIN is required');
+      }
+
+      try {
+        final client = ref.read(tasksClientProvider);
+        final response = await client.verifyProviderPin(taskId, {'pin': pin});
+
+        if (response.success && response.data != null) {
+          return response.data!;
+        }
+
+        throw Exception(
+          response.detail ??
+              'The PIN provided is incorrect. For your security, do not allow this provider in.',
+        );
+      } on DioException catch (e) {
+        if (e.response?.data != null && e.response?.data is Map) {
+          final detail =
+              e.response?.data['detail'] ?? e.response?.data['message'];
+          if (detail != null && detail.toString().isNotEmpty) {
+            throw Exception(detail.toString());
+          }
+        }
+        if (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.response == null) {
+          throw Exception(
+            'Network connection error. Please check your internet connection and try again.',
+          );
+        }
+        throw Exception(
+          'Failed to verify provider PIN. Please check your network and try again.',
+        );
+      }
+    }, retry: (retryCount, error) => null);
