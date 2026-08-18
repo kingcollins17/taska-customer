@@ -41,37 +41,6 @@ Map<String, dynamic> _$TaskLocationToJson(TaskLocation instance) =>
       'distance_km': instance.distanceKm,
     };
 
-Assignment _$AssignmentFromJson(Map<String, dynamic> json) => Assignment(
-  id: json['id'] as String?,
-  taskId: json['task_id'] as String?,
-  providerId: json['provider_id'] as String?,
-  acceptedDispatchAttemptId: json['accepted_dispatch_attempt_id'] as String?,
-  acceptedPrice: (json['accepted_price'] as num?)?.toDouble(),
-  assignedAt: json['assigned_at'] == null
-      ? null
-      : DateTime.parse(json['assigned_at'] as String),
-  startedAt: json['started_at'] == null
-      ? null
-      : DateTime.parse(json['started_at'] as String),
-  completedAt: json['completed_at'] == null
-      ? null
-      : DateTime.parse(json['completed_at'] as String),
-  status: json['status'] as String?,
-);
-
-Map<String, dynamic> _$AssignmentToJson(Assignment instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'task_id': instance.taskId,
-      'provider_id': instance.providerId,
-      'accepted_dispatch_attempt_id': instance.acceptedDispatchAttemptId,
-      'accepted_price': instance.acceptedPrice,
-      'assigned_at': instance.assignedAt?.toIso8601String(),
-      'started_at': instance.startedAt?.toIso8601String(),
-      'completed_at': instance.completedAt?.toIso8601String(),
-      'status': instance.status,
-    };
-
 TaskAttachment _$TaskAttachmentFromJson(Map<String, dynamic> json) =>
     TaskAttachment(
       id: json['id'] as String?,
@@ -158,7 +127,7 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
       .toList(),
   assignment: json['assignment'] == null
       ? null
-      : Assignment.fromJson(json['assignment'] as Map<String, dynamic>),
+      : TaskAssignment.fromJson(json['assignment'] as Map<String, dynamic>),
   attachments: (json['attachments'] as List<dynamic>?)
       ?.map((e) => TaskAttachment.fromJson(e as Map<String, dynamic>))
       .toList(),

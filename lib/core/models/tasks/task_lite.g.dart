@@ -34,7 +34,7 @@ TaskLite _$TaskLiteFromJson(Map<String, dynamic> json) => TaskLite(
       : ServiceCategory.fromJson(json['category'] as Map<String, dynamic>),
   assignment: json['assignment'] == null
       ? null
-      : Assignment.fromJson(json['assignment'] as Map<String, dynamic>),
+      : TaskAssignment.fromJson(json['assignment'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$TaskLiteToJson(TaskLite instance) => <String, dynamic>{

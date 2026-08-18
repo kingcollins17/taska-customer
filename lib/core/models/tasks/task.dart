@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'assignment.dart';
+
 part 'task.freezed.dart';
 part 'task.g.dart';
 
@@ -42,44 +44,6 @@ class TaskLocation {
       _$TaskLocationFromJson(json);
 
   Map<String, dynamic> toJson() => _$TaskLocationToJson(this);
-}
-
-
-@JsonSerializable(explicitToJson: true)
-class Assignment {
-  final String? id;
-  @JsonKey(name: 'task_id')
-  final String? taskId;
-  @JsonKey(name: 'provider_id')
-  final String? providerId;
-  @JsonKey(name: 'accepted_dispatch_attempt_id')
-  final String? acceptedDispatchAttemptId;
-  @JsonKey(name: 'accepted_price')
-  final double? acceptedPrice;
-  @JsonKey(name: 'assigned_at')
-  final DateTime? assignedAt;
-  @JsonKey(name: 'started_at')
-  final DateTime? startedAt;
-  @JsonKey(name: 'completed_at')
-  final DateTime? completedAt;
-  final String? status;
-
-  Assignment({
-    this.id,
-    this.taskId,
-    this.providerId,
-    this.acceptedDispatchAttemptId,
-    this.acceptedPrice,
-    this.assignedAt,
-    this.startedAt,
-    this.completedAt,
-    this.status,
-  });
-
-  factory Assignment.fromJson(Map<String, dynamic> json) =>
-      _$AssignmentFromJson(json);
-
-  Map<String, dynamic> toJson() => _$AssignmentToJson(this);
 }
 
 @JsonSerializable(explicitToJson: true)
@@ -192,7 +156,7 @@ class Task {
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
   final List<TaskLocation>? locations;
-  final Assignment? assignment;
+  final TaskAssignment? assignment;
   final List<TaskAttachment>? attachments;
   final TaskCustomer? customer;
 

@@ -28,10 +28,11 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      final dispatchValue = ref.read(pendingDispatchProvider(widget.taskId));
-      if (dispatchValue is AsyncError) {
-        ref.invalidate(pendingDispatchProvider(widget.taskId));
+    _timer = Timer.periodic(const Duration(minutes: 2), (timer) {
+      final task = ref.read(taskDetailProvider(widget.taskId));
+      if (task.value?.status?.toLowerCase().contains('assigned') != true) {
+        ref.invalidate(taskDetailProvider(widget.taskId));
+        ref.invalidate(taskAssignmentProvider(widget.taskId));
       }
     });
   }
@@ -44,14 +45,16 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dispatchAsyncValue = ref.watch(
-      pendingDispatchProvider(widget.taskId),
-    );
+    final taskAsync = ref.watch(taskDetailProvider(widget.taskId));
+    final assigmnentAsync = ref.watch(taskAssignmentProvider(widget.taskId));
     final theme = Theme.of(context);
 
     final bool isAccepted =
-        dispatchAsyncValue.hasValue &&
-        dispatchAsyncValue.value?.status == 'accepted';
+        taskAsync.hasValue &&
+        (taskAsync.value?.status?.toLowerCase().contains('assigned') ??
+            false) &&
+        (taskAsync.value?.assignment != null || assigmnentAsync.value != null);
+    final isPending = taskAsync.isLoading || !isAccepted;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -66,11 +69,7 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
                     const Spacer(),
                     const _Spinner(),
                     const SizedBox(height: 64),
-                    _TimelineSection(
-                      isPending:
-                          dispatchAsyncValue.hasValue &&
-                          dispatchAsyncValue.value?.status == 'pending',
-                    ),
+                    _TimelineSection(isPending: isPending),
                     const Spacer(),
                     // A nice cancel button if they want to cancel searching
                     TextButton(

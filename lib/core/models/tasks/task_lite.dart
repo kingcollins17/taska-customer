@@ -2,6 +2,8 @@ import 'package:json_annotation/json_annotation.dart';
 import 'package:seeker_app/core/models/service/service.dart';
 import 'package:seeker_app/core/models/tasks/task.dart';
 
+import 'assignment.dart';
+
 part 'task_lite.g.dart';
 
 @JsonSerializable(explicitToJson: true)
@@ -40,7 +42,7 @@ class TaskLite {
   @JsonKey(name: 'distance_km')
   final double? distanceKm;
   final ServiceCategory? category;
-  final Assignment? assignment;
+  final TaskAssignment? assignment;
 
   TaskLite({
     this.id,

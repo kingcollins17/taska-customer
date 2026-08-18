@@ -50,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
               await Future.wait([
                 ref.refresh(userProvider.future),
                 ref.refresh(notificationCountsProvider.future),
-                ref.refresh(allTasksAggregatedProvider.future),
+                ref.refresh(activeTasksProvider.future),
                 ref.refresh(categoriesProvider(null).future),
               ]);
             } catch (_) {}
@@ -417,7 +417,7 @@ class _ActiveWork extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final tasksAsync = ref.watch(allTasksAggregatedProvider);
+    final tasksAsync = ref.watch(activeTasksProvider);
 
     return tasksAsync.when(
       data: (tasks) {

@@ -1,22 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:seeker_app/core/constants.dart';
-import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/designs/widgets/confirmation_dialog.dart';
 import 'package:seeker_app/core/models/models.dart';
-import 'package:seeker_app/core/utils/flushbar_message.dart';
-import 'package:seeker_app/core/utils/loading_overlay.dart';
-import 'package:seeker_app/features/auth/presentation/verify_otp_screen.dart';
 import 'package:seeker_app/features/profile/providers/account_issues_provider.dart';
 import 'package:seeker_app/core/providers/theme_provider.dart';
 import '../../../../core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import '../../../../core/providers/user_provider.dart';
-import '../../../../core/designs/widgets/phone_number_sheet.dart';
 import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter/foundation.dart';
@@ -39,7 +32,6 @@ class ProfileScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
-    final cardColor = isDark ? AppColors.darkerBackground : AppColors.surface;
 
     final userState = ref.watch(userProvider);
     final user = userState.value;
@@ -74,21 +66,13 @@ class ProfileScreen extends ConsumerWidget {
                             color: textColor,
                           ),
                         ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          'View and manage your profile details below.',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            fontSize: 14.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
                       ],
                     ),
                   ),
                   const CurrentLocation(),
                 ],
               ),
-              SizedBox(height: 32.h),
+              SizedBox(height: 12.h),
 
               if (accountIssues.isNotEmpty && user != null)
                 Padding(
@@ -103,152 +87,121 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
 
-              // Profile Card with Banner
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(20.w),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.r),
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primaryVariant, AppColors.primary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            const _StatCard(
-                              label: 'Total Tasks',
-                              value: '0',
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 16.w),
-                            _StatCard(
-                              label: 'Average Rating',
-                              value:
-                                  user?.averageRatings?.toStringAsFixed(1) ??
-                                  '0.0',
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 16.w),
-                            _StatCard(
-                              label: 'Credibility',
-                              value:
-                                  user?.credibility?.toStringAsFixed(0) ?? '0',
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 24.h), // space for avatar overlapping
-                      ],
-                    ),
-                  ),
-                  if (userState is! AsyncError)
-                    Positioned(
-                      bottom: -30.h,
-                      left: 20.w,
-                      child: userState.isLoading
-                          ? Shimmer.fromColors(
-                              baseColor: isDark
-                                  ? Colors.grey[800]!
-                                  : Colors.grey[300]!,
-                              highlightColor: isDark
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[100]!,
-                              child: Container(
-                                width: 60.w,
-                                height: 60.w,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                  border: Border.all(color: bgColor, width: 3),
-                                ),
-                              ),
-                            )
-                          : Container(
-                              width: 60.w,
-                              height: 60.w,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: bgColor, width: 3),
-                                color: AppColors.primary,
-                              ),
-                              child: Text(
-                                _getInitials(
-                                  user?.customerProfile?.firstName,
-                                  user?.customerProfile?.lastName,
-                                ),
-                                style: AppTextStyles.heading1.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24.sp,
-                                ),
-                              ),
-                            ),
-                    ),
-                ],
-              ),
-              SizedBox(height: 40.h),
+              SizedBox(height: 24.h),
 
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: userState.isLoading
-                    ? Shimmer.fromColors(
-                        baseColor: isDark
-                            ? Colors.grey[800]!
-                            : Colors.grey[300]!,
-                        highlightColor: isDark
-                            ? Colors.grey[700]!
-                            : Colors.grey[100]!,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 150.w,
-                              height: 20.h,
-                              color: Colors.white,
-                            ),
-                            SizedBox(height: 8.h),
-                            Container(
-                              width: 200.w,
-                              height: 14.h,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ? _HeaderShimmer()
+                    : Row(
                         children: [
-                          Text(
-                            name,
-                            style: AppTextStyles.heading2.copyWith(
-                              fontSize: 20.sp,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
+                          Container(
+                            width: 72.w,
+                            height: 72.w,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.primary,
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.darkerBackground
+                                    : AppColors.surface,
+                                width: 3.w,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              _getInitials(
+                                user?.customerProfile?.firstName,
+                                user?.customerProfile?.lastName,
+                              ),
+                              style: AppTextStyles.heading1.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 24.sp,
+                              ),
                             ),
                           ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            email,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              fontSize: 14.sp,
-                              color: AppColors.textSecondary,
+                          SizedBox(width: 16.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: AppTextStyles.heading2.copyWith(
+                                    fontSize: 20.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                ),
+                                if (email.isNotEmpty) ...[
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    email,
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      fontSize: 14.sp,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                                SizedBox(height: 6.h),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withValues(
+                                      alpha: isDark ? 0.15 : 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: Colors.amber.withValues(
+                                        alpha: isDark ? 0.3 : 0.2,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: Colors.amber,
+                                        size: 14.sp,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        user?.averageRatings?.toStringAsFixed(
+                                              1,
+                                            ) ??
+                                            '0.0',
+                                        style: AppTextStyles.bodyMedium
+                                            .copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark
+                                                  ? Colors.amber[300]
+                                                  : Colors.amber[800],
+                                              fontSize: 12.sp,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
               ),
 
-              SizedBox(height: 20.h),
+              SizedBox(height: 24.h),
 
               // Menu Items
               _MenuItem(
@@ -259,15 +212,7 @@ class ProfileScreen extends ConsumerWidget {
                   context.push('/profile-details');
                 },
               ),
-              // Bank Details Update not available for customer app
-              // _MenuItem(
-              //   icon: Icons.account_balance_wallet_outlined,
-              //   title: 'Update Bank Details',
-              //   iconColor: Colors.green,
-              //   onTap: () {
-              //     context.pushNamed(RouteNames.updatePayoutAccount.name);
-              //   },
-              // ),
+
               _MenuItem(
                 icon: Icons.payments_outlined,
                 title: 'See Transactions',
@@ -372,8 +317,8 @@ class ProfileScreen extends ConsumerWidget {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(isDark ? 0.2 : 0.1),
-            border: Border.all(color: Colors.orange.withOpacity(0.5)),
+            color: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.1),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Row(
@@ -414,39 +359,64 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+class _HeaderShimmer extends StatelessWidget {
+  const _HeaderShimmer();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          style: AppTextStyles.heading3.copyWith(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: color,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: Row(
+        children: [
+          Container(
+            width: 72.w,
+            height: 72.w,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
           ),
-        ),
-        SizedBox(height: 2.h),
-        Text(
-          label,
-          style: AppTextStyles.label.copyWith(
-            fontSize: 10.sp,
-            color: color.withValues(alpha: 0.8),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 150.w,
+                  height: 20.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Container(
+                  width: 200.w,
+                  height: 14.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Container(
+                  width: 60.w,
+                  height: 20.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -499,7 +469,7 @@ class _MenuItem extends StatelessWidget {
                   Icons.chevron_right,
                   color: isLogout
                       ? Colors.red
-                      : AppColors.textSecondary.withOpacity(0.5),
+                      : AppColors.textSecondary.withValues(alpha: 0.5),
                   size: 24.sp,
                 ),
           ],

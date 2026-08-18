@@ -9,138 +9,6 @@ import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 
-class ActiveTasksNotifier extends AsyncNotifier<List<TaskLite>> {
-  int _page = 1;
-  final int _perPage = 20;
-  bool _hasMore = true;
-
-  bool get hasMore => _hasMore;
-
-  @override
-  FutureOr<List<TaskLite>> build() async {
-    _page = 1;
-    _hasMore = true;
-    return _fetchTasks();
-  }
-
-  Future<List<TaskLite>> _fetchTasks() async {
-    final client = ref.read(tasksClientProvider);
-    final response = await client.getActiveTasks(
-      page: _page,
-      perPage: _perPage,
-    );
-
-    if (response.success && response.data != null) {
-      final items = response.data!.items ?? [];
-
-      if (items.length < _perPage) {
-        _hasMore = false;
-      }
-      return items;
-    } else {
-      throw Exception(response.detail ?? 'Failed to load active tasks');
-    }
-  }
-
-  Future<void> loadMore() async {
-    if (state.isLoading ||
-        state.isRefreshing ||
-        state.isReloading ||
-        !_hasMore) {
-      return;
-    }
-
-    try {
-      _page++;
-      final newItems = await _fetchTasks();
-      final currentState = state.value ?? [];
-      state = AsyncValue.data([...currentState, ...newItems]);
-    } catch (_) {
-      _page--;
-    }
-  }
-
-  Future<void> refresh() async {
-    _page = 1;
-    _hasMore = true;
-    try {
-      final items = await _fetchTasks();
-      state = AsyncValue.data(items);
-    } catch (_) {}
-  }
-}
-
-final activeTasksProvider =
-    AsyncNotifierProvider<ActiveTasksNotifier, List<TaskLite>>(
-      () => ActiveTasksNotifier(),
-    );
-
-class PendingTasksNotifier extends AsyncNotifier<List<TaskLite>> {
-  int _page = 1;
-  final int _perPage = 20;
-  bool _hasMore = true;
-
-  bool get hasMore => _hasMore;
-
-  @override
-  FutureOr<List<TaskLite>> build() async {
-    _page = 1;
-    _hasMore = true;
-    return _fetchTasks();
-  }
-
-  Future<List<TaskLite>> _fetchTasks() async {
-    final client = ref.read(tasksClientProvider);
-    final response = await client.getPendingTasks(
-      page: _page,
-      perPage: _perPage,
-    );
-
-    if (response.success && response.data != null) {
-      final items = response.data!.items ?? [];
-
-      if (items.length < _perPage) {
-        _hasMore = false;
-      }
-      return items;
-    } else {
-      throw Exception(response.detail ?? 'Failed to load pending tasks');
-    }
-  }
-
-  Future<void> loadMore() async {
-    if (state.isLoading ||
-        state.isRefreshing ||
-        state.isReloading ||
-        !_hasMore) {
-      return;
-    }
-
-    try {
-      _page++;
-      final newItems = await _fetchTasks();
-      final currentState = state.value ?? [];
-      state = AsyncValue.data([...currentState, ...newItems]);
-    } catch (_) {
-      _page--;
-    }
-  }
-
-  Future<void> refresh() async {
-    _page = 1;
-    _hasMore = true;
-    try {
-      final items = await _fetchTasks();
-      state = AsyncValue.data(items);
-    } catch (_) {}
-  }
-}
-
-final pendingTasksProvider =
-    AsyncNotifierProvider<PendingTasksNotifier, List<TaskLite>>(
-      () => PendingTasksNotifier(),
-    );
-
 final taskDetailProvider = FutureProvider.family<Task, String>((
   ref,
   taskId,
@@ -153,17 +21,17 @@ final taskDetailProvider = FutureProvider.family<Task, String>((
   }
 
   throw Exception(response.detail ?? 'Failed to load task details');
-});
+}, retry: (retryCount, error) => null);
 
-final allTasksAggregatedProvider = FutureProvider<List<TaskLite>>((ref) async {
-  final activeTasks = await ref.watch(activeTasksProvider.future);
-  final pendingTasks = await ref.watch(pendingTasksProvider.future);
+final activeTasksProvider = FutureProvider<List<TaskLite>>((ref) async {
+  final user = await ref.watch(userProvider.future);
+  final response = await ref
+      .read(tasksClientProvider)
+      .listTasks(status: ['assigned', 'in_progress'], customerId: user?.id);
+  final data = response.data?.items ?? <TaskLite>[];
+  data.shuffle();
 
-  final allTasks = [...activeTasks, ...pendingTasks];
-
-  allTasks.shuffle();
-
-  allTasks.sort((a, b) {
+  data.sort((a, b) {
     final dateA = a.scheduledStartAt ?? a.createdAt;
     final dateB = b.scheduledStartAt ?? b.createdAt;
     if (dateA == null && dateB == null) return 0;
@@ -172,34 +40,7 @@ final allTasksAggregatedProvider = FutureProvider<List<TaskLite>>((ref) async {
     return dateB.compareTo(dateA);
   });
 
-  return allTasks;
-});
-
-// TODO: Remove this as backend will have multiple pending dispatches, instead query the taskDetailProvider for status, if its assigned, then get assigment
-final pendingDispatchProvider = FutureProvider.family<DispatchAttempt, String>((
-  ref,
-  taskId,
-) async {
-  final client = ref.read(tasksClientProvider);
-  final response = await client.getPendingDispatch(taskId);
-
-  if (response.success && response.data != null) {
-    return response.data!;
-  }
-
-  throw Exception(response.detail ?? 'Failed to load pending dispatch');
-  // return DispatchAttempt(
-  //   id: 'mock_id',
-  //   taskId: taskId,
-  //   providerId: 'provider_id',
-  //   sequenceOrder: 1,
-  //   matchScore: 99.0,
-  //   offeredPayout: 10.0,
-  //   pingedAt: DateTime.now(),
-  //   expiresAt: DateTime.now().add(const Duration(minutes: 5)),
-  //   respondedAt: null,
-  //   status: 'pending',
-  // );
+  return data;
 });
 
 class TaskDraftActionNotifier extends AsyncNotifier<void> {
@@ -376,19 +217,15 @@ final tasksProvider = AsyncNotifierProvider<TasksNotifier, List<TaskLite>>(
   () => TasksNotifier(),
 );
 
-final taskAssignmentProvider = FutureProvider.family<TaskAssignment, String>((
+final taskAssignmentProvider = FutureProvider.family<TaskAssignment?, String>((
   ref,
   taskId,
 ) async {
   final client = ref.read(tasksClientProvider);
   final response = await client.getTaskAssignment(taskId);
 
-  if (response.success && response.data != null) {
-    return response.data!;
-  }
-
-  throw Exception(response.detail ?? 'Failed to load task assignment');
-});
+  return response.data;
+}, retry: (retryCount, error) => null);
 
 final verifyProviderPinProvider = FutureProvider.family
     .autoDispose<TaskAssignmentProvider, ({String? taskId, String? pin})>((

@@ -24,7 +24,13 @@ class TaskDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final taskAsync = ref.watch(taskDetailProvider(taskId));
-
+    final fabAllowedStatus = ['draft', 'open', 'searching'];
+    final shouldShouldFab =
+        taskAsync.hasValue &&
+        taskAsync.value != null &&
+        fabAllowedStatus.any(
+          (i) => i.contains(taskAsync.value?.status ?? 'N/A'),
+        );
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: taskAsync.when(
@@ -34,7 +40,8 @@ class TaskDetailScreen extends ConsumerWidget {
             _TaskDetailErrorState(taskId: taskId, error: error),
       ),
       bottomNavigationBar: taskAsync.whenOrNull(
-        data: (task) => _BottomActionBar(task: task),
+        data: (task) =>
+            shouldShouldFab ? _BottomActionBar(task: task) : SizedBox.shrink(),
         loading: () => const _BottomShimmerBar(),
       ),
     );
@@ -108,178 +115,186 @@ class _TaskDetailContent extends ConsumerWidget {
       }
     }
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          expandedHeight: 300.h,
-          pinned: true,
-          elevation: 0,
-          backgroundColor: colorScheme.surface,
-          leading: Padding(
-            padding: EdgeInsets.all(8.r),
-            child: CustomBackButton(),
-          ),
-          actions: [
-            Padding(
-              padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
-              child: _StatusPill(status: task.status ?? 'open'),
+    return RefreshIndicator(
+      onRefresh: () async {
+        if (task.id != null) {
+          await ref.refresh(taskDetailProvider(task.id!).future);
+        }
+      },
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 300.h,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: colorScheme.surface,
+            leading: Padding(
+              padding: EdgeInsets.all(8.r),
+              child: CustomBackButton(),
             ),
-            Padding(
-              padding: EdgeInsets.only(right: 12.w, top: 8.h, bottom: 8.h),
-              child: CircleAvatar(
-                backgroundColor: colorScheme.surface.withValues(alpha: 0.85),
-                child: IconButton(
-                  icon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedMoreVertical,
-                    color: colorScheme.onSurface,
-                    size: 20.sp,
+            actions: [
+              Padding(
+                padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                child: _StatusPill(status: task.status ?? 'open'),
+              ),
+              Padding(
+                padding: EdgeInsets.only(right: 12.w, top: 8.h, bottom: 8.h),
+                child: CircleAvatar(
+                  backgroundColor: colorScheme.surface.withValues(alpha: 0.85),
+                  child: IconButton(
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedMoreVertical,
+                      color: colorScheme.onSurface,
+                      size: 20.sp,
+                    ),
+                    onPressed: () {
+                      TaskDetailOptionsSheet.show(context, task: task);
+                    },
                   ),
-                  onPressed: () {
-                    TaskDetailOptionsSheet.show(context, task: task);
-                  },
                 ),
               ),
-            ),
-          ],
-          flexibleSpace: FlexibleSpaceBar(
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (hasHeroImage)
-                  Image.network(
-                    heroImageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const _HeroFallback(),
-                  )
-                else
-                  const _HeroFallback(),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.4),
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.3),
-                        ],
-                        stops: const [0.0, 0.5, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Container(
-            transform: Matrix4.translationValues(0, -20.h, 0),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40.w,
-                      height: 4.h,
+                  if (hasHeroImage)
+                    Image.network(
+                      heroImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const _HeroFallback(),
+                    )
+                  else
+                    const _HeroFallback(),
+                  Positioned.fill(
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: colorScheme.outlineVariant.withValues(
-                          alpha: 0.6,
-                        ),
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        priceStr,
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontSize: 26.sp,
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
-                          letterSpacing: -0.5,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.4),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.3),
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    task.title ?? 'Task Details',
-                    style: textTheme.titleLarge?.copyWith(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                      height: 1.2,
                     ),
                   ),
-                  SizedBox(height: 12.h),
-                  if (task.description != null &&
-                      task.description!.isNotEmpty) ...[
-                    Text(
-                      task.description!,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontSize: 14.sp,
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.5,
-                      ),
-                    ),
-                    SizedBox(height: 18.h),
-                  ],
-                  if (task.status?.toLowerCase() == 'assigned') ...[
-                    _TaskAssignmentDisplay(taskId: task.id ?? ''),
-                    SizedBox(height: 18.h),
-                  ],
-                  Text(
-                    'Task Details',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  _InfoOptionCard(
-                    title: 'Scheduled Time',
-                    subtitle: dateStr,
-                    icon: HugeIcons.strokeRoundedCalendar01,
-                  ),
-                  SizedBox(height: 10.h),
-                  _InfoOptionCard(
-                    title: 'Location',
-                    subtitle: locationStr,
-                    icon: HugeIcons.strokeRoundedLocation01,
-                  ),
-                  SizedBox(height: 20.h),
-                  _PriceBreakdownCard(task: task),
-                  SizedBox(height: 20.h),
-                  _AttachmentsSection(attachments: task.attachments ?? []),
-                  SizedBox(height: 30.h),
                 ],
               ),
             ),
           ),
-        ),
-      ],
+          SliverToBoxAdapter(
+            child: Container(
+              transform: Matrix4.translationValues(0, -20.h, 0),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.6,
+                          ),
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          priceStr,
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontSize: 26.sp,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurface,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                    Text(
+                      task.title ?? 'Task Details',
+                      style: textTheme.titleLarge?.copyWith(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    if (task.description != null &&
+                        task.description!.isNotEmpty) ...[
+                      Text(
+                        task.description!,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontSize: 14.sp,
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                    ],
+                    if (task.status?.toLowerCase() == 'assigned') ...[
+                      _TaskAssignmentDisplay(taskId: task.id ?? ''),
+                      SizedBox(height: 18.h),
+                    ],
+                    Text(
+                      'Task Details',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    _InfoOptionCard(
+                      title: 'Scheduled Time',
+                      subtitle: dateStr,
+                      icon: HugeIcons.strokeRoundedCalendar01,
+                    ),
+                    SizedBox(height: 10.h),
+                    _InfoOptionCard(
+                      title: 'Location',
+                      subtitle: locationStr,
+                      icon: HugeIcons.strokeRoundedLocation01,
+                    ),
+                    SizedBox(height: 20.h),
+                    _PriceBreakdownCard(task: task),
+                    SizedBox(height: 20.h),
+                    _AttachmentsSection(attachments: task.attachments ?? []),
+                    SizedBox(height: 30.h),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -722,10 +737,10 @@ class _TaskAssignmentDisplay extends ConsumerWidget {
 
     return assignmentAsync.when(
       data: (assignment) {
-        if (assignment.provider == null) {
+        if (assignment?.provider == null) {
           return const SizedBox.shrink();
         }
-        return _AssignmentCard(assignment: assignment);
+        return _AssignmentCard(assignment: assignment!);
       },
       loading: () => const _AssignmentCardShimmer(),
       error: (error, stack) => const SizedBox.shrink(),
@@ -799,8 +814,7 @@ class _AssignmentCard extends StatelessWidget {
                         child: Image.network(
                           provider.profilePictureUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Center(
+                          errorBuilder: (context, error, stackTrace) => Center(
                             child: HugeIcon(
                               icon: HugeIcons.strokeRoundedUser,
                               color: AppColors.primary,
@@ -962,10 +976,7 @@ class _AssignmentCardShimmer extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 30.r,
-                  backgroundColor: Colors.white,
-                ),
+                CircleAvatar(radius: 30.r, backgroundColor: Colors.white),
                 SizedBox(width: 14.w),
                 Expanded(
                   child: Column(
@@ -1080,12 +1091,12 @@ class _BottomActionBar extends ConsumerWidget {
                     letterSpacing: 0.3,
                   ),
                 ),
-                SizedBox(width: 6.w),
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedArrowRight01,
-                  color: Colors.white,
-                  size: 18.sp,
-                ),
+                // SizedBox(width: 6.w),
+                // HugeIcon(
+                //   icon: HugeIcons.strokeRoundedArrowRight01,
+                //   color: Colors.white,
+                //   size: 18.sp,
+                // ),
               ],
             ),
           ),
@@ -1154,8 +1165,8 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        width: 80.w, 
-                        height: 20.h, 
+                        width: 80.w,
+                        height: 20.h,
                         decoration: BoxDecoration(
                           color: shimmerColor,
                           borderRadius: BorderRadius.circular(4.r),
@@ -1165,8 +1176,8 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                   ),
                   SizedBox(height: 16.h),
                   Container(
-                    width: 220.w, 
-                    height: 22.h, 
+                    width: 220.w,
+                    height: 22.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
@@ -1183,8 +1194,8 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                   ),
                   SizedBox(height: 6.h),
                   Container(
-                    width: 260.w, 
-                    height: 14.h, 
+                    width: 260.w,
+                    height: 14.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
@@ -1225,8 +1236,8 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                   ),
                   SizedBox(height: 24.h),
                   Container(
-                    width: 120.w, 
-                    height: 16.h, 
+                    width: 120.w,
+                    height: 16.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
