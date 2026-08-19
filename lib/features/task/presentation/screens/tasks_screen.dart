@@ -15,7 +15,9 @@ import 'package:seeker_app/features/task/presentation/widgets/task_card.dart';
 import 'package:seeker_app/features/task/presentation/widgets/task_card_shimmer.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
-  const TasksScreen({super.key});
+  final List<String>? initialStatuses;
+
+  const TasksScreen({super.key, this.initialStatuses});
 
   @override
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
@@ -39,6 +41,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    if (widget.initialStatuses != null && widget.initialStatuses!.isNotEmpty) {
+      final formattedStatuses = widget.initialStatuses!
+          .map((s) => s.toLowerCase().replaceAll(' ', '_'))
+          .toList();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(taskStatusFilterProvider.notifier).state = formattedStatuses;
+      });
+    }
   }
 
   @override

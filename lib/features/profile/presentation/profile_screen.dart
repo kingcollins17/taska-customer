@@ -32,6 +32,7 @@ class ProfileScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
+    final cardBg = isDark ? AppColors.darkerBackground : AppColors.surface;
 
     final userState = ref.watch(userProvider);
     final user = userState.value;
@@ -46,37 +47,30 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: bgColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'My profile',
-                          style: AppTextStyles.heading1.copyWith(
-                            fontSize: 24.sp,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    'Profile',
+                    style: AppTextStyles.heading2.copyWith(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
                     ),
                   ),
                   const CurrentLocation(),
                 ],
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 14.h),
 
               if (accountIssues.isNotEmpty && user != null)
                 Padding(
-                  padding: EdgeInsets.only(bottom: 24.h),
+                  padding: EdgeInsets.only(bottom: 12.h),
                   child: Column(
                     children: accountIssues
                         .map(
@@ -87,32 +81,39 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
 
-              SizedBox(height: 24.h),
-
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: userState.isLoading
-                    ? _HeaderShimmer()
-                    : Row(
+              // Compact Redesigned Profile Header
+              userState.isLoading
+                  ? const _HeaderShimmer()
+                  : Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.06)
+                              : Colors.black.withValues(alpha: 0.05),
+                        ),
+                      ),
+                      child: Row(
                         children: [
                           Container(
-                            width: 72.w,
-                            height: 72.w,
+                            width: 50.w,
+                            height: 50.w,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.primary,
-                              border: Border.all(
-                                color: isDark
-                                    ? AppColors.darkerBackground
-                                    : AppColors.surface,
-                                width: 3.w,
-                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.25,
+                                  ),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
@@ -124,84 +125,95 @@ class ProfileScreen extends ConsumerWidget {
                               style: AppTextStyles.heading1.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 24.sp,
+                                fontSize: 18.sp,
                               ),
                             ),
                           ),
-                          SizedBox(width: 16.w),
+                          SizedBox(width: 12.w),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  name,
-                                  style: AppTextStyles.heading2.copyWith(
-                                    fontSize: 20.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
-                                  ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        name,
+                                        style: AppTextStyles.heading2.copyWith(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.bold,
+                                          color: textColor,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    SizedBox(width: 6.w),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 7.w,
+                                        vertical: 2.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(
+                                          alpha: isDark ? 0.15 : 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          10.r,
+                                        ),
+                                        border: Border.all(
+                                          color: Colors.amber.withValues(
+                                            alpha: isDark ? 0.3 : 0.2,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.star,
+                                            color: Colors.amber,
+                                            size: 12.sp,
+                                          ),
+                                          SizedBox(width: 3.w),
+                                          Text(
+                                            user?.averageRatings
+                                                    ?.toStringAsFixed(1) ??
+                                                '0.0',
+                                            style: AppTextStyles.bodyMedium
+                                                .copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark
+                                                      ? Colors.amber[300]
+                                                      : Colors.amber[800],
+                                                  fontSize: 11.sp,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 if (email.isNotEmpty) ...[
                                   SizedBox(height: 2.h),
                                   Text(
                                     email,
                                     style: AppTextStyles.bodyMedium.copyWith(
-                                      fontSize: 14.sp,
+                                      fontSize: 13.sp,
                                       color: AppColors.textSecondary,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
-                                SizedBox(height: 6.h),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amber.withValues(
-                                      alpha: isDark ? 0.15 : 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: Colors.amber.withValues(
-                                        alpha: isDark ? 0.3 : 0.2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: Colors.amber,
-                                        size: 14.sp,
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        user?.averageRatings?.toStringAsFixed(
-                                              1,
-                                            ) ??
-                                            '0.0',
-                                        style: AppTextStyles.bodyMedium
-                                            .copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: isDark
-                                                  ? Colors.amber[300]
-                                                  : Colors.amber[800],
-                                              fontSize: 12.sp,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                               ],
                             ),
                           ),
                         ],
                       ),
-              ),
+                    ),
 
-              SizedBox(height: 24.h),
+              SizedBox(height: 16.h),
 
               // Menu Items
               _MenuItem(
@@ -212,7 +224,6 @@ class ProfileScreen extends ConsumerWidget {
                   context.push('/profile-details');
                 },
               ),
-
               _MenuItem(
                 icon: Icons.payments_outlined,
                 title: 'See Transactions',
@@ -245,12 +256,15 @@ class ProfileScreen extends ConsumerWidget {
                         (themeMode == ThemeMode.system &&
                             MediaQuery.platformBrightnessOf(context) ==
                                 Brightness.dark);
-                    return Switch(
-                      value: isDarkMode,
-                      onChanged: (val) {
-                        ref.read(themeProvider.notifier).toggleTheme();
-                      },
-                      activeColor: AppColors.primary,
+                    return Transform.scale(
+                      scale: 0.8,
+                      child: Switch(
+                        value: isDarkMode,
+                        onChanged: (val) {
+                          ref.read(themeProvider.notifier).toggleTheme();
+                        },
+                        activeColor: AppColors.primary,
+                      ),
                     );
                   },
                 ),
@@ -259,9 +273,7 @@ class ProfileScreen extends ConsumerWidget {
                 },
               ),
 
-              SizedBox(height: 24.h),
-
-              if (kDebugMode)
+              if (kDebugMode) ...[
                 _MenuItem(
                   icon: Icons.bug_report_outlined,
                   title: 'Debug Console',
@@ -270,6 +282,7 @@ class ProfileScreen extends ConsumerWidget {
                     DebugConsoleView.show(context);
                   },
                 ),
+              ],
 
               // Log Out
               _MenuItem(
@@ -290,7 +303,7 @@ class ProfileScreen extends ConsumerWidget {
                 },
               ),
 
-              SizedBox(height: 80.h), // Spacing for bottom nav bar
+              SizedBox(height: 60.h), // Spacing for bottom nav bar
             ],
           ),
         ),
@@ -315,7 +328,7 @@ class ProfileScreen extends ConsumerWidget {
         },
         borderRadius: BorderRadius.circular(12.r),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           decoration: BoxDecoration(
             color: Colors.orange.withValues(alpha: isDark ? 0.2 : 0.1),
             border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
@@ -324,8 +337,8 @@ class ProfileScreen extends ConsumerWidget {
           child: Row(
             children: [
               if (issue.icon != null)
-                Icon(issue.icon, color: Colors.orange, size: 24.sp),
-              SizedBox(width: 12.w),
+                Icon(issue.icon, color: Colors.orange, size: 20.sp),
+              SizedBox(width: 10.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,7 +346,7 @@ class ProfileScreen extends ConsumerWidget {
                     Text(
                       issue.title,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        fontSize: 14.sp,
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.orange,
                       ),
@@ -341,7 +354,7 @@ class ProfileScreen extends ConsumerWidget {
                     Text(
                       issue.description,
                       style: AppTextStyles.bodySmall.copyWith(
-                        fontSize: 12.sp,
+                        fontSize: 11.sp,
                         color: isDark
                             ? Colors.white70
                             : AppColors.textSecondary,
@@ -350,7 +363,7 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.orange, size: 20.sp),
+              Icon(Icons.chevron_right, color: Colors.orange, size: 18.sp),
             ],
           ),
         ),
@@ -367,55 +380,54 @@ class _HeaderShimmer extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
     final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+    final cardBg = isDark ? AppColors.darkerBackground : AppColors.surface;
 
-    return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
-      child: Row(
-        children: [
-          Container(
-            width: 72.w,
-            height: 72.w,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
+        child: Row(
+          children: [
+            Container(
+              width: 50.w,
+              height: 50.w,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
             ),
-          ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 150.w,
-                  height: 20.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4.r),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 130.w,
+                    height: 16.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
                   ),
-                ),
-                SizedBox(height: 8.h),
-                Container(
-                  width: 200.w,
-                  height: 14.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4.r),
+                  SizedBox(height: 6.h),
+                  Container(
+                    width: 170.w,
+                    height: 12.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
                   ),
-                ),
-                SizedBox(height: 8.h),
-                Container(
-                  width: 60.w,
-                  height: 20.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -427,6 +439,7 @@ class _MenuItem extends StatelessWidget {
   final Color iconColor;
   final bool isLogout;
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   const _MenuItem({
     required this.icon,
@@ -437,8 +450,6 @@ class _MenuItem extends StatelessWidget {
     this.trailing,
   });
 
-  final Widget? trailing;
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -448,17 +459,25 @@ class _MenuItem extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(10.r),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 8.w),
         child: Row(
           children: [
-            Icon(icon, color: iconColor, size: 24.sp),
-            SizedBox(width: 16.w),
+            Container(
+              padding: EdgeInsets.all(6.w),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: isDark ? 0.15 : 0.1),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Icon(icon, color: iconColor, size: 18.sp),
+            ),
+            SizedBox(width: 12.w),
             Expanded(
               child: Text(
                 title,
                 style: AppTextStyles.bodyLarge.copyWith(
-                  fontSize: 16.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                   color: textColor,
                 ),
@@ -469,8 +488,8 @@ class _MenuItem extends StatelessWidget {
                   Icons.chevron_right,
                   color: isLogout
                       ? Colors.red
-                      : AppColors.textSecondary.withValues(alpha: 0.5),
-                  size: 24.sp,
+                      : AppColors.textSecondary.withValues(alpha: 0.4),
+                  size: 18.sp,
                 ),
           ],
         ),

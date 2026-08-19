@@ -165,9 +165,11 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(height: 16.h),
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
-                child: CustomBackButton(),
+                child: CustomBackButton(
+                  offset: Offset(-10.w, 0),
+                ),
               ),
               SizedBox(height: 16.h),
               // App Logo placeholder based on UI mockup

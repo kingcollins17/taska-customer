@@ -13,6 +13,7 @@ import 'package:seeker_app/core/models/tasks/task.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
 import 'package:seeker_app/core/providers/task_attachment_upload_provider.dart';
+import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/utils/flushbar_message.dart';
 import 'package:seeker_app/core/utils/loading_overlay.dart';
 import 'package:shimmer/shimmer.dart';
@@ -161,6 +162,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     .upload(
                       taskId: taskId,
                       onSuccess: () {
+                        // Refresh the tasks list
+                        ref.invalidate(tasksProvider);
+
                         completer.complete();
                         context.go('/');
                         // Root Context

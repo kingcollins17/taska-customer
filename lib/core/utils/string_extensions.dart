@@ -1,19 +1,7 @@
 extension StringExt on String {
-  /// Checks if this string (lowercased) is exactly present in [values].
-  bool isExactlyIn(Iterable<String> values) {
-    return values.map((i) => i.toLowerCase()).contains(toLowerCase());
-  }
-
-  /// Checks if this string matches any of the regular expression patterns in [values].
-  bool isRegexIn(Iterable<String> values) {
-    return values.any((pattern) {
-      try {
-        final regex = RegExp(pattern, caseSensitive: false);
-        return regex.hasMatch(this);
-      } catch (_) {
-        return false;
-      }
-    });
+  /// Checks if this string contains any of the substrings in [values].
+  bool containsAny(Iterable<String> values) {
+    return values.any((v) => contains(v));
   }
 
   /// Checks if the string is a valid email address.

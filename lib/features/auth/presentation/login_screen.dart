@@ -72,7 +72,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SizedBox(height: 16.h),
 
               // Back Button
-              const CustomBackButton(),
+              CustomBackButton(offset: Offset(-10.w, 0)),
 
               SizedBox(height: 32.h),
 
@@ -95,7 +95,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: GoogleFonts.inter(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
 
@@ -112,9 +114,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Please enter your email';
-                        final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                        if (!emailRegex.hasMatch(value)) return 'Please enter a valid email address';
+                        if (value == null || value.isEmpty)
+                          return 'Please enter your email';
+                        final emailRegex = RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        );
+                        if (!emailRegex.hasMatch(value))
+                          return 'Please enter a valid email address';
                         return null;
                       },
                     ),
@@ -128,7 +134,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       isPassword: true,
                       controller: _passwordController,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Please enter your password';
+                        if (value == null || value.isEmpty)
+                          return 'Please enter your password';
                         return null;
                       },
                     ),

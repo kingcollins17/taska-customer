@@ -27,7 +27,14 @@ final List<RouteBase> homeRoutes = [
         routes: [
           GoRoute(
             path: '/tasks',
-            builder: (context, state) => const TasksScreen(),
+            builder: (context, state) {
+              final initialStatuses = state.extra is List<String>
+                  ? state.extra as List<String>
+                  : (state.extra is List
+                        ? (state.extra as List).cast<String>()
+                        : null);
+              return TasksScreen(initialStatuses: initialStatuses);
+            },
           ),
         ],
       ),

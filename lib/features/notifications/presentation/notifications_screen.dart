@@ -3,15 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:seeker_app/core/core.dart';
+import 'package:seeker_app/core/designs/app_colors.dart';
+import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:animations/animations.dart';
-import 'package:seeker_app/core/designs/widgets/custom_back_button.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/notification_providers.dart';
 
 import 'widgets/notifications_filter_row.dart';
 import 'widgets/notification_group_header.dart';
 import 'widgets/notification_list_item.dart';
+import 'widgets/notification_detail_sheet.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -130,17 +132,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final List<Widget> widgets = [];
     for (var entry in grouped.entries) {
       widgets.add(NotificationGroupHeader(title: entry.key));
-      widgets.add(SizedBox(height: 12.h));
       widgets.addAll(
         entry.value.map((item) {
           return Padding(
-            padding: EdgeInsets.only(bottom: 12.h),
+            padding: EdgeInsets.only(bottom: 8.h),
             child: NotificationListItem(
               notification: item,
               onTap: () {
                 if (item.readAt == null && item.notificationId != null) {
                   _markRead(item.notificationId!);
                 }
+                NotificationDetailSheet.show(context, notification: item);
               },
             ),
           );
@@ -154,17 +156,31 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(notificationsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
 
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
+        backgroundColor: bgColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         leading: const CustomBackButton(),
-        title: const Text('Notifications'),
+        title: Text(
+          'Notifications',
+          style: AppTextStyles.heading3.copyWith(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : AppColors.textPrimary,
+          ),
+        ),
       ),
       body: RefreshIndicator(
+        color: AppColors.primary,
         onRefresh: () => ref.read(notificationsProvider.notifier).refresh(),
         child: ListView(
           controller: _scrollController,
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           children: [
             state.when(
               data: (items) => NotificationsFilterRow(
@@ -177,9 +193,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 onMarkAllRead: () => _markAllRead(items),
               ),
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (err, stack) => const SizedBox.shrink(),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 4.h),
             state.when(
               data: (items) => PageTransitionSwitcher(
                 duration: const Duration(milliseconds: 300),
@@ -188,6 +204,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     animation: animation,
                     secondaryAnimation: secondaryAnimation,
                     transitionType: SharedAxisTransitionType.horizontal,
+                    fillColor: Colors.transparent,
                     child: child,
                   );
                 },

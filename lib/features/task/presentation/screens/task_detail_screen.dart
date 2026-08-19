@@ -11,7 +11,6 @@ import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/utils/num_extension.dart';
-import 'package:seeker_app/core/designs/widgets/confirm_task_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/task_detail_options_sheet.dart';
 
@@ -40,8 +39,9 @@ class TaskDetailScreen extends ConsumerWidget {
             _TaskDetailErrorState(taskId: taskId, error: error),
       ),
       bottomNavigationBar: taskAsync.whenOrNull(
-        data: (task) =>
-            shouldShouldFab ? _BottomActionBar(task: task) : SizedBox.shrink(),
+        data: (task) => shouldShouldFab
+            ? _BottomActionBar(task: task)
+            : const SizedBox.shrink(),
         loading: () => const _BottomShimmerBar(),
       ),
     );
@@ -57,7 +57,6 @@ class _TaskDetailContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final imageAttachments =
         task.attachments?.where((att) {
@@ -118,20 +117,20 @@ class _TaskDetailContent extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async {
         if (task.id != null) {
-          await ref.refresh(taskDetailProvider(task.id!).future);
+          return ref.refresh(taskDetailProvider(task.id!));
         }
       },
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 300.h,
+            expandedHeight: 240.h,
             pinned: true,
             elevation: 0,
             backgroundColor: colorScheme.surface,
             leading: Padding(
               padding: EdgeInsets.all(8.r),
-              child: CustomBackButton(),
+              child: const CustomBackButton(),
             ),
             actions: [
               Padding(
@@ -146,7 +145,7 @@ class _TaskDetailContent extends ConsumerWidget {
                     icon: HugeIcon(
                       icon: HugeIcons.strokeRoundedMoreVertical,
                       color: colorScheme.onSurface,
-                      size: 20.sp,
+                      size: 18.sp,
                     ),
                     onPressed: () {
                       TaskDetailOptionsSheet.show(context, task: task);
@@ -175,9 +174,9 @@ class _TaskDetailContent extends ConsumerWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withValues(alpha: 0.4),
+                            Colors.black.withValues(alpha: 0.35),
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.3),
+                            Colors.black.withValues(alpha: 0.25),
                           ],
                           stops: const [0.0, 0.5, 1.0],
                         ),
@@ -193,33 +192,26 @@ class _TaskDetailContent extends ConsumerWidget {
               transform: Matrix4.translationValues(0, -20.h, 0),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
-                    blurRadius: 16,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
               ),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
                       child: Container(
-                        width: 40.w,
+                        width: 36.w,
                         height: 4.h,
                         decoration: BoxDecoration(
-                          color: colorScheme.outlineVariant.withValues(
-                            alpha: 0.6,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.2,
                           ),
                           borderRadius: BorderRadius.circular(2.r),
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 12.h),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -228,66 +220,74 @@ class _TaskDetailContent extends ConsumerWidget {
                         Text(
                           priceStr,
                           style: textTheme.headlineMedium?.copyWith(
-                            fontSize: 26.sp,
+                            fontSize: 22.sp,
                             fontWeight: FontWeight.w800,
-                            color: colorScheme.onSurface,
+                            color: AppColors.primary,
                             letterSpacing: -0.5,
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 10.h),
+                    SizedBox(height: 6.h),
                     Text(
                       task.title ?? 'Task Details',
                       style: textTheme.titleLarge?.copyWith(
-                        fontSize: 20.sp,
+                        fontSize: 17.sp,
                         fontWeight: FontWeight.w700,
                         color: colorScheme.onSurface,
-                        height: 1.2,
+                        height: 1.25,
                       ),
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 8.h),
                     if (task.description != null &&
                         task.description!.isNotEmpty) ...[
                       Text(
                         task.description!,
                         style: textTheme.bodyMedium?.copyWith(
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           color: colorScheme.onSurfaceVariant,
-                          height: 1.5,
+                          height: 1.45,
                         ),
                       ),
-                      SizedBox(height: 18.h),
+                      SizedBox(height: 14.h),
                     ],
                     if (task.status?.toLowerCase() == 'assigned') ...[
                       _TaskAssignmentDisplay(taskId: task.id ?? ''),
-                      SizedBox(height: 18.h),
+                      SizedBox(height: 14.h),
                     ],
                     Text(
                       'Task Details',
                       style: textTheme.titleMedium?.copyWith(
-                        fontSize: 15.sp,
+                        fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
                         color: colorScheme.onSurface,
                       ),
                     ),
-                    SizedBox(height: 10.h),
-                    _InfoOptionCard(
-                      title: 'Scheduled Time',
-                      subtitle: dateStr,
-                      icon: HugeIcons.strokeRoundedCalendar01,
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _InfoOptionCard(
+                            title: 'Scheduled Time',
+                            subtitle: dateStr,
+                            icon: HugeIcons.strokeRoundedCalendar01,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: _InfoOptionCard(
+                            title: 'Location',
+                            subtitle: locationStr,
+                            icon: HugeIcons.strokeRoundedLocation01,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 10.h),
-                    _InfoOptionCard(
-                      title: 'Location',
-                      subtitle: locationStr,
-                      icon: HugeIcons.strokeRoundedLocation01,
-                    ),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 14.h),
                     _PriceBreakdownCard(task: task),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 16.h),
                     _AttachmentsSection(attachments: task.attachments ?? []),
-                    SizedBox(height: 30.h),
+                    SizedBox(height: 24.h),
                   ],
                 ),
               ),
@@ -318,8 +318,8 @@ class _HeroFallback extends StatelessWidget {
                   colorScheme.surfaceContainerHighest,
                 ]
               : [
-                  colorScheme.primaryContainer,
-                  colorScheme.surfaceContainerHighest,
+                  colorScheme.primaryContainer.withValues(alpha: 0.5),
+                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 ],
         ),
       ),
@@ -328,15 +328,15 @@ class _HeroFallback extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(20.r),
+              padding: EdgeInsets.all(16.r),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.15),
+                color: colorScheme.primary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: HugeIcon(
                 icon: HugeIcons.strokeRoundedTask01,
                 color: colorScheme.primary,
-                size: 54.sp,
+                size: 42.sp,
               ),
             ),
           ],
@@ -353,63 +353,98 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final s = status.toLowerCase().replaceAll(' ', '_');
 
-    Color badgeColor;
-    Color textColor;
-
-    switch (status.toLowerCase()) {
-      case 'draft':
-        badgeColor = Colors.grey.shade800;
-        textColor = Colors.white;
-        break;
-      case 'open':
-        badgeColor = AppColors.primary;
-        textColor = Colors.white;
-        break;
-      case 'matched':
-        badgeColor = Colors.amber.shade700;
-        textColor = Colors.white;
-        break;
-      case 'in progress':
-      case 'inprogress':
-        badgeColor = Colors.purple.shade600;
-        textColor = Colors.white;
-        break;
-      case 'completed':
-        badgeColor = Colors.green.shade600;
-        textColor = Colors.white;
-        break;
-      case 'cancelled':
-        badgeColor = Colors.red.shade600;
-        textColor = Colors.white;
-        break;
-      default:
-        badgeColor = colorScheme.onSurface;
-        textColor = colorScheme.surface;
-    }
+    final (
+      String label,
+      IconData iconData,
+      Color badgeColor,
+      Color textColor,
+    ) = switch (s) {
+      'draft' => (
+        'Draft',
+        Icons.edit_note_rounded,
+        Colors.grey.shade800,
+        Colors.white,
+      ),
+      'open' => (
+        'Open',
+        Icons.brightness_low_rounded,
+        AppColors.primary,
+        Colors.white,
+      ),
+      'searching' || 'pending' => (
+        'Searching',
+        Icons.radar_rounded,
+        Colors.blue.shade700,
+        Colors.white,
+      ),
+      'assigned' || 'matched' || 'booked' => (
+        'Assigned',
+        Icons.person_pin_circle_rounded,
+        Colors.amber.shade800,
+        Colors.white,
+      ),
+      'in_progress' || 'inprogress' => (
+        'In Progress',
+        Icons.play_circle_fill_rounded,
+        Colors.purple.shade600,
+        Colors.white,
+      ),
+      'completed' => (
+        'Completed',
+        Icons.check_circle_rounded,
+        Colors.green.shade700,
+        Colors.white,
+      ),
+      'cancelled' => (
+        'Cancelled',
+        Icons.cancel_rounded,
+        Colors.red.shade700,
+        Colors.white,
+      ),
+      'expired' => (
+        'Expired',
+        Icons.timer_off_rounded,
+        Colors.deepOrange.shade700,
+        Colors.white,
+      ),
+      _ => (
+        s.replaceAll('_', ' ').toUpperCase(),
+        Icons.info_outline_rounded,
+        AppColors.primary,
+        Colors.white,
+      ),
+    };
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
         color: badgeColor,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w800,
-          color: textColor,
-          letterSpacing: 0.8,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(iconData, size: 13.sp, color: textColor),
+          SizedBox(width: 4.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -432,30 +467,41 @@ class _InfoOptionCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
         color: isDark
             ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-          width: 1,
-        ),
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              HugeIcon(icon: icon, color: colorScheme.primary, size: 16.sp),
+              Container(
+                padding: EdgeInsets.all(4.r),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: HugeIcon(
+                  icon: icon,
+                  color: colorScheme.primary,
+                  size: 14.sp,
+                ),
+              ),
               SizedBox(width: 6.w),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -466,7 +512,7 @@ class _InfoOptionCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 12.sp,
               fontWeight: FontWeight.w700,
               color: colorScheme.onSurface,
             ),
@@ -493,15 +539,10 @@ class _PriceBreakdownCard extends StatelessWidget {
         : (task.basePrice != null ? task.basePrice!.toNaira(2) : 'TBD');
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: isDark
-            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.2)
-            : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -509,7 +550,7 @@ class _PriceBreakdownCard extends StatelessWidget {
           Text(
             'Total Price',
             style: textTheme.titleMedium?.copyWith(
-              fontSize: 15.sp,
+              fontSize: 14.sp,
               fontWeight: FontWeight.w700,
               color: colorScheme.onSurface,
             ),
@@ -517,9 +558,9 @@ class _PriceBreakdownCard extends StatelessWidget {
           Text(
             totalPriceStr,
             style: textTheme.titleLarge?.copyWith(
-              fontSize: 18.sp,
+              fontSize: 16.sp,
               fontWeight: FontWeight.w800,
-              color: colorScheme.primary,
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -577,7 +618,7 @@ class _AttachmentsSection extends StatelessWidget {
             Text(
               'Attachments (${attachments.length})',
               style: textTheme.titleMedium?.copyWith(
-                fontSize: 15.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w700,
                 color: colorScheme.onSurface,
               ),
@@ -592,25 +633,22 @@ class _AttachmentsSection extends StatelessWidget {
               ),
           ],
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: 8.h),
         if (attachments.isEmpty)
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 20.h),
+            padding: EdgeInsets.symmetric(vertical: 14.h),
             decoration: BoxDecoration(
               color: isDark
                   ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.15)
-                  : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.2),
-              ),
+                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Center(
               child: Text(
                 'No attachment images uploaded',
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -618,7 +656,7 @@ class _AttachmentsSection extends StatelessWidget {
           )
         else
           SizedBox(
-            height: 110.h,
+            height: 90.h,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: attachments.length,
@@ -641,23 +679,13 @@ class _AttachmentsSection extends StatelessWidget {
                     }
                   },
                   child: Container(
-                    width: 110.w,
-                    margin: EdgeInsets.only(right: 12.w),
+                    width: 90.w,
+                    margin: EdgeInsets.only(right: 10.w),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(
-                        color: colorScheme.outlineVariant.withValues(
-                          alpha: 0.4,
-                        ),
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.4,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: isImage && url != null
@@ -671,15 +699,15 @@ class _AttachmentsSection extends StatelessWidget {
                                   child: HugeIcon(
                                     icon: HugeIcons.strokeRoundedImage01,
                                     color: colorScheme.onSurfaceVariant,
-                                    size: 28.sp,
+                                    size: 24.sp,
                                   ),
                                 ),
                               ),
                               Positioned(
-                                right: 6.w,
-                                bottom: 6.h,
+                                right: 4.w,
+                                bottom: 4.h,
                                 child: Container(
-                                  padding: EdgeInsets.all(4.r),
+                                  padding: EdgeInsets.all(3.r),
                                   decoration: BoxDecoration(
                                     color: Colors.black.withValues(alpha: 0.6),
                                     shape: BoxShape.circle,
@@ -687,7 +715,7 @@ class _AttachmentsSection extends StatelessWidget {
                                   child: HugeIcon(
                                     icon: HugeIcons.strokeRoundedView,
                                     color: Colors.white,
-                                    size: 14.sp,
+                                    size: 12.sp,
                                   ),
                                 ),
                               ),
@@ -699,17 +727,17 @@ class _AttachmentsSection extends StatelessWidget {
                               HugeIcon(
                                 icon: HugeIcons.strokeRoundedFile01,
                                 color: colorScheme.primary,
-                                size: 28.sp,
+                                size: 24.sp,
                               ),
-                              SizedBox(height: 6.h),
+                              SizedBox(height: 4.h),
                               Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                padding: EdgeInsets.symmetric(horizontal: 4.w),
                                 child: Text(
                                   item.fileName ?? 'File',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 11.sp,
+                                    fontSize: 10.sp,
                                     color: colorScheme.onSurface,
                                   ),
                                 ),
@@ -774,176 +802,118 @@ class _AssignmentCard extends StatelessWidget {
     final totalTasks = provider.totalTasksCompleted ?? 0;
 
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: isDark
-            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-            : AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+        borderRadius: BorderRadius.circular(14.r),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 52.r,
-                height: 52.r,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: provider.profilePictureUrl != null
-                    ? ClipOval(
-                        child: Image.network(
-                          provider.profilePictureUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Center(
-                            child: HugeIcon(
-                              icon: HugeIcons.strokeRoundedUser,
-                              color: AppColors.primary,
-                              size: 24.sp,
-                            ),
-                          ),
-                        ),
-                      )
-                    : Center(
+          Container(
+            width: 44.r,
+            height: 44.r,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: 0.15),
+            ),
+            child: provider.profilePictureUrl != null
+                ? ClipOval(
+                    child: Image.network(
+                      provider.profilePictureUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Center(
                         child: HugeIcon(
                           icon: HugeIcons.strokeRoundedUser,
                           color: AppColors.primary,
-                          size: 24.sp,
+                          size: 20.sp,
                         ),
                       ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      provider.fullname ?? 'Provider',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4.h),
-                    Row(
-                      children: [
-                        if (provider.averageRatings != null) ...[
-                          HugeIcon(
-                            icon: HugeIcons.strokeRoundedStar,
-                            color: Colors.amber,
-                            size: 13.sp,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            '${provider.averageRatings?.toStringAsFixed(1) ?? '0.0'} rating',
-                            style: textTheme.bodySmall?.copyWith(
-                              fontSize: 11.sp,
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                        ],
-                        Text(
-                          '$totalTasks Tasks',
-                          style: textTheme.bodySmall?.copyWith(
-                            fontSize: 11.sp,
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
+                  )
+                : Center(
+                    child: HugeIcon(
+                      icon: HugeIcons.strokeRoundedUser,
+                      color: AppColors.primary,
+                      size: 20.sp,
+                    ),
+                  ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  provider.fullname ?? 'Provider',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 2.h),
+                Row(
+                  children: [
+                    if (provider.averageRatings != null) ...[
+                      HugeIcon(
+                        icon: HugeIcons.strokeRoundedStar,
+                        color: Colors.amber,
+                        size: 12.sp,
+                      ),
+                      SizedBox(width: 3.w),
+                      Text(
+                        '${provider.averageRatings?.toStringAsFixed(1) ?? '0.0'} rating',
+                        style: textTheme.bodySmall?.copyWith(
+                          fontSize: 11.sp,
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
+                      ),
+                      SizedBox(width: 8.w),
+                    ],
+                    Text(
+                      '$totalTasks Tasks',
+                      style: textTheme.bodySmall?.copyWith(
+                        fontSize: 11.sp,
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          SizedBox(height: 12.h),
-          if (provider.phoneNumber != null && provider.phoneNumber!.isNotEmpty)
-            SizedBox(
-              width: double.infinity,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => _makeCall(provider.phoneNumber!),
-                  borderRadius: BorderRadius.circular(12.r),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        HugeIcon(
-                          icon: HugeIcons.strokeRoundedCall,
-                          color: Colors.white,
-                          size: 18.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'Call Provider',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
+          if (provider.phoneNumber != null &&
+              provider.phoneNumber!.isNotEmpty) ...[
+            SizedBox(width: 8.w),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _makeCall(provider.phoneNumber!),
+                borderRadius: BorderRadius.circular(20.r),
+                child: Container(
+                  width: 38.r,
+                  height: 38.r,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
                   ),
-                ),
-              ),
-            )
-          else
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 12.h),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Center(
-                child: Text(
-                  'Phone number not available',
-                  style: textTheme.bodySmall?.copyWith(
-                    fontSize: 12.sp,
-                    color: colorScheme.onSurfaceVariant,
+                  child: Center(
+                    child: HugeIcon(
+                      icon: HugeIcons.strokeRoundedCall,
+                      color: Colors.white,
+                      size: 18.sp,
+                    ),
                   ),
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -964,20 +934,20 @@ class _AssignmentCardShimmer extends StatelessWidget {
       baseColor: baseColor,
       highlightColor: highlightColor,
       child: Container(
-        padding: EdgeInsets.all(18.w),
+        padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
           color: isDark
               ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
               : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(14.r),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                CircleAvatar(radius: 30.r, backgroundColor: Colors.white),
-                SizedBox(width: 14.w),
+                CircleAvatar(radius: 22.r, backgroundColor: Colors.white),
+                SizedBox(width: 10.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -987,10 +957,10 @@ class _AssignmentCardShimmer extends StatelessWidget {
                         width: 100.w,
                         color: Colors.white,
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: 6.h),
                       Container(
-                        height: 16.h,
-                        width: 150.w,
+                        height: 14.h,
+                        width: 130.w,
                         color: Colors.white,
                       ),
                     ],
@@ -998,13 +968,13 @@ class _AssignmentCardShimmer extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 12.h),
             Container(
-              height: 48.h,
+              height: 40.h,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14.r),
+                borderRadius: BorderRadius.circular(10.r),
               ),
             ),
           ],
@@ -1022,7 +992,6 @@ class _BottomActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final status = task.status?.toLowerCase() ?? 'open';
     String actionText = 'Back to Tasks';
@@ -1037,24 +1006,10 @@ class _BottomActionBar extends ConsumerWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: colorScheme.surface),
       child: SafeArea(
         child: SizedBox(
-          height: 48.h,
+          height: 44.h,
           child: ElevatedButton(
             onPressed: () {
               if (status == 'draft') {
@@ -1074,30 +1029,18 @@ class _BottomActionBar extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              elevation: 2,
-              shadowColor: AppColors.primary.withValues(alpha: 0.3),
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(12.r),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  actionText,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                // SizedBox(width: 6.w),
-                // HugeIcon(
-                //   icon: HugeIcons.strokeRoundedArrowRight01,
-                //   color: Colors.white,
-                //   size: 18.sp,
-                // ),
-              ],
+            child: Text(
+              actionText,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
         ),
@@ -1124,17 +1067,17 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
             baseColor: baseColor,
             highlightColor: highlightColor,
             child: Container(
-              height: 280.h,
+              height: 240.h,
               width: double.infinity,
               color: shimmerColor,
             ),
           ),
           Container(
             transform: Matrix4.translationValues(0, -20.h, 0),
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
             decoration: BoxDecoration(
               color: colorScheme.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
             ),
             child: Shimmer.fromColors(
               baseColor: baseColor,
@@ -1144,7 +1087,7 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                 children: [
                   Center(
                     child: Container(
-                      width: 40.w,
+                      width: 36.w,
                       height: 4.h,
                       decoration: BoxDecoration(
                         color: shimmerColor,
@@ -1152,21 +1095,21 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 16.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        width: 140.w,
-                        height: 26.h,
+                        width: 120.w,
+                        height: 22.h,
                         decoration: BoxDecoration(
                           color: shimmerColor,
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                       ),
                       Container(
-                        width: 80.w,
-                        height: 20.h,
+                        width: 70.w,
+                        height: 18.h,
                         decoration: BoxDecoration(
                           color: shimmerColor,
                           borderRadius: BorderRadius.circular(4.r),
@@ -1174,19 +1117,19 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 12.h),
                   Container(
-                    width: 220.w,
-                    height: 22.h,
+                    width: 200.w,
+                    height: 18.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 10.h),
                   Container(
                     width: double.infinity,
-                    height: 14.h,
+                    height: 12.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
@@ -1194,75 +1137,75 @@ class _TaskDetailShimmerLoading extends StatelessWidget {
                   ),
                   SizedBox(height: 6.h),
                   Container(
-                    width: 260.w,
+                    width: 240.w,
+                    height: 12.h,
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 60.h,
+                          decoration: BoxDecoration(
+                            color: shimmerColor,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Container(
+                          height: 60.h,
+                          decoration: BoxDecoration(
+                            color: shimmerColor,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                  Container(
+                    height: 90.h,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: shimmerColor,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Container(
+                    width: 110.w,
                     height: 14.h,
                     decoration: BoxDecoration(
                       color: shimmerColor,
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
-                  SizedBox(height: 24.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 70.h,
-                          decoration: BoxDecoration(
-                            color: shimmerColor,
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: Container(
-                          height: 70.h,
-                          decoration: BoxDecoration(
-                            color: shimmerColor,
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 24.h),
-                  Container(
-                    height: 120.h,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: shimmerColor,
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                  ),
-                  SizedBox(height: 24.h),
-                  Container(
-                    width: 120.w,
-                    height: 16.h,
-                    decoration: BoxDecoration(
-                      color: shimmerColor,
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 10.h),
                   SizedBox(
-                    height: 100.h,
+                    height: 90.h,
                     child: Row(
                       children: [
                         Container(
-                          width: 100.w,
-                          height: 100.h,
+                          width: 90.w,
+                          height: 90.h,
                           decoration: BoxDecoration(
                             color: shimmerColor,
-                            borderRadius: BorderRadius.circular(16.r),
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
                         ),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: 10.w),
                         Container(
-                          width: 100.w,
-                          height: 100.h,
+                          width: 90.w,
+                          height: 90.h,
                           decoration: BoxDecoration(
                             color: shimmerColor,
-                            borderRadius: BorderRadius.circular(16.r),
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
                         ),
                       ],
@@ -1289,17 +1232,17 @@ class _BottomShimmerBar extends StatelessWidget {
     final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       color: colorScheme.surface,
       child: SafeArea(
         child: Shimmer.fromColors(
           baseColor: baseColor,
           highlightColor: highlightColor,
           child: Container(
-            height: 52.h,
+            height: 44.h,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(26.r),
+              borderRadius: BorderRadius.circular(12.r),
             ),
           ),
         ),
@@ -1324,32 +1267,34 @@ class _TaskDetailErrorState extends ConsumerWidget {
         child: Padding(
           padding: EdgeInsets.all(24.w),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: Checkbox.width > 0
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.center,
             children: [
               HugeIcon(
                 icon: HugeIcons.strokeRoundedAlert01,
                 color: colorScheme.error,
-                size: 48.sp,
+                size: 40.sp,
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 14.h),
               Text(
                 'Unable to load task details',
                 style: textTheme.titleMedium?.copyWith(
-                  fontSize: 16.sp,
+                  fontSize: 15.sp,
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               Text(
                 error.toString(),
                 textAlign: TextAlign.center,
                 style: textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
-                  fontSize: 13.sp,
+                  fontSize: 12.sp,
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 20.h),
               ElevatedButton(
                 onPressed: () {
                   ref.invalidate(taskDetailProvider(taskId));
@@ -1358,11 +1303,11 @@ class _TaskDetailErrorState extends ConsumerWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(
-                    horizontal: 24.w,
-                    vertical: 12.h,
+                    horizontal: 20.w,
+                    vertical: 10.h,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                 ),
                 child: const Text('Try Again'),

@@ -162,7 +162,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               SizedBox(height: 16.h),
 
               // Back Button
-              const CustomBackButton(),
+              CustomBackButton(
+                offset: Offset(-10.w, 0),
+              ),
 
               SizedBox(height: 32.h),
 

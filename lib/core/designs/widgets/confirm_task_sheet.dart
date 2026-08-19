@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
-import 'package:seeker_app/core/designs/widgets/primary_button.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
@@ -23,6 +23,9 @@ class ConfirmTaskSheet extends ConsumerWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ConfirmTaskSheet(taskId: taskId),
     );
@@ -33,21 +36,6 @@ class ConfirmTaskSheet extends ConsumerWidget {
     final taskAsync = ref.watch(taskDetailProvider(taskId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    Widget buildHandle() {
-      return Center(
-        child: Container(
-          width: 48.w,
-          height: 5.h,
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withOpacity(0.2)
-                : Colors.black.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(2.5.r),
-          ),
-        ),
-      );
-    }
-
     Widget buildShimmer() {
       final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
       final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
@@ -56,58 +44,26 @@ class ConfirmTaskSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          buildHandle(),
-          SizedBox(height: 20.h),
-          Row(
-            children: [
-              Shimmer.fromColors(
-                baseColor: baseColor,
-                highlightColor: highlightColor,
-                child: Container(
-                  width: 40.w,
-                  height: 40.w,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
+          SizedBox(height: 8.h),
+          Shimmer.fromColors(
+            baseColor: baseColor,
+            highlightColor: highlightColor,
+            child: Container(
+              width: 140.w,
+              height: 18.h,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4.r),
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Shimmer.fromColors(
-                      baseColor: baseColor,
-                      highlightColor: highlightColor,
-                      child: Container(
-                        width: double.infinity,
-                        height: 16.h,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Shimmer.fromColors(
-                      baseColor: baseColor,
-                      highlightColor: highlightColor,
-                      child: Container(
-                        width: 100.w,
-                        height: 12.h,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 12.h),
           Shimmer.fromColors(
             baseColor: baseColor,
             highlightColor: highlightColor,
             child: Container(
               width: double.infinity,
-              height: 72.h,
+              height: 64.h,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12.r),
@@ -120,30 +76,10 @@ class ConfirmTaskSheet extends ConsumerWidget {
             highlightColor: highlightColor,
             child: Container(
               width: double.infinity,
-              height: 16.h,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 20.h),
-          Shimmer.fromColors(
-            baseColor: baseColor,
-            highlightColor: highlightColor,
-            child: Container(
-              width: double.infinity,
-              height: 32.h,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 24.h),
-          Shimmer.fromColors(
-            baseColor: baseColor,
-            highlightColor: highlightColor,
-            child: Container(
-              width: double.infinity,
-              height: 56.h,
+              height: 44.h,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(32.r),
+                borderRadius: BorderRadius.circular(12.r),
               ),
             ),
           ),
@@ -151,234 +87,341 @@ class ConfirmTaskSheet extends ConsumerWidget {
       );
     }
 
-    Widget buildTimelineItem({
-      required String text,
-      required bool isIncluded,
-      required bool isLast,
-    }) {
-      return IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Column(
-              children: [
-                Container(
-                  width: 16.w,
-                  height: 16.w,
-                  margin: EdgeInsets.only(top: 2.h),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isIncluded ? AppColors.primary : Colors.transparent,
-                    border: isIncluded
-                        ? null
-                        : Border.all(
-                            color: isDark
-                                ? Colors.grey[600]!
-                                : Colors.grey[400]!,
-                            width: 1.5.w,
-                          ),
-                    boxShadow: isIncluded
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.4),
-                              blurRadius: 6,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: isIncluded
-                      ? Icon(Icons.check, size: 10.sp, color: Colors.white)
-                      : null,
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 1.5.w,
-                      margin: EdgeInsets.symmetric(vertical: 4.h),
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                    ),
-                  ),
-              ],
-            ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: isLast ? 0 : 20.h),
-                child: Text(
-                  text,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: isIncluded
-                        ? (isDark ? Colors.white : Colors.black87)
-                        : (isDark ? Colors.grey[600] : Colors.grey[400]),
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ),
-          ],
+    return PopScope(
+      canPop: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkBackground : AppColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
-      );
-    }
+        padding: EdgeInsets.only(
+          left: 16.w,
+          right: 16.w,
+          top: 14.h,
+          bottom: MediaQuery.of(context).padding.bottom + 16.h,
+        ),
+        child: SafeArea(
+          top: false,
+          child: taskAsync.when(
+            data: (task) {
+              final categoryAsync = task.categoryId != null
+                  ? ref.watch(categoryByIdProvider(task.categoryId!))
+                  : const AsyncValue.data(null);
+              final categoryName =
+                  categoryAsync.asData?.value?.name ?? 'Service';
 
-    return Container(
-      padding: EdgeInsets.only(
-        left: 24.w,
-        right: 24.w,
-        top: 16.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 32.h,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBackground : AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      child: taskAsync.when(
-        data: (task) {
-          final categoryAsync = task.categoryId != null
-              ? ref.watch(categoryByIdProvider(task.categoryId!))
-              : const AsyncValue.data(null);
+              final priceStr = task.customerTotalPrice != null
+                  ? task.customerTotalPrice!.toNaira(2)
+                  : (task.basePrice != null
+                        ? task.basePrice!.toNaira(2)
+                        : 'TBD');
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              buildHandle(),
-              SizedBox(height: 16.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Confirm Task',
-                    style: AppTextStyles.heading3.copyWith(
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: AppColors.textSecondary,
-                      size: 20.sp,
-                    ),
-                    onPressed: () => context.pop(),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 24.h),
-              Text(
-                task.title ?? 'Untitled Task',
-                style: AppTextStyles.heading3.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16.sp,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Text(
-                'These details encompass the task you requested. You will be matched with a verified Tasker for this service.',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: 24.h),
-              Builder(
-                builder: (context) {
-                  final items = [
-                    if (categoryAsync.asData?.value != null)
-                      {
-                        'text': '${categoryAsync.asData!.value!.name}',
-                        'isIncluded': true,
-                      },
-                    {
-                      'text': 'Matched with a verified Tasker',
-                      'isIncluded': true,
-                    },
-                    {'text': 'Price open to renegotiation', 'isIncluded': true},
-                    {'text': 'Secure online/cash payment', 'isIncluded': true},
-                    {'text': 'Hidden task fees', 'isIncluded': false},
-                  ];
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(items.length, (index) {
-                      final item = items[index];
-                      return buildTimelineItem(
-                        text: item['text'] as String,
-                        isIncluded: item['isIncluded'] as bool,
-                        isLast: index == items.length - 1,
-                      );
-                    }),
-                  );
-                },
-              ),
-              SizedBox(height: 32.h),
-              GestureDetector(
-                onTap: () {
-                  context.showLoading();
-                  ref
-                      .read(taskDraftActionProvider.notifier)
-                      .confirmDraft(
-                        taskId: taskId,
-                        onSuccess: () {
-                          ref.invalidate(taskDetailProvider(taskId));
-                          context.hideLoading();
-                          context.pop();
-                          context.pushNamed(
-                            RouteNames.taskMatching.name,
-                            pathParameters: {'taskId': taskId},
-                          );
-                        },
-                        onError: (error) {
-                          context.hideLoading();
-                          context.showMessage(error, type: MessageType.error);
-                        },
-                      );
-                },
-                child: Container(
-                  height: 52.h,
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
+                  // Top Header Row
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Continue',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                        'Confirm Task Order',
+                        style: AppTextStyles.heading3.copyWith(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                       ),
-                      Text(
-                        (task.customerTotalPrice ?? 0).toNaira(2),
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                      IconButton(
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20.sp,
                         ),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
+                  SizedBox(height: 10.h),
+
+                  // Task Summary Card with Category Name
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(
+                        alpha: isDark ? 0.12 : 0.06,
+                      ),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 3.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                              child: Text(
+                                categoryName,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  fontSize: 10.5.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              priceStr,
+                              style: AppTextStyles.heading3.copyWith(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 6.h),
+                        Text(
+                          task.title ?? 'Untitled Task',
+                          style: AppTextStyles.heading3.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // What Happens Next Flow
+                  Text(
+                    'What Happens Next',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white70 : AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+
+                  _StepRow(
+                    stepNumber: '1',
+                    title: 'Get Matched',
+                    subtitle: 'Matched with a verified professional Tasker.',
+                    isDark: isDark,
+                  ),
+                  SizedBox(height: 6.h),
+                  _StepRow(
+                    stepNumber: '2',
+                    title: 'Service Delivery',
+                    subtitle:
+                        'Tasker arrives at your location and completes the job.',
+                    isDark: isDark,
+                  ),
+                  SizedBox(height: 6.h),
+                  _StepRow(
+                    stepNumber: '3',
+                    title: 'Flexible Payment',
+                    subtitle: 'Pay via online (recommended) or cash offline.',
+                    isDark: isDark,
+                  ),
+
+                  SizedBox(height: 10.h),
+
+                  // Safety Identity Verification Alert Box
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(
+                        alpha: isDark ? 0.15 : 0.1,
+                      ),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(
+                        color: Colors.amber.withValues(
+                          alpha: isDark ? 0.3 : 0.25,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        HugeIcon(
+                          icon: HugeIcons.strokeRoundedShield01,
+                          color: isDark
+                              ? Colors.amber[300]!
+                              : Colors.amber[800]!,
+                          size: 16.sp,
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            'Safety Tip: Always verify the provider\'s identity before allowing them in.',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 10.5.sp,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? Colors.amber[300]
+                                  : Colors.amber[900],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 14.h),
+
+                  // Primary Action Button
+                  ElevatedButton(
+                    onPressed: () {
+                      context.showLoading();
+                      ref
+                          .read(taskDraftActionProvider.notifier)
+                          .confirmDraft(
+                            taskId: taskId,
+                            onSuccess: () {
+                              ref.invalidate(taskDetailProvider(taskId));
+                              context.hideLoading();
+                              context.pop();
+                              context.pushNamed(
+                                RouteNames.taskMatching.name,
+                                pathParameters: {'taskId': taskId},
+                              );
+                            },
+                            onError: (error) {
+                              context.hideLoading();
+                              context.showMessage(
+                                error,
+                                type: MessageType.error,
+                              );
+                            },
+                          );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: Size(double.infinity, 44.h),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Confirm & Match Tasker',
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            color: Colors.white,
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => buildShimmer(),
+            error: (error, _) => Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.w),
+                child: Text(
+                  'Failed to load task details',
+                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.red),
                 ),
               ),
-            ],
-          );
-        },
-        loading: () => buildShimmer(),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Text(
-              'Failed to load task details',
-              style: AppTextStyles.bodyMedium.copyWith(color: Colors.red),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StepRow extends StatelessWidget {
+  final String stepNumber;
+  final String title;
+  final String subtitle;
+  final bool isDark;
+
+  const _StepRow({
+    required this.stepNumber,
+    required this.title,
+    required this.subtitle,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 20.r,
+          height: 20.r,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            stepNumber,
+            style: TextStyle(
+              fontSize: 10.5.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 1.h),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 10.sp,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

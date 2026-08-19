@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
+import 'package:seeker_app/core/models/models.dart';
+import 'package:seeker_app/core/utils/num_extension.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
@@ -52,6 +55,7 @@ class HomeScreen extends ConsumerWidget {
                 ref.refresh(notificationCountsProvider.future),
                 ref.refresh(activeTasksProvider.future),
                 ref.refresh(categoriesProvider(null).future),
+                ref.refresh(tasksProvider.future),
               ]);
             } catch (_) {}
           },
@@ -423,8 +427,8 @@ class _ActiveWork extends ConsumerWidget {
       data: (tasks) {
         if (tasks.isEmpty) return const SizedBox.shrink();
 
-        final displayTasks = tasks.take(3).toList();
-        final showSeeAll = tasks.length > 3;
+        final displayTasks = tasks.take(1).toList();
+        final showSeeAll = tasks.length > 1;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,7 +447,10 @@ class _ActiveWork extends ConsumerWidget {
                 if (showSeeAll)
                   TextButton(
                     onPressed: () {
-                      context.go('/tasks');
+                      context.go(
+                        '/tasks',
+                        extra: ['assigned', 'in_progress'],
+                      );
                     },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
@@ -505,11 +512,10 @@ class _ActiveWork extends ConsumerWidget {
 
               return Padding(
                 padding: EdgeInsets.only(
-                  bottom: index < displayTasks.length - 1 ? 12.h : 0,
+                  bottom: index < displayTasks.length - 1 ? 10.h : 0,
                 ),
                 child: _ActiveWorkItem(
-                  title: task.title ?? 'N/A',
-                  taskId: task.id,
+                  task: task,
                   status: statusText,
                   statusColor: statusColor,
                   statusChipColor: chipColor,
@@ -525,90 +531,158 @@ class _ActiveWork extends ConsumerWidget {
   }
 }
 
-class _ActiveWorkItem extends StatelessWidget {
-  final String? taskId;
-  final String title;
+class _ActiveWorkItem extends ConsumerWidget {
+  final TaskLite task;
   final String status;
   final Color statusColor;
   final Color statusChipColor;
 
   const _ActiveWorkItem({
-    this.taskId,
-    required this.title,
+    required this.task,
     required this.status,
     required this.statusColor,
     required this.statusChipColor,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: () {
-        if (taskId != null) {
-          context.pushNamed(
-            RouteNames.taskDetail.name,
-            pathParameters: {'taskId': taskId!},
-          );
-        }
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 6.h),
-        child: Row(
-          children: [
-            Container(
-              width: 40.w,
-              height: 40.w,
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Icon(
-                Icons.handyman_outlined,
-                color: colorScheme.primary,
-                size: 20.sp,
-              ),
+    final priceStr =
+        task.customerTotalPrice?.toNaira(2) ?? task.basePrice?.toNaira(2);
+
+    final categoryName = task.category?.name;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          if (task.id != null) {
+            context.pushNamed(
+              RouteNames.taskDetail.name,
+              pathParameters: {'taskId': task.id!},
+            );
+          }
+        },
+        borderRadius: BorderRadius.circular(16.r),
+        child: Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: isDark ? 0.10 : 0.05),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
             ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: colorScheme.onSurface,
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          ),
+          child: Row(
+            children: [
+              // Left Icon Badge
+              Container(
+                width: 40.r,
+                height: 40.r,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedTask01,
+                    color: AppColors.primary,
+                    size: 18.sp,
                   ),
-                  SizedBox(height: 6.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
+                ),
+              ),
+              SizedBox(width: 12.w),
+
+              // Task Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      task.title ?? 'Task',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: colorScheme.onSurface,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    decoration: BoxDecoration(
-                      color: statusChipColor,
-                      borderRadius: BorderRadius.circular(10.r),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        // Status Chip
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 7.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusChipColor,
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            status,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: statusColor,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (categoryName != null) ...[
+                          SizedBox(width: 6.w),
+                          Text(
+                            '•',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 10.sp,
+                            ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Expanded(
+                            child: Text(
+                              categoryName,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    child: Text(
-                      status,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: statusColor,
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w700,
+                  ],
+                ),
+              ),
+
+              SizedBox(width: 8.w),
+
+              // Right side Price & Chevron
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (priceStr != null)
+                    Text(
+                      priceStr,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.primary,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                  ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -622,7 +696,6 @@ class _ActiveWorkShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final baseColor = colorScheme.onSurface.withValues(alpha: 0.06);
     final highlightColor = colorScheme.onSurface.withValues(alpha: 0.15);
 
@@ -641,76 +714,16 @@ class _ActiveWorkShimmer extends StatelessWidget {
         Shimmer.fromColors(
           baseColor: baseColor,
           highlightColor: highlightColor,
-          child: Column(
-            children: [
-              _buildShimmerItem(colorScheme, isDark),
-              // SizedBox(height: 12.h),
-              // _buildShimmerItem(colorScheme, isDark),
-            ],
+          child: Container(
+            width: double.infinity,
+            height: 64.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildShimmerItem(ColorScheme colorScheme, bool isDark) {
-    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: colorScheme.onSurface.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44.w,
-            height: 44.w,
-            decoration: BoxDecoration(
-              color: colorScheme.onSurface.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: 16.h,
-                  decoration: BoxDecoration(
-                    color: colorScheme.onSurface.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Container(
-                  width: 100.w,
-                  height: 12.h,
-                  decoration: BoxDecoration(
-                    color: colorScheme.onSurface.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 14.w),
-          Container(
-            width: 24.w,
-            height: 24.w,
-            decoration: BoxDecoration(
-              color: colorScheme.onSurface.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

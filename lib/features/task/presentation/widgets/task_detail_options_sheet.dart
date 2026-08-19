@@ -42,6 +42,7 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
     final showPinActions = const {
       'assigned',
       'booked',
+      'in_progress',
       'started',
       'completed',
     }.contains(status);
@@ -53,7 +54,7 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
@@ -64,7 +65,7 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,31 +73,31 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                 // Handle Bar
                 Center(
                   child: Container(
-                    width: 44.w,
-                    height: 5.h,
+                    width: 36.w,
+                    height: 4.h,
                     decoration: BoxDecoration(
-                      color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(2.5.r),
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(2.r),
                     ),
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 12.h),
 
                 // Task Summary Header Tile
                 _TaskHeaderSummary(task: task),
 
-                SizedBox(height: 20.h),
+                SizedBox(height: 14.h),
 
                 Text(
                   'Task Actions',
                   style: textTheme.titleSmall?.copyWith(
-                    fontSize: 13.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     color: colorScheme.onSurfaceVariant,
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 6.h),
 
                 // Option Tiles List
                 _OptionTiles(
@@ -130,7 +131,6 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                       _OptionTile(
                         icon: HugeIcons.strokeRoundedTask01,
                         title: 'Get Start Pin',
-                        // subtitle: task.startPin ?? 'Start pin not assigned yet',
                         subtitle: '****',
                         iconBgColor: AppColors.primary.withValues(alpha: 0.12),
                         iconColor: AppColors.primary,
@@ -143,7 +143,6 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                       _OptionTile(
                         icon: HugeIcons.strokeRoundedCheckmarkCircle02,
                         title: 'Get Completion Pin',
-                        // subtitle: task.completionPin ?? 'Completion pin not assigned yet',
                         subtitle: '****',
                         iconBgColor: Colors.orange.withValues(alpha: 0.12),
                         iconColor: Colors.orange.shade700,
@@ -255,7 +254,7 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                   ],
                 ),
 
-                SizedBox(height: 16.h),
+                SizedBox(height: 8.h),
               ],
             ),
           ),
@@ -464,53 +463,75 @@ class _TaskHeaderSummary extends StatelessWidget {
         ? task.customerTotalPrice!.toNaira(2)
         : (task.basePrice != null ? task.basePrice!.toNaira(2) : 'TBD');
 
+    final statusText = (task.status ?? 'OPEN').toUpperCase();
+
+    Color statusBgColor() {
+      final s = statusText.toLowerCase();
+      if (s.contains('cancel')) return Colors.red.withValues(alpha: 0.15);
+      if (s.contains('draft')) return Colors.orange.withValues(alpha: 0.15);
+      return AppColors.primary.withValues(alpha: 0.15);
+    }
+
+    Color statusTextColor() {
+      final s = statusText.toLowerCase();
+      if (s.contains('cancel')) return Colors.red;
+      if (s.contains('draft')) return Colors.orange.shade800;
+      return AppColors.primary;
+    }
+
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: isDark
-            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+        borderRadius: BorderRadius.circular(14.r),
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12.r),
+            width: 38.r,
+            height: 38.r,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              color: AppColors.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: HugeIcon(
-              icon: HugeIcons.strokeRoundedTask01,
-              color: AppColors.primary,
-              size: 22.sp,
+            child: Center(
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedTask01,
+                color: AppColors.primary,
+                size: 18.sp,
+              ),
             ),
           ),
-          SizedBox(width: 12.w),
+          SizedBox(width: 10.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   task.title ?? 'Task Details',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: textTheme.titleMedium?.copyWith(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
                   ),
                 ),
                 SizedBox(height: 3.h),
-                Text(
-                  'Status: ${(task.status ?? 'Open').toUpperCase()}',
-                  style: textTheme.bodySmall?.copyWith(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: statusBgColor(),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.bold,
+                      color: statusTextColor(),
+                    ),
                   ),
                 ),
               ],
@@ -520,7 +541,7 @@ class _TaskHeaderSummary extends StatelessWidget {
           Text(
             priceStr,
             style: textTheme.titleMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 15.sp,
               fontWeight: FontWeight.w800,
               color: AppColors.primary,
             ),
@@ -573,26 +594,26 @@ class _OptionTile extends StatelessWidget {
         : colorScheme.onSurface;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
+      margin: EdgeInsets.only(bottom: 2.h),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 7.h),
           child: Row(
             children: [
               Container(
-                width: 42.w,
-                height: 42.w,
+                width: 24.w,
+                height: 24.w,
                 decoration: BoxDecoration(
                   color: iconBgColor,
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Center(
-                  child: HugeIcon(icon: icon, color: iconColor, size: 20.sp),
+                  child: HugeIcon(icon: icon, color: iconColor, size: 18.sp),
                 ),
               ),
-              SizedBox(width: 14.w),
+              SizedBox(width: 12.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -600,28 +621,23 @@ class _OptionTile extends StatelessWidget {
                     Text(
                       title,
                       style: textTheme.titleMedium?.copyWith(
-                        fontSize: 14.sp,
+                        fontSize: 13.5.sp,
                         fontWeight: FontWeight.w600,
                         color: titleColor,
                       ),
                     ),
-                    SizedBox(height: 2.h),
+                    SizedBox(height: 1.h),
                     Text(
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodySmall?.copyWith(
-                        fontSize: 12.sp,
+                        fontSize: 11.sp,
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
-              ),
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedArrowRight01,
-                color: colorScheme.outlineVariant,
-                size: 18.sp,
               ),
             ],
           ),

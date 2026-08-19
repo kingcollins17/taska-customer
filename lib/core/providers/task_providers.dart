@@ -114,18 +114,24 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
 
   bool get hasMore => _hasMore;
 
+  String? _userId;
+
   @override
   FutureOr<List<TaskLite>> build() async {
-    await ref.watch(userProvider.future);
+    final user = await ref.watch(userProvider.future);
+    if (user?.id == null) throw Exception('User not found');
     final statusFilter = ref.watch(taskStatusFilterProvider);
     _page = 1;
     _hasMore = true;
-    return _fetchTasks(statusFilter);
+    _userId = user?.id;
+    return _fetchTasks(statusFilter, user!.id!);
   }
 
-  Future<List<TaskLite>> _fetchTasks([List<String>? statusFilter]) async {
+  Future<List<TaskLite>> _fetchTasks(
+    List<String>? statusFilter,
+    String? userId,
+  ) async {
     final client = ref.read(tasksClientProvider);
-    final user = ref.read(userProvider).value;
     final statuses = statusFilter ?? ref.read(taskStatusFilterProvider);
 
     final response = await client.listTasks(
@@ -138,7 +144,7 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
       radiusKm: radiusKm,
       sortBy: sortBy,
       sortDesc: sortDesc,
-      customerId: user?.id,
+      customerId: userId,
     );
 
     if (response.success && response.data != null) {
@@ -163,7 +169,7 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
 
     try {
       _page++;
-      final newItems = await _fetchTasks();
+      final newItems = await _fetchTasks(null, _userId);
       final currentState = state.value ?? [];
       state = AsyncValue.data([...currentState, ...newItems]);
     } catch (_) {
@@ -175,7 +181,7 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
     _page = 1;
     _hasMore = true;
     try {
-      final items = await _fetchTasks();
+      final items = await _fetchTasks(null, _userId);
       state = AsyncValue.data(items);
     } catch (_) {}
   }
