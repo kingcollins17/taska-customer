@@ -122,6 +122,7 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
   updatedAt: json['updated_at'] == null
       ? null
       : DateTime.parse(json['updated_at'] as String),
+  cancellationReason: json['cancellation_reason'] as String?,
   locations: (json['locations'] as List<dynamic>?)
       ?.map((e) => TaskLocation.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -160,6 +161,7 @@ Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
   'start_pin': instance.startPin,
   'completion_pin': instance.completionPin,
   'updated_at': instance.updatedAt?.toIso8601String(),
+  'cancellation_reason': instance.cancellationReason,
   'locations': instance.locations?.map((e) => e.toJson()).toList(),
   'assignment': instance.assignment?.toJson(),
   'attachments': instance.attachments?.map((e) => e.toJson()).toList(),
@@ -252,5 +254,5 @@ Map<String, dynamic> _$CreateTaskRequestToJson(_CreateTaskRequest instance) =>
       'service_id': instance.serviceId,
       'expires_at': instance.expiresAt?.toIso8601String(),
       'scheduled_start_at': instance.scheduledStartAt?.toIso8601String(),
-      'locations': instance.locations?.map((e) => e.toJson()).toList(),
+      'locations': instance.locations,
     };

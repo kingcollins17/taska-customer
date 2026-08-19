@@ -212,8 +212,8 @@ return $default(_that.locationType,_that.latitude,_that.longitude,_that.address,
 }
 
 /// @nodoc
+@JsonSerializable()
 
-@JsonSerializable(explicitToJson: true)
 class _CreateTaskLocationRequest implements CreateTaskLocationRequest {
   const _CreateTaskLocationRequest({@JsonKey(name: 'location_type') this.locationType = 'service', this.latitude, this.longitude, this.address, this.city, this.state, this.country});
   factory _CreateTaskLocationRequest.fromJson(Map<String, dynamic> json) => _$CreateTaskLocationRequestFromJson(json);
@@ -493,8 +493,8 @@ return $default(_that.title,_that.description,_that.categoryId,_that.serviceId,_
 }
 
 /// @nodoc
+@JsonSerializable()
 
-@JsonSerializable(explicitToJson: true)
 class _CreateTaskRequest implements CreateTaskRequest {
   const _CreateTaskRequest({this.title, this.description, @JsonKey(name: 'category_id') this.categoryId, @JsonKey(name: 'service_id') this.serviceId, @JsonKey(name: 'expires_at') this.expiresAt, @JsonKey(name: 'scheduled_start_at') this.scheduledStartAt, final  List<CreateTaskLocationRequest>? locations}): _locations = locations;
   factory _CreateTaskRequest.fromJson(Map<String, dynamic> json) => _$CreateTaskRequestFromJson(json);

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,6 +8,8 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/models/tasks/assignment.dart';
+import 'package:seeker_app/core/models/tasks/task_matching_state.dart';
+import 'package:seeker_app/core/providers/task_matching_provider.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 
@@ -23,46 +23,44 @@ class MatchingScreen extends ConsumerStatefulWidget {
 }
 
 class _MatchingScreenState extends ConsumerState<MatchingScreen> {
-  Timer? _timer;
-
   @override
   void initState() {
     super.initState();
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(minutes: 2), (timer) {
-      final task = ref.read(taskDetailProvider(widget.taskId));
-      if (task.value?.status?.toLowerCase().contains('assigned') == true) {
-        timer.cancel();
-      } else {
-        ref.invalidate(taskDetailProvider(widget.taskId));
-        ref.invalidate(taskAssignmentProvider(widget.taskId));
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(taskMatchingProvider.notifier).start(widget.taskId);
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    ref.read(taskMatchingProvider.notifier).stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final matchingAsync = ref.watch(taskMatchingProvider);
     final taskAsync = ref.watch(taskDetailProvider(widget.taskId));
     final assignmentAsync = ref.watch(taskAssignmentProvider(widget.taskId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final matchingState = matchingAsync.value;
+    final bool isCancelled =
+        matchingState?.status == MatchingStatus.cancelled ||
+        (taskAsync.value?.status?.toLowerCase().contains('cancel') ?? false);
+
     final bool isAssigned =
+        !isCancelled &&
         taskAsync.hasValue &&
         (taskAsync.value?.status?.toLowerCase().contains('assigned') ??
             false) &&
         (taskAsync.value?.assignment != null || assignmentAsync.value != null);
 
+    final task = matchingState?.task ?? taskAsync.value;
+    final cancellationReason = task?.cancellationReason;
+
     // Get assignment data from either source
-    final assignment = assignmentAsync.value ?? taskAsync.value?.assignment;
+    final assignment = assignmentAsync.value ?? task?.assignment;
     final provider = assignment?.provider;
 
     return Scaffold(
@@ -73,12 +71,14 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
           child: Column(
             children: [
               const Spacer(),
-              // Radar spinner — shrinks when assigned
-              _RadarSpinner(isAssigned: isAssigned),
-              SizedBox(height: isAssigned ? 32.h : 48.h),
-              // Timeline — always visible, text changes on assignment
+              // Radar spinner — scales down when assigned or cancelled
+              _RadarSpinner(isAssigned: isAssigned, isCancelled: isCancelled),
+              SizedBox(height: (isAssigned || isCancelled) ? 32.h : 48.h),
+              // Timeline — always visible, text changes on assignment or cancellation
               _TimelineSection(
                 isAssigned: isAssigned,
+                isCancelled: isCancelled,
+                cancellationReason: cancellationReason,
                 provider: provider,
                 isDark: isDark,
               ),
@@ -149,27 +149,44 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Radar Spinner — scales down when assigned
+// Radar Spinner — scales down when assigned or cancelled
 // ---------------------------------------------------------------------------
 class _RadarSpinner extends StatelessWidget {
   final bool isAssigned;
+  final bool isCancelled;
 
-  const _RadarSpinner({required this.isAssigned});
+  const _RadarSpinner({required this.isAssigned, this.isCancelled = false});
 
   @override
   Widget build(BuildContext context) {
-    final double size = isAssigned ? 100.0 : 160.0;
-    final double padding = isAssigned ? 28.0 : 48.0;
+    final double size = (isAssigned || isCancelled) ? 100.0 : 160.0;
+    final double padding = (isAssigned || isCancelled) ? 28.0 : 48.0;
+
+    final Color color = isCancelled ? Colors.redAccent : AppColors.primary;
 
     return AnimatedContainer(
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
+            color: color.withValues(alpha: 0.08),
             shape: BoxShape.circle,
           ),
-          child: isAssigned
+          child: isCancelled
+              ? Icon(
+                      Icons.cancel_rounded,
+                      color: Colors.redAccent,
+                      size: size * 0.6,
+                    )
+                    .animate()
+                    .fadeIn(duration: 300.ms)
+                    .scale(
+                      begin: const Offset(0.5, 0.5),
+                      end: const Offset(1.0, 1.0),
+                      duration: 400.ms,
+                      curve: Curves.elasticOut,
+                    )
+              : isAssigned
               ? Icon(
                       Icons.check_circle_rounded,
                       color: AppColors.primary,
@@ -189,10 +206,18 @@ class _RadarSpinner extends StatelessWidget {
                   borderWidth: 8.0,
                 ),
         )
-        .animate(onPlay: isAssigned ? null : (c) => c.repeat(reverse: true))
+        .animate(
+          onPlay: (isAssigned || isCancelled)
+              ? null
+              : (c) => c.repeat(reverse: true),
+        )
         .scale(
-          begin: isAssigned ? const Offset(1.0, 1.0) : const Offset(0.95, 0.95),
-          end: isAssigned ? const Offset(1.0, 1.0) : const Offset(1.05, 1.05),
+          begin: (isAssigned || isCancelled)
+              ? const Offset(1.0, 1.0)
+              : const Offset(0.95, 0.95),
+          end: (isAssigned || isCancelled)
+              ? const Offset(1.0, 1.0)
+              : const Offset(1.05, 1.05),
           duration: 1500.ms,
           curve: Curves.easeInOut,
         );
@@ -200,15 +225,19 @@ class _RadarSpinner extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Timeline Section — text evolves on assignment
+// Timeline Section — text evolves on assignment or cancellation
 // ---------------------------------------------------------------------------
 class _TimelineSection extends StatelessWidget {
   final bool isAssigned;
+  final bool isCancelled;
+  final String? cancellationReason;
   final TaskAssignmentProvider? provider;
   final bool isDark;
 
   const _TimelineSection({
     required this.isAssigned,
+    this.isCancelled = false,
+    this.cancellationReason,
     required this.provider,
     required this.isDark,
   });
@@ -221,24 +250,36 @@ class _TimelineSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final defaultCancelledMsg =
+        'Your task has been cancelled because there are no available taskers around you at the moment';
+
     return Column(
           children: [
             _buildStep(
               title: 'Finding your Tasker',
               subtitle: 'Scanning network for the nearest qualified Tasker.',
               isCompleted: true,
+              isCancelled: false,
               isActive: false,
               isLast: false,
             ),
             _buildStep(
-              title: isAssigned
+              title: isCancelled
+                  ? 'Task matching cancelled'
+                  : isAssigned
                   ? '${_firstName()} accepted your task'
                   : 'Awaiting confirmation',
-              subtitle: isAssigned
+              subtitle: isCancelled
+                  ? (cancellationReason != null &&
+                            cancellationReason!.trim().isNotEmpty
+                        ? cancellationReason!
+                        : defaultCancelledMsg)
+                  : isAssigned
                   ? 'Your task has been booked and is now assigned.'
                   : 'A Tasker has been matched. Awaiting their response...',
               isCompleted: isAssigned,
-              isActive: !isAssigned,
+              isCancelled: isCancelled,
+              isActive: !isAssigned && !isCancelled,
               isLast: true,
             ),
           ],
@@ -252,10 +293,13 @@ class _TimelineSection extends StatelessWidget {
     required String title,
     required String subtitle,
     required bool isCompleted,
+    required bool isCancelled,
     required bool isActive,
     required bool isLast,
   }) {
-    final color = (isCompleted || isActive)
+    final color = isCancelled
+        ? Colors.redAccent
+        : (isCompleted || isActive)
         ? AppColors.primary
         : (isDark ? Colors.white24 : Colors.black26);
 
@@ -271,13 +315,23 @@ class _TimelineSection extends StatelessWidget {
                 height: 22.r,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isCompleted ? AppColors.primary : Colors.transparent,
+                  color: isCancelled
+                      ? Colors.redAccent
+                      : isCompleted
+                      ? AppColors.primary
+                      : Colors.transparent,
                   border: Border.all(
                     color: color,
-                    width: isCompleted || isActive ? 2 : 1.5,
+                    width: isCompleted || isCancelled || isActive ? 2 : 1.5,
                   ),
                 ),
-                child: isCompleted
+                child: isCancelled
+                    ? Icon(
+                        Icons.close_rounded,
+                        size: 13.sp,
+                        color: Colors.white,
+                      )
+                    : isCompleted
                     ? Icon(
                         Icons.check_rounded,
                         size: 13.sp,
@@ -316,10 +370,12 @@ class _TimelineSection extends StatelessWidget {
                     title,
                     style: AppTextStyles.bodyLarge.copyWith(
                       fontSize: 14.sp,
-                      fontWeight: (isActive || isCompleted)
+                      fontWeight: (isActive || isCompleted || isCancelled)
                           ? FontWeight.bold
                           : FontWeight.w500,
-                      color: (isActive || isCompleted)
+                      color: isCancelled
+                          ? Colors.redAccent
+                          : (isActive || isCompleted)
                           ? (isDark ? Colors.white : AppColors.textPrimary)
                           : (isDark ? Colors.white38 : Colors.black38),
                     ),

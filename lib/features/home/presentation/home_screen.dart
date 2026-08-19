@@ -16,6 +16,7 @@ import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:seeker_app/core/utils/category_icon_helper.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:seeker_app/core/designs/widgets/task_matching_banner.dart';
 import 'widgets/home_app_bar.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -46,46 +47,56 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: RefreshIndicator(
-          color: theme.colorScheme.primary,
-          onRefresh: () async {
-            try {
-              await Future.wait([
-                ref.refresh(userProvider.future),
-                ref.refresh(notificationCountsProvider.future),
-                ref.refresh(activeTasksProvider.future),
-                ref.refresh(categoriesProvider(null).future),
-                ref.refresh(tasksProvider.future),
-              ]);
-            } catch (_) {}
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.only(
+        child: Stack(
+          children: [
+            RefreshIndicator(
+              color: theme.colorScheme.primary,
+              onRefresh: () async {
+                try {
+                  await Future.wait([
+                    ref.refresh(userProvider.future),
+                    ref.refresh(notificationCountsProvider.future),
+                    ref.refresh(activeTasksProvider.future),
+                    ref.refresh(categoriesProvider(null).future),
+                    ref.refresh(tasksProvider.future),
+                  ]);
+                } catch (_) {}
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: 20.w,
+                  right: 20.w,
+                  top: 16.h,
+                  bottom: 100.h,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeAppBar(
+                      name: name,
+                      greeting: greeting,
+                      unreadCount: unreadCount,
+                    ),
+                    SizedBox(height: 20.h),
+                    const _SearchBar(),
+                    SizedBox(height: 24.h),
+                    const _ActiveWork(),
+                    SizedBox(height: 28.h),
+                    const _MainHero(),
+                    SizedBox(height: 28.h),
+                    const _PopularCategories(),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 16.h,
               left: 20.w,
               right: 20.w,
-              top: 16.h,
-              bottom: 100.h,
+              child: const TaskMatchingBanner(),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HomeAppBar(
-                  name: name,
-                  greeting: greeting,
-                  unreadCount: unreadCount,
-                ),
-                SizedBox(height: 20.h),
-                const _SearchBar(),
-                SizedBox(height: 24.h),
-                const _ActiveWork(),
-                SizedBox(height: 28.h),
-                const _MainHero(),
-                SizedBox(height: 28.h),
-                const _PopularCategories(),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -447,10 +458,7 @@ class _ActiveWork extends ConsumerWidget {
                 if (showSeeAll)
                   TextButton(
                     onPressed: () {
-                      context.go(
-                        '/tasks',
-                        extra: ['assigned', 'in_progress'],
-                      );
+                      context.go('/tasks', extra: ['assigned', 'in_progress']);
                     },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,

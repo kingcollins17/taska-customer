@@ -8,6 +8,7 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     return ThemeData(
+      brightness: Brightness.light,
       useMaterial3: true,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
@@ -51,6 +52,7 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     return ThemeData(
+      brightness: Brightness.dark,
       useMaterial3: true,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,

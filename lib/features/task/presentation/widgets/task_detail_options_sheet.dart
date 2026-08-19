@@ -182,15 +182,16 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                       iconBgColor: colorScheme.surfaceContainerHighest,
                       iconColor: colorScheme.onSurface,
                       onTap: () {
-                        if (task.id != null) {
-                          Clipboard.setData(ClipboardData(text: task.id!));
+                        final taskId = task.id;
+                        Navigator.of(context).pop();
+                        if (taskId != null) {
+                          Clipboard.setData(ClipboardData(text: taskId));
                           context.showMessage(
                             'Task ID copied to clipboard',
                             type: MessageType.success,
                             title: 'Copied',
                           );
                         }
-                        Navigator.of(context).pop();
                       },
                     ),
 

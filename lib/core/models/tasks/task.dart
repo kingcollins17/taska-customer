@@ -155,6 +155,8 @@ class Task {
   final String? completionPin;
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
+  @JsonKey(name: 'cancellation_reason')
+  final String? cancellationReason;
   final List<TaskLocation>? locations;
   final TaskAssignment? assignment;
   final List<TaskAttachment>? attachments;
@@ -184,6 +186,7 @@ class Task {
     this.startPin,
     this.completionPin,
     this.updatedAt,
+    this.cancellationReason,
     this.locations,
     this.assignment,
     this.attachments,
@@ -237,7 +240,6 @@ class DispatchAttempt {
 
 @freezed
 abstract class CreateTaskLocationRequest with _$CreateTaskLocationRequest {
-  @JsonSerializable(explicitToJson: true)
   const factory CreateTaskLocationRequest({
     @JsonKey(name: 'location_type') @Default('service') String? locationType,
     double? latitude,
@@ -254,7 +256,6 @@ abstract class CreateTaskLocationRequest with _$CreateTaskLocationRequest {
 
 @freezed
 abstract class CreateTaskRequest with _$CreateTaskRequest {
-  @JsonSerializable(explicitToJson: true)
   const factory CreateTaskRequest({
     String? title,
     String? description,
