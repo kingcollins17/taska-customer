@@ -155,19 +155,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
 
   Future<void> _onPayNow() async {
     if (_amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please enter a valid amount',
-            style: GoogleFonts.inter(),
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-        ),
-      );
+      context.showMessage("Please enter a valid amount", type: MessageType.error);
       return;
     }
 

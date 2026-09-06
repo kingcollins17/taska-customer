@@ -19,4 +19,8 @@ abstract class PaymentsClient {
   Future<GenericResponse<dynamic>> processPaymentWebhook(
     @Body() WebhookPayload payload,
   );
+
+  @GET('/payments/customer/payouts/pending-payment')
+  Future<GenericResponse<Payout>> getPendingPayout();
 }
+

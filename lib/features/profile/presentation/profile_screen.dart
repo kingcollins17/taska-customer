@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:seeker_app/core/constants.dart';
 import 'package:seeker_app/core/designs/widgets/confirmation_dialog.dart';
 import 'package:seeker_app/core/models/models.dart';
+import 'package:seeker_app/core/providers/payout_providers.dart';
 import 'package:seeker_app/features/profile/providers/account_issues_provider.dart';
 import 'package:seeker_app/core/providers/theme_provider.dart';
 import '../../../../core/designs/app_colors.dart';
@@ -42,6 +43,7 @@ class ProfileScreen extends ConsumerWidget {
         : 'User';
     final email = user?.email ?? '';
     final accountIssues = ref.watch(accountIssuesProvider);
+    ref.watch(pendingPayoutListenerProvider);
 
     return Scaffold(
       backgroundColor: bgColor,

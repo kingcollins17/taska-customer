@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/models/models.dart';
+import 'package:seeker_app/core/providers/payout_providers.dart';
 import 'package:seeker_app/core/utils/num_extension.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,6 +37,8 @@ class HomeScreen extends ConsumerWidget {
     final notificationCountsAsync = ref.watch(notificationCountsProvider);
     final user = userAsync.value;
     ref.watch(deviceTrayNotificationsProvider);
+
+    ref.watch(pendingPayoutListenerProvider);
 
     final String name = user?.customerProfile != null
         ? '${user!.customerProfile!.firstName ?? ''} ${user.customerProfile!.lastName ?? ''}'

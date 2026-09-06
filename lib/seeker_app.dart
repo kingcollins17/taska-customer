@@ -5,6 +5,7 @@ import 'package:seeker_app/core/designs/app_theme.dart';
 import 'package:seeker_app/router/app_router.dart';
 
 import 'package:seeker_app/core/providers/theme_provider.dart';
+import 'package:seeker_app/core/providers/payout_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SeekerApp extends ConsumerWidget {
@@ -13,7 +14,9 @@ class SeekerApp extends ConsumerWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    
     final themeMode = ref.watch(themeProvider);
+
 
     return ScreenUtilInit(
       designSize: const Size(360, 690),

@@ -15,7 +15,7 @@ WebhookPayload _$WebhookPayloadFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$WebhookPayloadToJson(WebhookPayload instance) =>
-    <String, dynamic>{'event': instance.event, 'data': instance.data};
+    <String, dynamic>{'event': instance.event, 'data': instance.data?.toJson()};
 
 WebhookPayloadData _$WebhookPayloadDataFromJson(Map<String, dynamic> json) =>
     WebhookPayloadData(
@@ -34,14 +34,19 @@ Map<String, dynamic> _$WebhookPayloadDataToJson(WebhookPayloadData instance) =>
       'reference': instance.reference,
       'amount': instance.amount,
       'status': instance.status,
-      'metadata': instance.metadata,
+      'metadata': instance.metadata?.toJson(),
     };
 
 WebhookPayloadMeta _$WebhookPayloadMetaFromJson(Map<String, dynamic> json) =>
     WebhookPayloadMeta(
       userId: json['user_id'] as String?,
       taskId: json['task_id'] as String?,
+      type: json['type'] as String? ?? 'task_payment',
     );
 
 Map<String, dynamic> _$WebhookPayloadMetaToJson(WebhookPayloadMeta instance) =>
-    <String, dynamic>{'user_id': instance.userId, 'task_id': instance.taskId};
+    <String, dynamic>{
+      'user_id': instance.userId,
+      'task_id': instance.taskId,
+      'type': instance.type,
+    };

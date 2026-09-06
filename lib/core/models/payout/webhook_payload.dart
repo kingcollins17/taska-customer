@@ -1,8 +1,21 @@
 import 'package:json_annotation/json_annotation.dart';
 
 part 'webhook_payload.g.dart';
-
-@JsonSerializable()
+//  final eg={
+//       "event": "charge.success",
+//       "data": {
+//         "reference": "chrg_succ_12345",
+//         "amount": 3025,
+//         "status": "success",
+//         "metadata": {
+//           "type": "task_payment",
+//           "user_id": "7bced38a-e96b-44b9-a812-b35881948a81",
+//           "task_id": "4060dcb4-ce45-4014-97d3-5061da1bc62f"
+          
+//         }
+//       }
+//     };
+@JsonSerializable(explicitToJson: true)
 class WebhookPayload {
   WebhookPayload({this.event, this.data});
 
@@ -44,8 +57,9 @@ class WebhookPayload {
   Map<String, dynamic> toJson() => _$WebhookPayloadToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class WebhookPayloadData {
+
   WebhookPayloadData({this.reference, this.amount, this.status, this.metadata});
 
   final String? reference;
@@ -78,13 +92,15 @@ class WebhookPayloadData {
 
 @JsonSerializable()
 class WebhookPayloadMeta {
-  WebhookPayloadMeta({this.userId, this.taskId});
+  WebhookPayloadMeta({this.userId, this.taskId, this.type='task_payment'});
 
   @JsonKey(name: 'user_id')
   final String? userId;
 
   @JsonKey(name: 'task_id')
   final String? taskId;
+
+  final String? type;
 
   WebhookPayloadMeta copyWith({String? userId, String? taskId}) {
     return WebhookPayloadMeta(
