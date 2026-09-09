@@ -36,6 +36,17 @@ abstract class ServicesClient {
     @Query('per_page') int? perPage = 20,
   });
 
+  @GET('/services/available')
+  Future<GenericResponse<PaginatedResponse<Service>>> getAvailableServices({
+    @Query('latitude') required double latitude,
+    @Query('longitude') required double longitude,
+    @Query('page') int? page = 1,
+    @Query('per_page') int? perPage = 20,
+    @Query('radius_km') double? radiusKm = 10,
+    @Query('category_id') String? categoryId,
+    @Query('region_id') String? regionId,
+  });
+
   @GET('/services/{service_id}/available/regions/{region_id}')
   Future<GenericResponse<ServiceAvailability>> checkServiceAvailabilityInRegion(
     @Path('service_id') String serviceId,

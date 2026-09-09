@@ -1,6 +1,13 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
-enum StorageKey { accessToken, onboardingComplete, themeMode, taskDraft, matchingState }
+enum StorageKey {
+  accessToken,
+  onboardingComplete,
+  themeMode,
+  taskDraft,
+  matchingState,
+  reviewPromptHistory,
+}
 enum HiveBox { defaultBox }
 
 class LocalStorageService {

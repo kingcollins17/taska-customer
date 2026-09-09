@@ -48,8 +48,21 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async {
+            ref.invalidate(userProvider);
+            ref.invalidate(pendingPayoutProvider);
+            try {
+              await Future.wait([
+                ref.read(userProvider.future),
+                ref.read(pendingPayoutProvider.future),
+              ]);
+            } catch (_) {}
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -275,7 +288,7 @@ class ProfileScreen extends ConsumerWidget {
                 },
               ),
 
-              if (kDebugMode) ...[
+              // if (kDebugMode) ...[
                 _MenuItem(
                   icon: Icons.bug_report_outlined,
                   title: 'Debug Console',
@@ -284,7 +297,7 @@ class ProfileScreen extends ConsumerWidget {
                     DebugConsoleView.show(context);
                   },
                 ),
-              ],
+              // ],
 
               // Log Out
               _MenuItem(
@@ -310,7 +323,8 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildIssueBanner(

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/clients/user_client.dart';
 import 'package:seeker_app/core/core.dart';
@@ -9,7 +8,7 @@ import 'package:seeker_app/core/services/local_storage_service.dart';
 
 final userProvider = AsyncNotifierProvider<UserNotifier, User?>(
   UserNotifier.new,
-);
+ retry: (_, _) => null);
 
 class UserNotifier extends AsyncNotifier<User?> {
   @override
@@ -27,7 +26,8 @@ class UserNotifier extends AsyncNotifier<User?> {
       final client = ref.read(userClientProvider);
       final response = await client.getMe();
       if (response.success && response.data != null) {
-        return response.data;
+        
+        return response.data..debugLog();
       }
     } catch (_) {
       // Ignore errors on initial load or background fetch
@@ -233,7 +233,7 @@ class UserNotifier extends AsyncNotifier<User?> {
 final isAuthenticatedProvider = FutureProvider<bool>((ref) async {
   final user = await ref.watch(userProvider.future);
   return user != null;
-});
+}, retry: (_, _) => null);
 
 final supportedBanksProvider = FutureProvider<List<SupportedBank>>((ref) async {
   final client = ref.read(userClientProvider);
@@ -242,7 +242,7 @@ final supportedBanksProvider = FutureProvider<List<SupportedBank>>((ref) async {
     return response.data!;
   }
   throw response.detail ?? 'Failed to fetch supported banks.';
-});
+}, retry: (_, _) => null);
 
 final verifyBankAccountProvider =
     FutureProvider.family<
@@ -258,4 +258,14 @@ final verifyBankAccountProvider =
         return response.data!;
       }
       throw response.detail ?? 'Failed to verify bank account.';
-    });
+    }, retry: (retryCount, error) => null);
+
+final publicProviderProfileProvider = FutureProvider.family
+    .autoDispose<PublicProviderProfile, String>((ref, providerId) async {
+  final client = ref.read(userClientProvider);
+  final response = await client.getPublicProviderProfile(providerId);
+  if (response.success && response.data != null) {
+    return response.data!..debugLog();
+  }
+  throw Exception(response.detail ?? 'Failed to load provider profile.');
+}, retry: (_,_) => null);

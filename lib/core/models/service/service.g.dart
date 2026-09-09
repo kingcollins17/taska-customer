@@ -33,8 +33,8 @@ Map<String, dynamic> _$ServiceCategoryToJson(ServiceCategory instance) =>
     };
 
 Service _$ServiceFromJson(Map<String, dynamic> json) => Service(
-  id: json['id'] as String?,
-  name: json['name'] as String?,
+  id: Service._readServiceId(json, 'id') as String?,
+  name: Service._readServiceName(json, 'name') as String?,
   description: json['description'] as String?,
   imageUrl: json['image_url'] as String?,
   takeRate: (json['take_rate'] as num?)?.toDouble(),
@@ -50,6 +50,8 @@ Service _$ServiceFromJson(Map<String, dynamic> json) => Service(
       ? null
       : DateTime.parse(json['updated_at'] as String),
   data: json['data'] as Map<String, dynamic>?,
+  isAvailable: json['is_available'] as bool?,
+  providerCount: (json['provider_count'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ServiceToJson(Service instance) => <String, dynamic>{
@@ -64,6 +66,8 @@ Map<String, dynamic> _$ServiceToJson(Service instance) => <String, dynamic>{
   'created_at': instance.createdAt?.toIso8601String(),
   'updated_at': instance.updatedAt?.toIso8601String(),
   'data': instance.data,
+  'is_available': instance.isAvailable,
+  'provider_count': instance.providerCount,
 };
 
 ServiceAvailability _$ServiceAvailabilityFromJson(Map<String, dynamic> json) =>

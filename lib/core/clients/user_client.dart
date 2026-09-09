@@ -74,4 +74,9 @@ abstract class UserClient {
 
   @GET('/users/payouts/banks')
   Future<GenericResponse<List<SupportedBank>>> getSupportedBanks();
+
+  @GET('/users/providers/{provider_id}')
+  Future<GenericResponse<PublicProviderProfile>> getPublicProviderProfile(
+    @Path('provider_id') String providerId,
+  );
 }

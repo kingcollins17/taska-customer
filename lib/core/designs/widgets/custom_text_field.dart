@@ -15,6 +15,7 @@ class CustomTextField extends StatefulWidget {
   final VoidCallback? onTap;
   final String? Function(String?)? validator;
   final List<TextInputFormatter>? inputFormatters;
+  final int? maxLines;
 
   const CustomTextField({
     super.key,
@@ -29,6 +30,7 @@ class CustomTextField extends StatefulWidget {
     this.onTap,
     this.validator,
     this.inputFormatters,
+    this.maxLines = 1,
   });
 
   @override
@@ -68,6 +70,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
     return TextFormField(
       controller: widget.controller,
+      maxLines: widget.maxLines,
       obscureText: widget.isPassword ? _obscureText : false,
       keyboardType: widget.keyboardType,
       inputFormatters: widget.inputFormatters,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -83,23 +84,56 @@ class PaymentPage extends ConsumerStatefulWidget {
   const PaymentPage({super.key, this.amount, this.userId, this.taskId});
 
   /// Show the payment bottom sheet and return the result.
-  static Future<PaymentInfo> show({double? amount, String? userId, String? taskId}) async {
-    final context = rootNavigatorKey.currentContext!;
+  static Future<PaymentInfo> show({
+    double? amount,
+    String? userId,
+    String? taskId,
+  }) async {
+    final completer = Completer<PaymentInfo>();
 
-    final result = await showModalBottomSheet<PaymentInfo>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: PaymentPage(amount: amount, userId: userId, taskId: taskId),
-      ),
-    );
+    appQueue.add(() async {
+      final context = rootNavigatorKey.currentContext;
+      if (context == null) {
+        if (!completer.isCompleted) {
+          completer.complete(
+            PaymentInfo(isSuccessful: false, amount: amount ?? 0),
+          );
+        }
+        return;
+      }
 
-    // If user dismisses without paying, return a failed result.
-    return result ?? PaymentInfo(isSuccessful: false, amount: amount ?? 0);
+      try {
+        final result = await showModalBottomSheet<PaymentInfo>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: PaymentPage(
+              amount: amount,
+              userId: userId,
+              taskId: taskId,
+            ),
+          ),
+        );
+
+        if (!completer.isCompleted) {
+          completer.complete(
+            result ?? PaymentInfo(isSuccessful: false, amount: amount ?? 0),
+          );
+        }
+      } catch (e) {
+        if (!completer.isCompleted) {
+          completer.complete(
+            PaymentInfo(isSuccessful: false, amount: amount ?? 0),
+          );
+        }
+      }
+    });
+
+    return completer.future;
   }
 
   @override
@@ -284,8 +318,8 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       height: 5.h,
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withOpacity(0.2)
-            : Colors.black.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.2)
+            : Colors.black.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(2.5.r),
       ),
     );

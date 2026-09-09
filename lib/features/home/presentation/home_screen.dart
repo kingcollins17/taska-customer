@@ -4,6 +4,7 @@ import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/payout_providers.dart';
+import 'package:seeker_app/core/providers/review_providers.dart';
 import 'package:seeker_app/core/utils/num_extension.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +40,7 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(deviceTrayNotificationsProvider);
 
     ref.watch(pendingPayoutListenerProvider);
+    ref.watch(pendingReviewPromptListenerProvider);
 
     final String name = user?.customerProfile != null
         ? '${user!.customerProfile!.firstName ?? ''} ${user.customerProfile!.lastName ?? ''}'
@@ -55,13 +57,20 @@ class HomeScreen extends ConsumerWidget {
             RefreshIndicator(
               color: theme.colorScheme.primary,
               onRefresh: () async {
+                ref.invalidate(userProvider);
+                ref.invalidate(notificationCountsProvider);
+                ref.invalidate(activeTasksProvider);
+                ref.invalidate(categoriesProvider(null));
+                ref.invalidate(tasksProvider);
+                ref.invalidate(pendingPayoutProvider);
                 try {
                   await Future.wait([
-                    ref.refresh(userProvider.future),
-                    ref.refresh(notificationCountsProvider.future),
-                    ref.refresh(activeTasksProvider.future),
-                    ref.refresh(categoriesProvider(null).future),
-                    ref.refresh(tasksProvider.future),
+                    ref.read(userProvider.future),
+                    ref.read(notificationCountsProvider.future),
+                    ref.read(activeTasksProvider.future),
+                    ref.read(categoriesProvider(null).future),
+                    ref.read(tasksProvider.future),
+                    ref.read(pendingPayoutProvider.future),
                   ]);
                 } catch (_) {}
               },
@@ -253,7 +262,7 @@ class _MainHero extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                context.pushNamed(RouteNames.taskCategory.name);
+                context.pushNamed(RouteNames.taskService.name);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,

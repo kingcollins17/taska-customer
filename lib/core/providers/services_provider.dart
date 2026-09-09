@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/clients/clients.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/regions_provider.dart';
+import 'package:seeker_app/core/providers/location_provider.dart';
 
 class ServicesNotifier extends AsyncNotifier<List<Service>> {
   int _page = 1;
@@ -50,7 +52,7 @@ class ServicesNotifier extends AsyncNotifier<List<Service>> {
       final nextItems = await _fetchServices(page: _page + 1);
       _page++;
       state = AsyncData([...currentItems, ...nextItems]);
-    } catch (e, st) {
+    } catch (e) {
       // TODO: Implement error handling
     }
   }
@@ -112,7 +114,7 @@ class CategoriesNotifier extends AsyncNotifier<List<ServiceCategory>> {
       final nextItems = await _fetchCategories(page: _page + 1);
       _page++;
       state = AsyncData([...currentItems, ...nextItems]);
-    } catch (e, st) {
+    } catch (e) {
       // TODO: Implement error handling
     }
   }
@@ -194,4 +196,79 @@ final topCategoriesProvider = FutureProvider<List<ServiceCategory>>((ref) async 
     throw Exception(response.detail ?? 'Failed to load top categories');
   }
   return response.data!;
+});
+
+class AvailableServicesNotifier extends AsyncNotifier<List<Service>> {
+  int _page = 1;
+  final int _perPage = 20;
+  bool _hasMore = true;
+  bool get hasMore => _hasMore;
+
+  final String? categoryId;
+
+  AvailableServicesNotifier({ this.categoryId});
+
+  @override
+  FutureOr<List<Service>> build() async {
+    _page = 1;
+    _hasMore = true;
+    return _fetchAvailable(page: _page);
+  }
+
+  Future<List<Service>> _fetchAvailable({required int page}) async {
+    final address = await ref.read(locationProvider.future);
+    if (address?.lat == null || address?.lng == null) {
+      throw Exception('Location not available. Please enable location services.');
+    }
+
+    final currentRegion = await ref.read(currentRegionProvider.future);
+    final radiusKm = double.tryParse(
+          dotenv.maybeGet('SEARCH_RADIUS_KM',fallback: '10.0') ?? '10.0'
+        );
+
+    final client = ref.read(servicesClientProvider);
+    final response = await client.getAvailableServices(
+      latitude: address!.lat!,
+      longitude: address.lng!,
+      page: page,
+      perPage: _perPage,
+      radiusKm: radiusKm,
+      categoryId: categoryId,
+      regionId: currentRegion?.id,
+    );
+
+    final items = response.data?.items ?? [];
+    if (items.length < _perPage) {
+      _hasMore = false;
+    }
+    return items;
+  }
+
+  Future<void> refresh() async {
+    _page = 1;
+    _hasMore = true;
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => _fetchAvailable(page: _page));
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading || state.hasError || !_hasMore) return;
+
+    final currentItems = state.value ?? [];
+
+    try {
+      final nextItems = await _fetchAvailable(page: _page + 1);
+      _page++;
+      state = AsyncData([...currentItems, ...nextItems]);
+    } catch (e) {
+      // Keep current items on pagination error
+    }
+  }
+}
+
+final availableServicesProvider = AsyncNotifierProvider.family<
+    AvailableServicesNotifier,
+    List<Service>,
+    String?>((categoryId) {
+  return AvailableServicesNotifier(categoryId: categoryId);
 });

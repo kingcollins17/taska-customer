@@ -2,19 +2,17 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:seeker_app/core/clients/payments_client.dart';
+import 'package:seeker_app/core/constants.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/models/payout/payout_models.dart';
-
-
-
 
 final pendingPayoutProvider = FutureProvider.autoDispose<Payout?>((ref) async {
   try {
     final client = ref.watch(paymentsClientProvider);
     final response = await client.getPendingPayout();
     if (response.success && response.data != null) {
-      return response.data;
+      return response.data..debugLog();
     }
   } catch (e) {
     e.debugLog(type: LogType.error);
@@ -31,17 +29,19 @@ final pendingPayoutListenerProvider = Provider.autoDispose<void>((ref) {
     if (!currentlyShown) {
       final modalNotifier = ref.read(hasShownPendingPayoutModalProvider.notifier);
       modalNotifier.state = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await PaymentPage.show(
-          amount: payout.customerPaymentAmount?.toDouble() ??
-              payout.payoutAmount?.toDouble() ??
-              payout.task?.customerTotalPrice?.toDouble(),
-          userId: payout.customerId,
-          taskId: payout.taskId,
-        );
-        if (ref.mounted) {
-          modalNotifier.state = false;
-        }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        appQueue.add(() async {
+          await PaymentPage.show(
+            amount: payout.customerPaymentAmount?.toDouble() ??
+                payout.payoutAmount?.toDouble() ??
+                payout.task?.customerTotalPrice?.toDouble(),
+            userId: payout.customerId,
+            taskId: payout.taskId,
+          );
+          if (ref.mounted) {
+            modalNotifier.state = false;
+          }
+        });
       });
     }
   }

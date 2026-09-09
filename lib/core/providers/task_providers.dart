@@ -17,7 +17,7 @@ final taskDetailProvider = FutureProvider.family<Task, String>((
   final response = await client.getTask(taskId);
 
   if (response.success && response.data != null) {
-    return response.data!;
+    return response.data!..debugLog();
   }
 
   throw Exception(response.detail ?? 'Failed to load task details');
@@ -153,6 +153,7 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
       if (items.length < _perPage) {
         _hasMore = false;
       }
+      items.map((i) => i.toJson()).toList().debugLog();
       return items;
     } else {
       throw Exception(response.detail ?? 'Failed to load tasks');

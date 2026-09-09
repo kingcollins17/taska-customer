@@ -115,9 +115,18 @@ class _TaskDetailContent extends ConsumerWidget {
     }
 
     return RefreshIndicator(
+      color: colorScheme.primary,
       onRefresh: () async {
-        if (task.id != null) {
-          return ref.refresh(taskDetailProvider(task.id!));
+        final id = task.id;
+        if (id != null && id.isNotEmpty) {
+          ref.invalidate(taskDetailProvider(id));
+          ref.invalidate(taskAssignmentProvider(id));
+          try {
+            await Future.wait([
+              ref.read(taskDetailProvider(id).future),
+              ref.read(taskAssignmentProvider(id).future),
+            ]);
+          } catch (_) {}
         }
       },
       child: CustomScrollView(
@@ -1298,6 +1307,7 @@ class _TaskDetailErrorState extends ConsumerWidget {
               ElevatedButton(
                 onPressed: () {
                   ref.invalidate(taskDetailProvider(taskId));
+                  ref.invalidate(taskAssignmentProvider(taskId));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

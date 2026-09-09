@@ -2,9 +2,10 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'api_responses.g.dart';
 
-@JsonSerializable(genericArgumentFactories: true)
+@JsonSerializable(genericArgumentFactories: true, explicitToJson: true)
 class GenericResponse<T> {
   final String? detail;
+  @JsonKey(name: 'status_code')
   final int? statusCode;
   final T? data;
 
@@ -27,6 +28,7 @@ class PaginatedResponse<T> {
   final List<T>? items;
   final int? total;
   final int? page;
+  @JsonKey(name: 'per_page')
   final int? perPage;
 
   PaginatedResponse({this.items, this.total, this.page, this.perPage});

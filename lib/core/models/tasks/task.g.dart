@@ -135,6 +135,7 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
   customer: json['customer'] == null
       ? null
       : TaskCustomer.fromJson(json['customer'] as Map<String, dynamic>),
+  assignedProviderId: json['assigned_provider_id'] as String?,
 );
 
 Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
@@ -166,6 +167,7 @@ Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
   'assignment': instance.assignment?.toJson(),
   'attachments': instance.attachments?.map((e) => e.toJson()).toList(),
   'customer': instance.customer?.toJson(),
+  'assigned_provider_id': instance.assignedProviderId,
 };
 
 DispatchAttempt _$DispatchAttemptFromJson(Map<String, dynamic> json) =>

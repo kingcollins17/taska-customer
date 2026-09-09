@@ -8,7 +8,20 @@ class LogData {
   final dynamic data;
   final DateTime timestamp;
 
-  LogData({required this.type, required this.data, required this.timestamp});
+  /// The original structured object (Map or List) before JSON encoding.
+  /// Will be `null` for plain text logs that couldn't be JSON-encoded.
+  final dynamic rawData;
+
+  LogData({
+    required this.type,
+    required this.data,
+    required this.timestamp,
+    this.rawData,
+  });
+
+  /// Returns `true` if this log entry contains JSON-encodable data
+  /// (i.e. the raw data is a [Map] or [List]).
+  bool get isJson => rawData is Map || rawData is List;
 }
 
 class LogCache extends ChangeNotifier {
@@ -38,7 +51,8 @@ extension DebugLogExtension on Object? {
   ///
   /// If the conversion to JSON fails, it falls back to calling `.toString()`.
   void debugLog({LogType type = LogType.info}) {
-    if (!kDebugMode) return;
+    // Comment out or now
+    // if (!kDebugMode) return;
 
     if (this == null) {
       LogCache.instance.addLog(
@@ -49,6 +63,7 @@ extension DebugLogExtension on Object? {
     }
 
     String logDataString;
+    dynamic rawObject;
     try {
       dynamic objectToEncode = this;
 
@@ -63,13 +78,33 @@ extension DebugLogExtension on Object? {
 
       const encoder = JsonEncoder.withIndent('   ');
       logDataString = encoder.convert(objectToEncode);
+
+      // Preserve the raw structured object for the JSON viewer
+      if (objectToEncode is Map || objectToEncode is List) {
+        rawObject = objectToEncode;
+      } else {
+        // Try to decode the string back to get structured data
+        try {
+          final decoded = jsonDecode(logDataString);
+          if (decoded is Map || decoded is List) {
+            rawObject = decoded;
+          }
+        } catch (_) {
+          // Not valid JSON structure, leave rawObject null
+        }
+      }
     } catch (_) {
       // Fallback if JsonEncoder fails (e.g. object contains non-encodable properties)
       logDataString = toString();
     }
 
     LogCache.instance.addLog(
-      LogData(type: type, data: logDataString, timestamp: DateTime.now()),
+      LogData(
+        type: type,
+        data: logDataString,
+        timestamp: DateTime.now(),
+        rawData: rawObject,
+      ),
     );
     debugPrint(logDataString);
   }

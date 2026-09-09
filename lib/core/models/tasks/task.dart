@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'assignment.dart';
@@ -161,6 +162,8 @@ class Task {
   final TaskAssignment? assignment;
   final List<TaskAttachment>? attachments;
   final TaskCustomer? customer;
+  @JsonKey(name: 'assigned_provider_id')
+  final String? assignedProviderId;
 
   Task({
     this.id,
@@ -191,6 +194,7 @@ class Task {
     this.assignment,
     this.attachments,
     this.customer,
+    this.assignedProviderId,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) => _$TaskFromJson(json);

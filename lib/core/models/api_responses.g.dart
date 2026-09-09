@@ -11,7 +11,7 @@ GenericResponse<T> _$GenericResponseFromJson<T>(
   T Function(Object? json) fromJsonT,
 ) => GenericResponse<T>(
   detail: json['detail'] as String?,
-  statusCode: (json['statusCode'] as num?)?.toInt(),
+  statusCode: (json['status_code'] as num?)?.toInt(),
   data: _$nullableGenericFromJson(json['data'], fromJsonT),
 );
 
@@ -20,7 +20,7 @@ Map<String, dynamic> _$GenericResponseToJson<T>(
   Object? Function(T value) toJsonT,
 ) => <String, dynamic>{
   'detail': instance.detail,
-  'statusCode': instance.statusCode,
+  'status_code': instance.statusCode,
   'data': _$nullableGenericToJson(instance.data, toJsonT),
 };
 
@@ -41,7 +41,7 @@ PaginatedResponse<T> _$PaginatedResponseFromJson<T>(
   items: (json['items'] as List<dynamic>?)?.map(fromJsonT).toList(),
   total: (json['total'] as num?)?.toInt(),
   page: (json['page'] as num?)?.toInt(),
-  perPage: (json['perPage'] as num?)?.toInt(),
+  perPage: (json['per_page'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$PaginatedResponseToJson<T>(
@@ -51,5 +51,5 @@ Map<String, dynamic> _$PaginatedResponseToJson<T>(
   'items': instance.items?.map(toJsonT).toList(),
   'total': instance.total,
   'page': instance.page,
-  'perPage': instance.perPage,
+  'per_page': instance.perPage,
 };
