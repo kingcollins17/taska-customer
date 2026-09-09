@@ -120,5 +120,5 @@ Map<String, dynamic> _$PayoutToJson(Payout instance) => <String, dynamic>{
   'reference': instance.reference,
   'created_at': instance.createdAt,
   'updated_at': instance.updatedAt,
-  'task': instance.task,
+  'task': instance.task?.toJson(),
 };

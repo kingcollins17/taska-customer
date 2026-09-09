@@ -197,9 +197,9 @@ class SubmitReviewNotifier extends AsyncNotifier<void> {
       );
 
       if (response.success) {
-        ref.invalidate(pendingReviewsProvider);
-        ref.invalidate(pendingReviewsCountProvider);
-        ref.invalidate(tasksProvider);
+        // ref.invalidate(pendingReviewsProvider);
+        // ref.invalidate(pendingReviewsCountProvider);
+        // ref.invalidate(tasksProvider);
         onSuccess?.call();
       } else {
         final error = response.detail ?? 'Failed to submit review';

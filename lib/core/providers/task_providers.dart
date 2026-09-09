@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:seeker_app/core/clients/tasks_client.dart';
+import 'package:seeker_app/core/constants.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
@@ -283,3 +284,134 @@ final verifyProviderPinProvider = FutureProvider.family
         );
       }
     }, retry: (retryCount, error) => null);
+
+class RespondPriceAdjustmentNotifier extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {}
+
+  Future<PriceAdjustment?> respond({
+    required String taskId,
+    required String adjustmentId,
+    required bool approved,
+    void Function(PriceAdjustment result)? onSuccess,
+    void Function(String error)? onError,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final client = ref.read(tasksClientProvider);
+      final response = await client.respondToPriceAdjustment(
+        taskId,
+        adjustmentId,
+        RespondPriceAdjustmentRequest(approved: approved),
+      );
+
+      if (response.success && response.data != null) {
+        state = const AsyncValue.data(null);
+        ref.invalidate(taskDetailProvider(taskId));
+        ref.invalidate(recentPendingPriceAdjustmentProvider);
+        onSuccess?.call(response.data!);
+        return response.data;
+      } else {
+        final error =
+            response.detail ?? 'Failed to respond to price adjustment';
+        state = AsyncValue.error(error, StackTrace.current);
+        onError?.call(error);
+        return null;
+      }
+    } catch (e, st) {
+      AppErrorHandler.instance.handleError(e, st);
+      state = AsyncValue.error(e, st);
+      onError?.call(e.toString());
+      return null;
+    }
+  }
+}
+
+final respondPriceAdjustmentProvider =
+    AsyncNotifierProvider<RespondPriceAdjustmentNotifier, void>(
+  () => RespondPriceAdjustmentNotifier(),
+);
+
+final recentPendingPriceAdjustmentProvider =
+    FutureProvider<PriceAdjustment?>((ref) async {
+  final client = ref.read(tasksClientProvider);
+  final response = await client.getRecentPendingPriceAdjustment();
+
+  if (response.success) {
+    return response.data..debugLog();
+  }
+  throw Exception(
+    response.detail ?? 'Failed to fetch recent pending price adjustment',
+  );
+}, retry: (retryCount, error) => null);
+
+class ShownPriceAdjustmentTaskIdsNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => {};
+
+  void markAsShown(String taskId) {
+    if (taskId.isEmpty) return;
+    state = {...state, taskId};
+  }
+
+  bool isShown(String taskId) {
+    return state.contains(taskId);
+  }
+
+  void clear() {
+    state = {};
+  }
+}
+
+final shownPriceAdjustmentTaskIdsProvider =
+    NotifierProvider<ShownPriceAdjustmentTaskIdsNotifier, Set<String>>(
+  () => ShownPriceAdjustmentTaskIdsNotifier(),
+);
+
+final recentPendingPriceAdjustmentListenerProvider = Provider<void>((ref) {
+  bool isShowing = false;
+
+  void showAdjustmentModal(PriceAdjustment adjustment) {
+    final taskId = adjustment.taskId ?? adjustment.id;
+    if (taskId == null || taskId.isEmpty) return;
+
+    final shownTaskIds = ref.read(shownPriceAdjustmentTaskIdsProvider);
+    if (shownTaskIds.contains(taskId)) return;
+
+    if (isShowing) return;
+    isShowing = true;
+
+    ref.read(shownPriceAdjustmentTaskIdsProvider.notifier).markAsShown(taskId);
+
+    appQueue.add(() async {
+      final context = rootNavigatorKey.currentContext;
+      if (context == null) {
+        isShowing = false;
+        return;
+      }
+      try {
+        await ReviewPriceAdjustmentSheet.show(context, adjustment: adjustment);
+      } finally {
+        isShowing = false;
+      }
+    });
+  }
+
+  ref.listen<AsyncValue<PriceAdjustment?>>(
+    recentPendingPriceAdjustmentProvider,
+    (previous, next) {
+      final adjustment = next.value;
+      if (adjustment != null) {
+        showAdjustmentModal(adjustment);
+      }
+    },
+  );
+
+  final asyncAdjustment = ref.watch(recentPendingPriceAdjustmentProvider);
+  if (asyncAdjustment.hasValue && asyncAdjustment.value != null) {
+    showAdjustmentModal(asyncAdjustment.value!);
+  }
+});
+
+
+

@@ -96,5 +96,15 @@ abstract class TasksClient {
     @Path('task_id') String taskId,
     @Body() Map<String, dynamic> body,
   );
+
+  @POST('/tasks/{task_id}/price-adjustments/{adjustment_id}/respond')
+  Future<GenericResponse<PriceAdjustment>> respondToPriceAdjustment(
+    @Path('task_id') String taskId,
+    @Path('adjustment_id') String adjustmentId,
+    @Body() RespondPriceAdjustmentRequest body,
+  );
+
+  @GET('/tasks/price-adjustments/recent')
+  Future<GenericResponse<PriceAdjustment>> getRecentPendingPriceAdjustment();
 }
 

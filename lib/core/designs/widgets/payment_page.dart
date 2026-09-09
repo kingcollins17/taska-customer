@@ -9,7 +9,6 @@ import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/clients/clients.dart';
 import 'package:seeker_app/core/utils/flushbar_message.dart';
 import 'package:seeker_app/core/designs/widgets/primary_button.dart';
-import 'package:seeker_app/core/designs/app_text_styles.dart';
 
 import '../../constants.dart';
 import '../../utils/loading_overlay.dart';
@@ -91,47 +90,48 @@ class PaymentPage extends ConsumerStatefulWidget {
   }) async {
     final completer = Completer<PaymentInfo>();
 
-    appQueue.add(() async {
-      final context = rootNavigatorKey.currentContext;
-      if (context == null) {
-        if (!completer.isCompleted) {
-          completer.complete(
-            PaymentInfo(isSuccessful: false, amount: amount ?? 0),
-          );
-        }
-        return;
-      }
-
-      try {
-        final result = await showModalBottomSheet<PaymentInfo>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: PaymentPage(
-              amount: amount,
-              userId: userId,
-              taskId: taskId,
-            ),
-          ),
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) {
+      if (!completer.isCompleted) {
+        completer.complete(
+          PaymentInfo(isSuccessful: false, amount: amount ?? 0),
         );
-
-        if (!completer.isCompleted) {
-          completer.complete(
-            result ?? PaymentInfo(isSuccessful: false, amount: amount ?? 0),
-          );
-        }
-      } catch (e) {
-        if (!completer.isCompleted) {
-          completer.complete(
-            PaymentInfo(isSuccessful: false, amount: amount ?? 0),
-          );
-        }
       }
-    });
+      return completer.future;
+    }
+
+    try {
+      final result = await showModalBottomSheet<PaymentInfo>(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        useRootNavigator: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: PaymentPage(
+            amount: amount,
+            userId: userId,
+            taskId: taskId,
+          ),
+        ),
+      );
+
+      if (!completer.isCompleted) {
+        completer.complete(
+          result ?? PaymentInfo(isSuccessful: false, amount: amount ?? 0),
+        );
+      }
+    } catch (e) {
+      if (!completer.isCompleted) {
+        completer.complete(
+          PaymentInfo(isSuccessful: false, amount: amount ?? 0),
+        );
+      }
+    }
 
     return completer.future;
   }
@@ -205,20 +205,15 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
         taskId: widget.taskId,
       );
 
-      final response = await paymentsClient.processPaymentWebhook(payload);
+      await paymentsClient.processPaymentWebhook(payload);
 
       if (!mounted) return;
       context.hideLoading();
 
-      if (response.success) {
+  
         final info = PaymentInfo(isSuccessful: true, amount: _amount);
         Navigator.of(context).pop(info);
-      } else {
-        context.showMessage(
-          response.detail ?? "Unable to process payment",
-          type: MessageType.error,
-        );
-      }
+      
     } catch (e) {
       if (!mounted) return;
       context.hideLoading();
@@ -235,92 +230,170 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.surface;
+    final textColor = isDark ? Colors.white : AppColors.textPrimary;
+    final cardColor =
+        isDark ? AppColors.darkerBackground : AppColors.background;
 
-    return Container(
-      padding: EdgeInsets.only(
-        top: 16.h,
-        bottom: 32.h,
-      ),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBackground : AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(child: _buildDragHandle(isDark)),
-            SizedBox(height: 16.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Card Payment',
-                    style: AppTextStyles.heading3.copyWith(
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: AppColors.textSecondary,
-                      size: 20.sp,
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 24.h),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Please provide your payment details. Transactions are securely processed.',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    _buildAmountField(colorScheme, isDark),
-                    SizedBox(height: 20.h),
-                    _buildTestCardSelector(colorScheme, isDark),
-                    SizedBox(height: 16.h),
-                    _buildCardForm(colorScheme, isDark),
-                    SizedBox(height: 24.h),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 0),
-              child: _buildPayButton(colorScheme),
+    return PopScope(
+      canPop: false,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, -6),
             ),
           ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top Bar with Centered Drag Handle & Right Close Button
+                SizedBox(
+                  height: 32.h,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white30 : Colors.black26,
+                            borderRadius: BorderRadius.circular(2.r),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.of(context).pop(),
+                            borderRadius: BorderRadius.circular(20.r),
+                            child: Container(
+                              width: 30.r,
+                              height: 30.r,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.15)
+                                    : Colors.black.withValues(alpha: 0.08),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.2)
+                                      : Colors.black.withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 16.sp,
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 8.h),
+
+                // Title Section
+                Text(
+                  'Card Payment',
+                  style: GoogleFonts.inter(
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Transactions are securely processed.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 14.h),
+
+                // Amount Section
+                if (widget.amount != null)
+                  _buildFixedAmountBanner(colorScheme, isDark, cardColor, textColor)
+                else
+                  _buildAmountField(colorScheme, isDark),
+                SizedBox(height: 12.h),
+
+                // Test Card Selector
+                _buildTestCardSelector(colorScheme, isDark),
+                SizedBox(height: 12.h),
+
+                // Card Form
+                _buildCardForm(colorScheme, isDark),
+                SizedBox(height: 16.h),
+
+                // Pay Button
+                _buildPayButton(colorScheme),
+                SizedBox(height: 4.h),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDragHandle(bool isDark) {
+  // ── Fixed Amount Banner ──
+
+  Widget _buildFixedAmountBanner(
+    ColorScheme colorScheme,
+    bool isDark,
+    Color cardColor,
+    Color textColor,
+  ) {
     return Container(
-      width: 48.w,
-      height: 5.h,
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.2)
-            : Colors.black.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(2.5.r),
+        color: colorScheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total Amount',
+            style: GoogleFonts.inter(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            '₦${widget.amount!.toStringAsFixed(2)}',
+            style: GoogleFonts.inter(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -332,7 +405,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _fieldLabel('Amount (₦)', colorScheme),
-        SizedBox(height: 8.h),
+        SizedBox(height: 6.h),
         TextFormField(
           controller: _amountCtrl,
           readOnly: widget.amount != null,
@@ -341,24 +414,24 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
             FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
           ],
           style: GoogleFonts.inter(
-            fontSize: 24.sp,
-            fontWeight: FontWeight.w700,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
             color: colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             hintText: '0.00',
             hintStyle: GoogleFonts.inter(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface.withValues(alpha: 0.15),
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface.withValues(alpha: 0.25),
             ),
             prefixIcon: Padding(
-              padding: EdgeInsets.only(left: 12.w, right: 4.w),
+              padding: EdgeInsets.only(left: 12.w, right: 6.w),
               child: Text(
                 '₦',
                 style: GoogleFonts.inter(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
                   color: colorScheme.primary,
                 ),
               ),
@@ -368,12 +441,13 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
               minHeight: 0,
             ),
             filled: true,
-            fillColor: colorScheme.onSurface.withValues(alpha: 0.03),
+            fillColor: colorScheme.onSurface.withValues(alpha: 0.04),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide.none,
             ),
-            contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           ),
         ),
       ],
@@ -383,34 +457,47 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   // ── Card Form ──
 
   Widget _buildTestCardSelector(ColorScheme colorScheme, bool isDark) {
-    return SizedBox(
-      height: 36.h,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _testCards.length,
-        separatorBuilder: (_, _) => SizedBox(width: 8.w),
-        itemBuilder: (_, i) {
-          final card = _testCards[i];
-          return GestureDetector(
-            onTap: () => _fillCard(card),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(18.r),
-              ),
-              child: Text(
-                card.label,
-                style: GoogleFonts.inter(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.primary,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _fieldLabel('Quick Fill Test Card', colorScheme),
+        SizedBox(height: 6.h),
+        SizedBox(
+          height: 32.h,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _testCards.length,
+            separatorBuilder: (_, _) => SizedBox(width: 8.w),
+            itemBuilder: (_, i) {
+              final card = _testCards[i];
+              return GestureDetector(
+                onTap: () => _fillCard(card),
+                child: Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: colorScheme.primary.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      card.label,
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -418,6 +505,8 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _fieldLabel('Card Details', colorScheme),
+        SizedBox(height: 6.h),
         _styledInput(
           controller: _cardNumberCtrl,
           hint: 'Card Number',
@@ -430,7 +519,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
           ],
           prefixIcon: _cardBrandIcon(),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 10.h),
         Row(
           children: [
             Expanded(
@@ -446,7 +535,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 10.w),
             Expanded(
               child: _styledInput(
                 controller: _cvvCtrl,
@@ -490,6 +579,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
   Widget _buildPayButton(ColorScheme colorScheme) {
     return PrimaryButton(
       text: _amount > 0 ? 'Pay ₦${_amount.toStringAsFixed(2)}' : 'Pay Now',
+      height: 44.h,
       onPressed: _onPayNow,
     );
   }
@@ -502,7 +592,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     return Text(
       text,
       style: GoogleFonts.inter(
-        fontSize: 13.sp,
+        fontSize: 12.5.sp,
         fontWeight: FontWeight.w500,
         color: colorScheme.onSurface.withValues(alpha: 0.6),
       ),
@@ -524,26 +614,27 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       inputFormatters: formatters,
       obscureText: obscure,
       style: GoogleFonts.inter(
-        fontSize: 14.sp,
+        fontSize: 13.5.sp,
         fontWeight: FontWeight.w500,
         color: colorScheme.onSurface,
       ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.inter(
-          fontSize: 14.sp,
+          fontSize: 13.5.sp,
           fontWeight: FontWeight.w500,
           color: colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         prefixIcon: prefixIcon,
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         filled: true,
-        fillColor: colorScheme.onSurface.withValues(alpha: 0.03),
+        fillColor: colorScheme.onSurface.withValues(alpha: 0.04),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide.none,
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        contentPadding:
+            EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
       ),
     );
   }

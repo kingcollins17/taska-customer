@@ -41,6 +41,7 @@ class HomeScreen extends ConsumerWidget {
 
     ref.watch(pendingPayoutListenerProvider);
     ref.watch(pendingReviewPromptListenerProvider);
+    ref.watch(recentPendingPriceAdjustmentListenerProvider);
 
     final String name = user?.customerProfile != null
         ? '${user!.customerProfile!.firstName ?? ''} ${user.customerProfile!.lastName ?? ''}'
@@ -63,6 +64,7 @@ class HomeScreen extends ConsumerWidget {
                 ref.invalidate(categoriesProvider(null));
                 ref.invalidate(tasksProvider);
                 ref.invalidate(pendingPayoutProvider);
+                ref.invalidate(recentPendingPriceAdjustmentProvider);
                 try {
                   await Future.wait([
                     ref.read(userProvider.future),
@@ -71,6 +73,7 @@ class HomeScreen extends ConsumerWidget {
                     ref.read(categoriesProvider(null).future),
                     ref.read(tasksProvider.future),
                     ref.read(pendingPayoutProvider.future),
+                    ref.read(recentPendingPriceAdjustmentProvider.future),
                   ]);
                 } catch (_) {}
               },

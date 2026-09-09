@@ -86,12 +86,9 @@ class _SubmitReviewSheetState extends ConsumerState<SubmitReviewSheet> {
           onSuccess: () {
             if (mounted) {
               setState(() => _isSubmitting = false);
-              context.showMessage(
-                'Thank you for rating ${providerName ?? 'your Tasker'}!',
-                type: MessageType.success,
-              );
-              widget.onSuccess?.call();
               Navigator.of(context).pop(true);
+              widget.onSuccess?.call();
+       
             }
           },
           onError: (error) {

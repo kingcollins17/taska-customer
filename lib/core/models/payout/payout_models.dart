@@ -72,7 +72,7 @@ class SupportedBank {
   Map<String, dynamic> toJson() => _$SupportedBankToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class PayoutTask {
   final String? id;
   final String? title;
@@ -113,7 +113,7 @@ class PayoutTask {
   Map<String, dynamic> toJson() => _$PayoutTaskToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
 class Payout {
   final String? id;
   @JsonKey(name: 'provider_id')
