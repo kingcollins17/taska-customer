@@ -2,10 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/services/local_storage_service.dart';
+
+/// Provider to manage visibility state of the floating Task Matching Banner.
+final showTaskMatchingBannerProvider = StateProvider<bool>((ref) => true);
 
 class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
   Timer? _timer;
@@ -58,8 +62,9 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
   /// Starts polling taskDetailProvider periodically to track task assignment / status.
   Future<void> start(
     String taskId, {
-    Duration interval = const Duration(seconds: 10),
+    Duration interval = const Duration(minutes: 1),
   }) async {
+    ref.read(showTaskMatchingBannerProvider.notifier).state = true;
     final initialState = TaskMatchingState(
       taskId: taskId,
       status: MatchingStatus.pending,
@@ -74,7 +79,7 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
 
   void _startPolling(
     String taskId, {
-    Duration interval = const Duration(seconds: 10),
+    Duration interval = const Duration(minutes: 1),
   }) {
     _timer?.cancel();
     _pollTask(taskId);
@@ -86,7 +91,7 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
   /// Polls task details and invalidates taskDetailProvider.
   Future<void> _pollTask(String taskId) async {
     try {
-      ref.invalidate(taskDetailProvider(taskId));
+      // ref.invalidate(taskDetailProvider(taskId));
       ref.invalidate(taskAssignmentProvider(taskId));
 
       final task = await ref.read(taskDetailProvider(taskId).future);
@@ -99,8 +104,10 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
       MatchingStatus status;
       if (isAssigned) {
         status = MatchingStatus.success;
+        ref.invalidate(taskDetailProvider(taskId));
       } else if (isCancelled) {
         status = MatchingStatus.cancelled;
+        ref.invalidate(taskDetailProvider(taskId));
       } else {
         status = MatchingStatus.pending;
       }
@@ -138,6 +145,7 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
 }
 
 final taskMatchingProvider =
-    AsyncNotifierProvider<TaskMatchingNotifier, TaskMatchingState?>(
+    AsyncNotifierProvider.autoDispose<TaskMatchingNotifier, TaskMatchingState?>(
       () => TaskMatchingNotifier(),
     );
+

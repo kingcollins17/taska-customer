@@ -21,14 +21,10 @@ final pendingPayoutProvider = FutureProvider.autoDispose<Payout?>((ref) async {
   return null;
 });
 
-final hasShownPendingPayoutModalProvider = StateProvider<bool>((ref) => false);
 
-final pendingPayoutListenerProvider = Provider.autoDispose<void>((ref) {
+final pendingPayoutListenerProvider = FutureProvider.autoDispose<void>((ref) async{
   void showModal(Payout payout) {
-    final currentlyShown = ref.read(hasShownPendingPayoutModalProvider);
-    if (!currentlyShown) {
-      final modalNotifier = ref.read(hasShownPendingPayoutModalProvider.notifier);
-      modalNotifier.state = true;
+  
       WidgetsBinding.instance.addPostFrameCallback((_) {
         appQueue.add(() async {
           await PaymentPage.show(
@@ -38,24 +34,15 @@ final pendingPayoutListenerProvider = Provider.autoDispose<void>((ref) {
             userId: payout.customerId,
             taskId: payout.taskId,
           );
-          if (ref.mounted) {
-            modalNotifier.state = false;
-          }
+          
         });
       });
     }
-  }
+  
 
-  ref.listen<AsyncValue<Payout?>>(pendingPayoutProvider, (previous, next) {
-    final payout = next.value;
-    if (payout != null) {
-      showModal(payout);
-    }
-  });
-
-  final asyncPayout = ref.watch(pendingPayoutProvider);
-  if (asyncPayout.hasValue && asyncPayout.value != null) {
-    showModal(asyncPayout.value!);
+  final payout = await ref.watch(pendingPayoutProvider.future);
+  if (payout != null) {
+    showModal(payout);
   }
 });
 

@@ -35,6 +35,7 @@ class _ConsoleColors {
   static const Color info = Color(0xFF00BFA5);
   static const Color warn = Color(0xFFFFA726);
   static const Color error = Color(0xFFEF5350);
+  static const Color network = Color(0xFF29B6F6);
 
   // Accents
   static const Color chipSelected = Color(0xFF00BFA5);
@@ -80,6 +81,8 @@ class _DebugConsoleViewState extends State<DebugConsoleView> {
         return _ConsoleColors.warn;
       case LogType.error:
         return _ConsoleColors.error;
+      case LogType.network:
+        return _ConsoleColors.network;
     }
   }
 
@@ -91,6 +94,8 @@ class _DebugConsoleViewState extends State<DebugConsoleView> {
         return 'WARN';
       case LogType.error:
         return 'ERROR';
+      case LogType.network:
+        return 'NETWORK';
     }
   }
 
@@ -184,33 +189,43 @@ class _DebugConsoleViewState extends State<DebugConsoleView> {
             // ── Filter chips ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Row(
-                children: [
-                  _FilterChip(
-                    label: 'All Logs',
-                    selected: _selectedFilter == null,
-                    onTap: () => setState(() => _selectedFilter = null),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: 'Info',
-                    selected: _selectedFilter == LogType.info,
-                    onTap: () => setState(() => _selectedFilter = LogType.info),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: 'Warnings',
-                    selected: _selectedFilter == LogType.warn,
-                    onTap: () => setState(() => _selectedFilter = LogType.warn),
-                  ),
-                  const SizedBox(width: 8),
-                  _FilterChip(
-                    label: 'Errors',
-                    selected: _selectedFilter == LogType.error,
-                    onTap: () =>
-                        setState(() => _selectedFilter = LogType.error),
-                  ),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      label: 'All Logs',
+                      selected: _selectedFilter == null,
+                      onTap: () => setState(() => _selectedFilter = null),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Network',
+                      selected: _selectedFilter == LogType.network,
+                      onTap: () =>
+                          setState(() => _selectedFilter = LogType.network),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Info',
+                      selected: _selectedFilter == LogType.info,
+                      onTap: () => setState(() => _selectedFilter = LogType.info),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Warnings',
+                      selected: _selectedFilter == LogType.warn,
+                      onTap: () => setState(() => _selectedFilter = LogType.warn),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'Errors',
+                      selected: _selectedFilter == LogType.error,
+                      onTap: () =>
+                          setState(() => _selectedFilter = LogType.error),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -382,70 +397,91 @@ class _LogEntryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _ConsoleColors.divider, width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header: type badge + timestamp + copy ───────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 8, 8),
-            child: Row(
-              children: [
-                // Type badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: typeColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    typeLabel,
-                    style: TextStyle(
-                      color: typeColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => DebugDetailPage.show(context, log),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header: type badge + timestamp + copy + detail ─────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 8, 8),
+                child: Row(
+                  children: [
+                    // Type badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: typeColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        typeLabel,
+                        style: TextStyle(
+                          color: typeColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Timestamp
-                Text(
-                  timestamp,
-                  style: const TextStyle(
-                    color: _ConsoleColors.textMuted,
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-                const Spacer(),
-                // Copy button
-                InkWell(
-                  borderRadius: BorderRadius.circular(6),
-                  onTap: () => _copyToClipboard(context),
-                  child: const Padding(
-                    padding: EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.copy_rounded,
-                      size: 16,
-                      color: _ConsoleColors.textMuted,
+                    const SizedBox(width: 10),
+                    // Timestamp
+                    Text(
+                      timestamp,
+                      style: const TextStyle(
+                        color: _ConsoleColors.textMuted,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                      ),
                     ),
-                  ),
+                    const Spacer(),
+                    // Copy button
+                    InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => _copyToClipboard(context),
+                      child: const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(
+                          Icons.copy_rounded,
+                          size: 16,
+                          color: _ConsoleColors.textMuted,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    // Open detail button
+                    InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => DebugDetailPage.show(context, log),
+                      child: const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(
+                          Icons.open_in_new_rounded,
+                          size: 16,
+                          color: _ConsoleColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              // ── Content area ───────────────────────────────────────────
+              if (log.isJson)
+                _JsonViewer(data: log.rawData)
+              else
+                _LogViewer(text: log.data.toString()),
+
+              const SizedBox(height: 4),
+            ],
           ),
-
-          // ── Content area ───────────────────────────────────────────
-          if (log.isJson)
-            _JsonViewer(data: log.rawData)
-          else
-            _LogViewer(text: log.data.toString()),
-
-          const SizedBox(height: 4),
-        ],
+        ),
       ),
     );
   }
@@ -934,6 +970,334 @@ class _JsonNodeState extends State<_JsonNode>
         fontFamily: 'monospace',
         fontSize: 12.5,
         height: 1.6,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Debug Detail Page
+// ─────────────────────────────────────────────────────────────────────────────
+
+class DebugDetailPage extends StatelessWidget {
+  final LogData log;
+
+  const DebugDetailPage({super.key, required this.log});
+
+  static void show(BuildContext context, LogData log) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => DebugDetailPage(log: log)));
+  }
+
+  Color _typeColor(LogType type) {
+    switch (type) {
+      case LogType.info:
+        return _ConsoleColors.info;
+      case LogType.warn:
+        return _ConsoleColors.warn;
+      case LogType.error:
+        return _ConsoleColors.error;
+      case LogType.network:
+        return _ConsoleColors.network;
+    }
+  }
+
+  String _typeLabel(LogType type) {
+    switch (type) {
+      case LogType.info:
+        return 'INFO';
+      case LogType.warn:
+        return 'WARN';
+      case LogType.error:
+        return 'ERROR';
+      case LogType.network:
+        return 'NETWORK';
+    }
+  }
+
+  String _formatTimestamp(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    final s = dt.second.toString().padLeft(2, '0');
+    final ms = dt.millisecond.toString().padLeft(3, '0');
+    final yr = dt.year;
+    final mo = dt.month.toString().padLeft(2, '0');
+    final dy = dt.day.toString().padLeft(2, '0');
+    return '$h:$m:$s.$ms ($yr-$mo-$dy)';
+  }
+
+  Color _statusCodeColor(int code) {
+    if (code >= 200 && code < 300) return const Color(0xFF66BB6A);
+    if (code >= 300 && code < 400) return const Color(0xFFFFCA28);
+    if (code >= 400 && code < 500) return const Color(0xFFFFA726);
+    if (code >= 500) return const Color(0xFFEF5350);
+    return _ConsoleColors.textMuted;
+  }
+
+  void _copyToClipboard(BuildContext context) {
+    final text = log.isJson
+        ? const JsonEncoder.withIndent('  ').convert(log.rawData)
+        : log.data.toString();
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Copied log details to clipboard'),
+        backgroundColor: _ConsoleColors.surfaceVariant,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final typeColor = _typeColor(log.type);
+    final typeLabel = _typeLabel(log.type);
+    final rawMap = log.rawData is Map ? log.rawData as Map : null;
+
+    final String? event = rawMap?['event']?.toString();
+    final String? method = rawMap?['method']?.toString();
+    final String? url = rawMap?['url']?.toString();
+    final dynamic statusCodeVal = rawMap?['statusCode'];
+    final int? statusCode = statusCodeVal is int
+        ? statusCodeVal
+        : int.tryParse(statusCodeVal?.toString() ?? '');
+
+    return Theme(
+      data: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: _ConsoleColors.scaffold,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: _ConsoleColors.scaffold,
+          foregroundColor: _ConsoleColors.textPrimary,
+          elevation: 0,
+          centerTitle: true,
+        ),
+      ),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            event ?? 'Log Details',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              letterSpacing: 0.5,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.copy_rounded, size: 20),
+              tooltip: 'Copy details',
+              onPressed: () => _copyToClipboard(context),
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header Metadata Card ─────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _ConsoleColors.cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _ConsoleColors.divider, width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // Type badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: typeColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: typeColor.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            typeLabel,
+                            style: TextStyle(
+                              color: typeColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Format badge (JSON vs TEXT)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: (log.isJson
+                                    ? _ConsoleColors.jsonBracket
+                                    : _ConsoleColors.textMuted)
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            log.isJson ? 'JSON' : 'TEXT',
+                            style: TextStyle(
+                              color: log.isJson
+                                  ? _ConsoleColors.jsonBracket
+                                  : _ConsoleColors.textMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+
+                        if (statusCode != null) ...[
+                          const SizedBox(width: 8),
+                          // Status code pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _statusCodeColor(statusCode)
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _statusCodeColor(statusCode)
+                                    .withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '$statusCode',
+                              style: TextStyle(
+                                color: _statusCodeColor(statusCode),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        const Spacer(),
+
+                        // Timestamp
+                        Text(
+                          _formatTimestamp(log.timestamp),
+                          style: const TextStyle(
+                            color: _ConsoleColors.textMuted,
+                            fontSize: 11.5,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    if (method != null || url != null) ...[
+                      const SizedBox(height: 12),
+                      const Divider(color: _ConsoleColors.divider, height: 1),
+                      const SizedBox(height: 12),
+
+                      if (method != null)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              width: 65,
+                              child: Text(
+                                'Method:',
+                                style: TextStyle(
+                                  color: _ConsoleColors.textMuted,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              method,
+                              style: const TextStyle(
+                                color: _ConsoleColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      if (url != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(
+                              width: 65,
+                              child: Text(
+                                'URL:',
+                                style: TextStyle(
+                                  color: _ConsoleColors.textMuted,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: SelectableText(
+                                url,
+                                style: const TextStyle(
+                                  color: _ConsoleColors.jsonString,
+                                  fontSize: 12.5,
+                                  fontFamily: 'monospace',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Data Content Viewer Header ───────────────────────────
+              const Padding(
+                padding: EdgeInsets.only(left: 4, bottom: 8),
+                child: Text(
+                  'PAYLOAD CONTENT',
+                  style: TextStyle(
+                    color: _ConsoleColors.textMuted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+
+              // ── Data Viewer ──────────────────────────────────────────
+              if (log.isJson)
+                _JsonViewer(data: log.rawData)
+              else
+                _LogViewer(text: log.data.toString()),
+            ],
+          ),
+        ),
       ),
     );
   }

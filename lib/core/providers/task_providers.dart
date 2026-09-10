@@ -345,43 +345,16 @@ final recentPendingPriceAdjustmentProvider =
   );
 }, retry: (retryCount, error) => null);
 
-class ShownPriceAdjustmentTaskIdsNotifier extends Notifier<Set<String>> {
-  @override
-  Set<String> build() => {};
 
-  void markAsShown(String taskId) {
-    if (taskId.isEmpty) return;
-    state = {...state, taskId};
-  }
-
-  bool isShown(String taskId) {
-    return state.contains(taskId);
-  }
-
-  void clear() {
-    state = {};
-  }
-}
-
-final shownPriceAdjustmentTaskIdsProvider =
-    NotifierProvider<ShownPriceAdjustmentTaskIdsNotifier, Set<String>>(
-  () => ShownPriceAdjustmentTaskIdsNotifier(),
-);
-
-final recentPendingPriceAdjustmentListenerProvider = Provider<void>((ref) {
+final recentPendingPriceAdjustmentListenerProvider = FutureProvider<void>((ref) async {
   bool isShowing = false;
 
   void showAdjustmentModal(PriceAdjustment adjustment) {
     final taskId = adjustment.taskId ?? adjustment.id;
     if (taskId == null || taskId.isEmpty) return;
 
-    final shownTaskIds = ref.read(shownPriceAdjustmentTaskIdsProvider);
-    if (shownTaskIds.contains(taskId)) return;
-
     if (isShowing) return;
     isShowing = true;
-
-    ref.read(shownPriceAdjustmentTaskIdsProvider.notifier).markAsShown(taskId);
 
     appQueue.add(() async {
       final context = rootNavigatorKey.currentContext;
@@ -397,19 +370,10 @@ final recentPendingPriceAdjustmentListenerProvider = Provider<void>((ref) {
     });
   }
 
-  ref.listen<AsyncValue<PriceAdjustment?>>(
-    recentPendingPriceAdjustmentProvider,
-    (previous, next) {
-      final adjustment = next.value;
-      if (adjustment != null) {
-        showAdjustmentModal(adjustment);
-      }
-    },
-  );
 
-  final asyncAdjustment = ref.watch(recentPendingPriceAdjustmentProvider);
-  if (asyncAdjustment.hasValue && asyncAdjustment.value != null) {
-    showAdjustmentModal(asyncAdjustment.value!);
+  final adjustment = await ref.watch(recentPendingPriceAdjustmentProvider.future);
+  if (adjustment != null) {
+    showAdjustmentModal(adjustment);
   }
 });
 

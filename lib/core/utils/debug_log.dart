@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
-enum LogType { info, warn, error }
+enum LogType { info, warn, error, network }
 
 class LogData {
   final LogType type;

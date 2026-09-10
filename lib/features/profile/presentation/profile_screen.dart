@@ -294,7 +294,7 @@ class ProfileScreen extends ConsumerWidget {
                   title: 'Debug Console',
                   iconColor: Colors.teal,
                   onTap: () {
-                    DebugConsoleView.show(context);
+                    DebugConsoleView.show(rootNavigatorKey.currentContext!);
                   },
                 ),
               // ],

@@ -20,7 +20,7 @@ Map<String, dynamic> _$WebhookPayloadToJson(WebhookPayload instance) =>
 WebhookPayloadData _$WebhookPayloadDataFromJson(Map<String, dynamic> json) =>
     WebhookPayloadData(
       reference: json['reference'] as String?,
-      amount: (json['amount'] as num?)?.toInt(),
+      amount: (json['amount'] as num?)?.toDouble(),
       status: json['status'] as String?,
       metadata: json['metadata'] == null
           ? null

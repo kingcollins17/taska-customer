@@ -35,7 +35,10 @@ class TaskReviewPromptHistoryNotifier
     extends Notifier<List<TaskReviewPromptLog>> {
   @override
   List<TaskReviewPromptLog> build() {
-    return _loadFromStorage();
+    final val= _loadFromStorage();
+    val.map((i) => i.toJson()).toList().debugLog();
+    '[TaskReviewPromptHistoryNotifier] HISTORY'.debugLog();
+    return val;
   }
 
   List<TaskReviewPromptLog> _loadFromStorage() {
@@ -127,6 +130,7 @@ class PendingReviewsNotifier extends AsyncNotifier<List<PendingReviewTask>> {
       if (items.length < _perPage) {
         _hasMore = false;
       }
+      items.map((i) => i).toList().debugLog();
       return items;
     } else {
       throw Exception(response.detail ?? 'Failed to load pending reviews');
@@ -216,7 +220,7 @@ final submitReviewProvider = AsyncNotifierProvider<SubmitReviewNotifier, void>(
   () => SubmitReviewNotifier(),
 );
 
-final pendingReviewPromptListenerProvider = Provider.autoDispose<void>((ref) {
+final pendingReviewPromptListenerProvider = FutureProvider.autoDispose<void>((ref) async {
   void checkAndPrompt(List<PendingReviewTask> pendingTasks) {
     if (pendingTasks.isEmpty) return;
 
@@ -246,15 +250,8 @@ final pendingReviewPromptListenerProvider = Provider.autoDispose<void>((ref) {
     });
   }
 
-  ref.listen<AsyncValue<List<PendingReviewTask>>>(pendingReviewsProvider,
-      (previous, next) {
-    if (next.hasValue && next.value != null) {
-      checkAndPrompt(next.value!);
-    }
-  });
-
-  final asyncPending = ref.watch(pendingReviewsProvider);
-  if (asyncPending.hasValue && asyncPending.value != null) {
-    checkAndPrompt(asyncPending.value!);
+  final reviews = await ref.watch(pendingReviewsProvider.future);
+  if (reviews.isNotEmpty) {
+    checkAndPrompt(reviews);
   }
 });

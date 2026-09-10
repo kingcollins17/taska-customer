@@ -23,7 +23,7 @@ class WebhookPayload {
 
   final WebhookPayloadData? data;
 
-  static WebhookPayload transfer(int amount, {String? userId, String? taskId}) {
+  static WebhookPayload transfer(double amount, {String? userId, String? taskId}) {
     return WebhookPayload(
       event: 'transfer.success',
       data: WebhookPayloadData(
@@ -35,7 +35,7 @@ class WebhookPayload {
     );
   }
 
-  static WebhookPayload payment(int amount, {String? userId, String? taskId}) {
+  static WebhookPayload payment(double amount, {String? userId, String? taskId}) {
     return WebhookPayload(
       event: 'charge.success',
       data: WebhookPayloadData(
@@ -64,7 +64,7 @@ class WebhookPayloadData {
 
   final String? reference;
 
-  final int? amount;
+  final double? amount;
 
   final String? status;
 
@@ -72,7 +72,7 @@ class WebhookPayloadData {
 
   WebhookPayloadData copyWith({
     String? reference,
-    int? amount,
+    double? amount,
     String? status,
     WebhookPayloadMeta? metadata,
   }) {

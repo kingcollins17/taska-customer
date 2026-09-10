@@ -5,8 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/clients/clients.dart';
+import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/utils/flushbar_message.dart';
 import 'package:seeker_app/core/designs/widgets/primary_button.dart';
 
@@ -112,11 +114,7 @@ class PaymentPage extends ConsumerStatefulWidget {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: PaymentPage(
-            amount: amount,
-            userId: userId,
-            taskId: taskId,
-          ),
+          child: PaymentPage(amount: amount, userId: userId, taskId: taskId),
         ),
       );
 
@@ -189,7 +187,10 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
 
   Future<void> _onPayNow() async {
     if (_amount <= 0) {
-      context.showMessage("Please enter a valid amount", type: MessageType.error);
+      context.showMessage(
+        "Please enter a valid amount",
+        type: MessageType.error,
+      );
       return;
     }
 
@@ -198,29 +199,38 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     context.showLoading();
 
     try {
+      if (widget.taskId == null || widget.taskId!.isEmpty) return;
+      final task = await ref.read(taskDetailProvider(widget.taskId!).future);
+      final providerId = task.assignment?.providerId;
       final paymentsClient = ref.read(paymentsClientProvider);
+
       final payload = WebhookPayload.payment(
-        _amount.toInt(),
+        _amount,
         userId: widget.userId,
+        taskId: widget.taskId,
+      );
+
+      final mockTransferPayload = WebhookPayload.transfer(
+        task.providerPayout ?? _amount,
+        userId: providerId,
         taskId: widget.taskId,
       );
 
       await paymentsClient.processPaymentWebhook(payload);
 
+      if (providerId != null) {
+        await paymentsClient.processPaymentWebhook(mockTransferPayload);
+      }
+
       if (!mounted) return;
       context.hideLoading();
 
-  
-        final info = PaymentInfo(isSuccessful: true, amount: _amount);
-        Navigator.of(context).pop(info);
-      
+      final info = PaymentInfo(isSuccessful: true, amount: _amount);
+      Navigator.of(context).pop(info);
     } catch (e) {
       if (!mounted) return;
       context.hideLoading();
-      context.showMessage(
-        "Unable to process payment",
-        type: MessageType.error,
-      );
+      context.showMessage("Unable to process payment", type: MessageType.error);
     }
   }
 
@@ -232,8 +242,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.darkBackground : AppColors.surface;
     final textColor = isDark ? Colors.white : AppColors.textPrimary;
-    final cardColor =
-        isDark ? AppColors.darkerBackground : AppColors.background;
+    final cardColor = isDark
+        ? AppColors.darkerBackground
+        : AppColors.background;
 
     return PopScope(
       canPop: false,
@@ -333,7 +344,12 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
 
                 // Amount Section
                 if (widget.amount != null)
-                  _buildFixedAmountBanner(colorScheme, isDark, cardColor, textColor)
+                  _buildFixedAmountBanner(
+                    colorScheme,
+                    isDark,
+                    cardColor,
+                    textColor,
+                  )
                 else
                   _buildAmountField(colorScheme, isDark),
                 SizedBox(height: 12.h),
@@ -370,9 +386,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       decoration: BoxDecoration(
         color: colorScheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.18)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -386,7 +400,8 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
             ),
           ),
           Text(
-            '₦${widget.amount!.toStringAsFixed(2)}',
+            // '₦${widget.amount!.toStringAsFixed(2)}',
+            widget.amount?.toNaira(2) ?? '_',
             style: GoogleFonts.inter(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
@@ -446,8 +461,10 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide.none,
             ),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 14.w,
+              vertical: 10.h,
+            ),
           ),
         ),
       ],
@@ -473,8 +490,10 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
               return GestureDetector(
                 onTap: () => _fillCard(card),
                 child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16.r),
@@ -578,7 +597,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
 
   Widget _buildPayButton(ColorScheme colorScheme) {
     return PrimaryButton(
-      text: _amount > 0 ? 'Pay ₦${_amount.toStringAsFixed(2)}' : 'Pay Now',
+      text: _amount > 0 ? 'Pay ${widget.amount?.toNaira(2)}' : 'Pay Now',
       height: 44.h,
       onPressed: _onPayNow,
     );
@@ -633,8 +652,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
       ),
     );
   }
