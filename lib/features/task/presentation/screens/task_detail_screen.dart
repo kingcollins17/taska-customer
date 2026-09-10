@@ -6,10 +6,13 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:seeker_app/core/designs/designs.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
+import 'package:seeker_app/core/utils/utils.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
+import 'package:seeker_app/core/providers/payout_providers.dart';
+import 'package:seeker_app/core/designs/widgets/payment_page.dart';
 import 'package:seeker_app/core/utils/num_extension.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/task_detail_options_sheet.dart';
@@ -24,12 +27,15 @@ class TaskDetailScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final taskAsync = ref.watch(taskDetailProvider(taskId));
     final fabAllowedStatus = ['draft', 'open', 'searching'];
-    final shouldShouldFab =
+    final task = taskAsync.value;
+    final isPaymentRequested = task?.status?.toLowerCase() == 'completed' &&
+        task?.paymentStatus?.toUpperCase() == PaymentStatus.paymentRequested;
+    final shouldShowFab =
         taskAsync.hasValue &&
-        taskAsync.value != null &&
-        fabAllowedStatus.any(
-          (i) => i.contains(taskAsync.value?.status ?? 'N/A'),
-        );
+        task != null &&
+        (fabAllowedStatus.any(
+          (i) => i.contains(task.status ?? 'N/A'),
+        ) || isPaymentRequested);
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: taskAsync.when(
@@ -39,7 +45,7 @@ class TaskDetailScreen extends ConsumerWidget {
             _TaskDetailErrorState(taskId: taskId, error: error),
       ),
       bottomNavigationBar: taskAsync.whenOrNull(
-        data: (task) => shouldShouldFab
+        data: (task) => shouldShowFab
             ? _BottomActionBar(task: task)
             : const SizedBox.shrink(),
         loading: () => const _BottomShimmerBar(),
@@ -144,7 +150,10 @@ class _TaskDetailContent extends ConsumerWidget {
             actions: [
               Padding(
                 padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
-                child: _StatusPill(status: task.status ?? 'open'),
+                child: _StatusPill(
+                  status: task.status ?? 'open',
+                  paymentStatus: task.paymentStatus,
+                ),
               ),
               Padding(
                 padding: EdgeInsets.only(right: 12.w, top: 8.h, bottom: 8.h),
@@ -293,6 +302,11 @@ class _TaskDetailContent extends ConsumerWidget {
                       ],
                     ),
                     SizedBox(height: 14.h),
+                    if (task.status?.toLowerCase() == 'completed' &&
+                        task.paymentStatus?.toUpperCase() ==
+                            PaymentStatus.paymentRequested) ...[
+                      _PaymentRequestedBanner(task: task),
+                    ],
                     _PriceBreakdownCard(task: task),
                     SizedBox(height: 16.h),
                     _AttachmentsSection(attachments: task.attachments ?? []),
@@ -357,12 +371,47 @@ class _HeroFallback extends StatelessWidget {
 
 class _StatusPill extends StatelessWidget {
   final String status;
+  final String? paymentStatus;
 
-  const _StatusPill({required this.status});
+  const _StatusPill({required this.status, this.paymentStatus});
 
   @override
   Widget build(BuildContext context) {
     final s = status.toLowerCase().replaceAll(' ', '_');
+    final pStatus = paymentStatus?.toUpperCase();
+
+    if (s == 'completed' && pStatus == PaymentStatus.paymentRequested) {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+        decoration: BoxDecoration(
+          color: Colors.amber.shade800,
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.payment_rounded, size: 13.sp, color: Colors.white),
+            SizedBox(width: 4.w),
+            Text(
+              'Payment Requested',
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     final (
       String label,
@@ -993,19 +1042,241 @@ class _AssignmentCardShimmer extends StatelessWidget {
   }
 }
 
+class _PaymentRequestedBanner extends ConsumerWidget {
+  final Task task;
+
+  const _PaymentRequestedBanner({required this.task});
+
+  Future<void> _onMakePayment(BuildContext context, WidgetRef ref) async {
+    final taskId = task.id;
+    if (taskId == null || taskId.isEmpty) return;
+
+    final existingPayout = task.payout;
+    if (existingPayout != null) {
+      final amount = existingPayout.customerPaymentAmount?.toDouble() ??
+          task.customerTotalPrice ??
+          task.basePrice;
+      final userId = existingPayout.customerId ?? task.customerId;
+      final pTaskId = existingPayout.taskId ?? taskId;
+
+      final result = await PaymentPage.show(
+        amount: amount,
+        userId: userId,
+        taskId: pTaskId,
+      );
+
+      if (result.isSuccessful && context.mounted) {
+        ref.invalidate(taskDetailProvider(taskId));
+      }
+      return;
+    }
+
+    context.showLoading();
+    try {
+      final payout = await ref.read(pendingPayoutProvider(taskId).future);
+      if (context.mounted) {
+        context.hideLoading();
+      }
+      if (context.mounted) {
+        final amount = payout?.customerPaymentAmount?.toDouble() ??
+            task.customerTotalPrice ??
+            task.basePrice;
+        final userId = payout?.customerId ?? task.customerId;
+        final pTaskId = payout?.taskId ?? taskId;
+
+        final result = await PaymentPage.show(
+          amount: amount,
+          userId: userId,
+          taskId: pTaskId,
+        );
+
+        if (result.isSuccessful && context.mounted) {
+          ref.invalidate(taskDetailProvider(taskId));
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        context.hideLoading();
+        final result = await PaymentPage.show(
+          amount: task.customerTotalPrice ?? task.basePrice,
+          userId: task.customerId,
+          taskId: taskId,
+        );
+        if (result.isSuccessful && context.mounted) {
+          ref.invalidate(taskDetailProvider(taskId));
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: isDark ? 0.15 : 0.1),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: Colors.amber.withValues(alpha: isDark ? 0.3 : 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedCreditCard,
+                  color: Colors.amber.shade800,
+                  size: 20.sp,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Payment Requested',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      'Task completed! Please make payment.',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            height: 40.h,
+            child: ElevatedButton(
+              onPressed: () => _onMakePayment(context, ref),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                'Make Payment',
+                style: TextStyle(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BottomActionBar extends ConsumerWidget {
   final Task task;
 
   const _BottomActionBar({required this.task});
+
+  Future<void> _onMakePayment(BuildContext context, WidgetRef ref) async {
+    final taskId = task.id;
+    if (taskId == null || taskId.isEmpty) return;
+
+    final existingPayout = task.payout;
+    if (existingPayout != null) {
+      final amount = existingPayout.customerPaymentAmount?.toDouble() ??
+          task.customerTotalPrice ??
+          task.basePrice;
+      final userId = existingPayout.customerId ?? task.customerId;
+      final pTaskId = existingPayout.taskId ?? taskId;
+
+      final result = await PaymentPage.show(
+        amount: amount,
+        userId: userId,
+        taskId: pTaskId,
+      );
+
+      if (result.isSuccessful && context.mounted) {
+        ref.invalidate(taskDetailProvider(taskId));
+      }
+      return;
+    }
+
+    context.showLoading();
+    try {
+      final payout = await ref.read(pendingPayoutProvider(taskId).future);
+      if (context.mounted) {
+        context.hideLoading();
+      }
+      if (context.mounted) {
+        final amount = payout?.customerPaymentAmount?.toDouble() ??
+            task.customerTotalPrice ??
+            task.basePrice;
+        final userId = payout?.customerId ?? task.customerId;
+        final pTaskId = payout?.taskId ?? taskId;
+
+        final result = await PaymentPage.show(
+          amount: amount,
+          userId: userId,
+          taskId: pTaskId,
+        );
+
+        if (result.isSuccessful && context.mounted) {
+          ref.invalidate(taskDetailProvider(taskId));
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        context.hideLoading();
+        final result = await PaymentPage.show(
+          amount: task.customerTotalPrice ?? task.basePrice,
+          userId: task.customerId,
+          taskId: taskId,
+        );
+        if (result.isSuccessful && context.mounted) {
+          ref.invalidate(taskDetailProvider(taskId));
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
 
     final status = task.status?.toLowerCase() ?? 'open';
+    final paymentStatus = task.paymentStatus?.toUpperCase();
+    final isPaymentRequested =
+        status == 'completed' && paymentStatus == PaymentStatus.paymentRequested;
+
     String actionText = 'Back to Tasks';
 
-    if (status == 'draft') {
+    if (isPaymentRequested) {
+      actionText = 'Make Payment';
+    } else if (status == 'draft') {
       actionText = 'Confirm Task Order';
     } else if (status == 'open') {
       actionText = 'Searching Provider...';
@@ -1021,7 +1292,9 @@ class _BottomActionBar extends ConsumerWidget {
           height: 44.h,
           child: ElevatedButton(
             onPressed: () {
-              if (status == 'draft') {
+              if (isPaymentRequested) {
+                _onMakePayment(context, ref);
+              } else if (status == 'draft') {
                 if (task.id != null) {
                   ConfirmTaskSheet.show(context, task.id!);
                 }
@@ -1043,13 +1316,26 @@ class _BottomActionBar extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12.r),
               ),
             ),
-            child: Text(
-              actionText,
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isPaymentRequested) ...[
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedCreditCard,
+                    color: Colors.white,
+                    size: 18.sp,
+                  ),
+                  SizedBox(width: 8.w),
+                ],
+                Text(
+                  actionText,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

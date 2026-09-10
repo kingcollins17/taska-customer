@@ -192,4 +192,69 @@ extension FlushbarMessageExtension on BuildContext {
       isDismissible: true,
     ).show(this);
   }
+
+  /// Shows a small, simple toast notification at the bottom of the screen.
+  ///
+  /// - [message] – The text to display inside the toast.
+  /// - [type] – One of [MessageType.info], [MessageType.error], or [MessageType.success].
+  /// - [icon] – Optional custom icon override.
+  /// - [duration] – How long the toast stays visible. Defaults to 2 seconds.
+  void showToast(
+    String message, {
+    MessageType type = MessageType.info,
+    IconData? icon,
+    Duration duration = const Duration(seconds: 2),
+  }) {
+    final isDark = Theme.of(this).colorScheme.brightness == Brightness.dark;
+    final config = _configs[type]!;
+    final style = config.getStyle(isDark);
+
+    final toastBgColor = isDark
+        ? const Color(0xFF1E293B)
+        : const Color(0xFF0F172A);
+
+    Flushbar(
+      messageText: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon ?? config.icon,
+            color: style.iconColor,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+      duration: duration,
+      flushbarPosition: FlushbarPosition.BOTTOM,
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      borderRadius: BorderRadius.circular(24),
+      backgroundColor: toastBgColor,
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.25),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+      ],
+      forwardAnimationCurve: Curves.easeOutCubic,
+      reverseAnimationCurve: Curves.easeInCubic,
+      animationDuration: const Duration(milliseconds: 300),
+      dismissDirection: FlushbarDismissDirection.HORIZONTAL,
+      isDismissible: true,
+    ).show(this);
+  }
 }

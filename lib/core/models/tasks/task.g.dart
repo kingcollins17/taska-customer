@@ -136,6 +136,10 @@ Task _$TaskFromJson(Map<String, dynamic> json) => Task(
       ? null
       : TaskCustomer.fromJson(json['customer'] as Map<String, dynamic>),
   assignedProviderId: json['assigned_provider_id'] as String?,
+  paymentStatus: json['payment_status'] as String?,
+  payout: json['payout'] == null
+      ? null
+      : Payout.fromJson(json['payout'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
@@ -168,6 +172,8 @@ Map<String, dynamic> _$TaskToJson(Task instance) => <String, dynamic>{
   'attachments': instance.attachments?.map((e) => e.toJson()).toList(),
   'customer': instance.customer?.toJson(),
   'assigned_provider_id': instance.assignedProviderId,
+  'payment_status': instance.paymentStatus,
+  'payout': instance.payout?.toJson(),
 };
 
 DispatchAttempt _$DispatchAttemptFromJson(Map<String, dynamic> json) =>

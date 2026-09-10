@@ -63,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
                 ref.invalidate(activeTasksProvider);
                 ref.invalidate(categoriesProvider(null));
                 ref.invalidate(tasksProvider);
-                ref.invalidate(pendingPayoutProvider);
+                ref.invalidate(pendingPayoutProvider(null));
                 ref.invalidate(recentPendingPriceAdjustmentProvider);
                 try {
                   await Future.wait([
@@ -72,7 +72,7 @@ class HomeScreen extends ConsumerWidget {
                     ref.read(activeTasksProvider.future),
                     ref.read(categoriesProvider(null).future),
                     ref.read(tasksProvider.future),
-                    ref.read(pendingPayoutProvider.future),
+                    ref.read(pendingPayoutProvider(null).future),
                     ref.read(recentPendingPriceAdjustmentProvider.future),
                   ]);
                 } catch (_) {}

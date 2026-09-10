@@ -55,9 +55,10 @@ class _PaymentsClient implements PaymentsClient {
   }
 
   @override
-  Future<GenericResponse<Payout>> getPendingPayout() async {
+  Future<GenericResponse<Payout>> getPendingPayout({String? taskId}) async {
     final _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{r'task_id': taskId};
+    queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<GenericResponse<Payout>>(

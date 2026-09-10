@@ -7,10 +7,10 @@ import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/models/payout/payout_models.dart';
 
-final pendingPayoutProvider = FutureProvider.autoDispose<Payout?>((ref) async {
+final pendingPayoutProvider = FutureProvider.family.autoDispose<Payout?, String?>((ref, taskId) async {
   try {
     final client = ref.watch(paymentsClientProvider);
-    final response = await client.getPendingPayout();
+    final response = await client.getPendingPayout(taskId: taskId);
     if (response.success && response.data != null) {
       return response.data..debugLog();
     }
@@ -40,7 +40,7 @@ final pendingPayoutListenerProvider = FutureProvider.autoDispose<void>((ref) asy
     }
   
 
-  final payout = await ref.watch(pendingPayoutProvider.future);
+  final payout = await ref.watch(pendingPayoutProvider(null).future);
   if (payout != null) {
     showModal(payout);
   }

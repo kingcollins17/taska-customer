@@ -21,6 +21,6 @@ abstract class PaymentsClient {
   );
 
   @GET('/payments/customer/payouts/pending-payment')
-  Future<GenericResponse<Payout>> getPendingPayout();
+  Future<GenericResponse<Payout>> getPendingPayout({@Query('task_id') String? taskId});
 }
 

@@ -4,14 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:seeker_app/core/core.dart';
-import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
 import 'package:seeker_app/core/providers/task_attachment_upload_provider.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import '../../../../core/designs/app_colors.dart';
 import '../../../../core/designs/app_text_styles.dart';
-import '../../../../core/designs/widgets/primary_button.dart';
 
 class TaskDescriptionScreen extends ConsumerStatefulWidget {
   final String? initialTitle;
@@ -37,7 +35,15 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
 
   Future<void> _pickImage() async {
     final attachments = ref.read(taskAttachmentUploadProvider).value ?? [];
-    if (attachments.length >= 4) return;
+    if (attachments.length >= 4) {
+      if (mounted) {
+        context.showToast(
+          'Maximum 4 photos allowed',
+          type: MessageType.error,
+        );
+      }
+      return;
+    }
 
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -233,11 +239,9 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                   text: 'Continue',
                   onPressed: () {
                     if (attachments.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please select at least 1 photo'),
-                          backgroundColor: Colors.red,
-                        ),
+                      context.showToast(
+                        'Please select at least 1 photo',
+                        type: MessageType.error,
                       );
                       return;
                     }

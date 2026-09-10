@@ -2,6 +2,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'assignment.dart';
+import '../payout/payout_models.dart';
 
 part 'task.freezed.dart';
 part 'task.g.dart';
@@ -112,6 +113,16 @@ class TaskCustomer {
   Map<String, dynamic> toJson() => _$TaskCustomerToJson(this);
 }
 
+class PaymentStatus {
+  static const String pending = 'PENDING';
+  static const String paymentRequested = 'PAYMENT_REQUESTED';
+  static const String customerPaid = 'CUSTOMER_PAID';
+  static const String transferInitiated = 'TRANSFER_INITIATED';
+  static const String paid = 'PAID';
+  static const String cashPaid = 'CASH_PAID';
+  static const String failed = 'FAILED';
+}
+
 @JsonSerializable(explicitToJson: true)
 class Task {
   final String? id;
@@ -164,6 +175,9 @@ class Task {
   final TaskCustomer? customer;
   @JsonKey(name: 'assigned_provider_id')
   final String? assignedProviderId;
+  @JsonKey(name: 'payment_status')
+  final String? paymentStatus;
+  final Payout? payout;
 
   Task({
     this.id,
@@ -195,6 +209,8 @@ class Task {
     this.attachments,
     this.customer,
     this.assignedProviderId,
+    this.paymentStatus,
+    this.payout,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) => _$TaskFromJson(json);

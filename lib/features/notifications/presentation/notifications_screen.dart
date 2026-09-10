@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:animations/animations.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/notification_providers.dart';
@@ -14,6 +13,7 @@ import 'widgets/notifications_filter_row.dart';
 import 'widgets/notification_group_header.dart';
 import 'widgets/notification_list_item.dart';
 import 'widgets/notification_detail_sheet.dart';
+import 'widgets/notification_card_shimmer.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -183,65 +183,39 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           children: [
             state.when(
-              data: (items) => NotificationsFilterRow(
-                showUnreadOnly: _showUnreadOnly,
-                onFilterChanged: (val) {
-                  setState(() {
-                    _showUnreadOnly = val;
-                  });
-                },
-                onMarkAllRead: () => _markAllRead(items),
-              ),
-              loading: () => const SizedBox.shrink(),
-              error: (err, stack) => const SizedBox.shrink(),
-            ),
-            SizedBox(height: 4.h),
-            state.when(
-              data: (items) => PageTransitionSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation, secondaryAnimation) {
-                  return SharedAxisTransition(
-                    animation: animation,
-                    secondaryAnimation: secondaryAnimation,
-                    transitionType: SharedAxisTransitionType.horizontal,
-                    fillColor: Colors.transparent,
-                    child: child,
-                  );
-                },
-                child: Column(
-                  key: ValueKey<bool>(_showUnreadOnly),
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _buildGroupedList(items),
-                ),
-              ),
-              loading: () => Column(
+              data: (items) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 6,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          bottom: 12.h,
-                          top: index == 0 ? 12.h : 0,
-                        ),
-                        child: Shimmer.fromColors(
-                          baseColor: Colors.white.withValues(alpha: 0.05),
-                          highlightColor: Colors.white.withValues(alpha: 0.1),
-                          child: Container(
-                            height: 80.h,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16.r),
-                            ),
-                          ),
-                        ),
+                  NotificationsFilterRow(
+                    showUnreadOnly: _showUnreadOnly,
+                    onFilterChanged: (val) {
+                      setState(() {
+                        _showUnreadOnly = val;
+                      });
+                    },
+                    onMarkAllRead: () => _markAllRead(items),
+                  ),
+                  SizedBox(height: 4.h),
+                  PageTransitionSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation, secondaryAnimation) {
+                      return SharedAxisTransition(
+                        animation: animation,
+                        secondaryAnimation: secondaryAnimation,
+                        transitionType: SharedAxisTransitionType.horizontal,
+                        fillColor: Colors.transparent,
+                        child: child,
                       );
                     },
+                    child: Column(
+                      key: ValueKey<bool>(_showUnreadOnly),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: _buildGroupedList(items),
+                    ),
                   ),
                 ],
               ),
+              loading: () => const NotificationsListShimmer(),
               error: (err, stack) => Center(
                 child: Padding(
                   padding: EdgeInsets.only(top: 60.h),
@@ -256,17 +230,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
             if (state.isLoading && state.hasValue)
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 20.h),
-                child: Shimmer.fromColors(
-                  baseColor: Colors.white.withValues(alpha: 0.05),
-                  highlightColor: Colors.white.withValues(alpha: 0.1),
-                  child: Container(
-                    height: 80.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                  ),
+                padding: EdgeInsets.only(top: 4.h, bottom: 16.h),
+                child: const NotificationCardShimmer(
+                  titleWidth: 130,
+                  bodyWidth: 160,
                 ),
               ),
           ],

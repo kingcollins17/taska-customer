@@ -52,11 +52,11 @@ class ProfileScreen extends ConsumerWidget {
           color: AppColors.primary,
           onRefresh: () async {
             ref.invalidate(userProvider);
-            ref.invalidate(pendingPayoutProvider);
+            ref.invalidate(pendingPayoutProvider(null));
             try {
               await Future.wait([
                 ref.read(userProvider.future),
-                ref.read(pendingPayoutProvider.future),
+                ref.read(pendingPayoutProvider(null).future),
               ]);
             } catch (_) {}
           },
