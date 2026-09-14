@@ -213,7 +213,7 @@ Map<String, dynamic> _$DispatchAttemptToJson(DispatchAttempt instance) =>
 _CreateTaskLocationRequest _$CreateTaskLocationRequestFromJson(
   Map<String, dynamic> json,
 ) => _CreateTaskLocationRequest(
-  locationType: json['location_type'] as String? ?? 'service',
+  locationType: json['location_type'] as String? ?? 'SERVICE',
   latitude: (json['latitude'] as num?)?.toDouble(),
   longitude: (json['longitude'] as num?)?.toDouble(),
   address: json['address'] as String?,

@@ -5,11 +5,12 @@ part 'api_responses.g.dart';
 @JsonSerializable(genericArgumentFactories: true, explicitToJson: true)
 class GenericResponse<T> {
   final String? detail;
+  final String? message;
   @JsonKey(name: 'status_code')
   final int? statusCode;
   final T? data;
 
-  GenericResponse({this.detail, this.statusCode, this.data});
+  GenericResponse({this.detail, this.message, this.statusCode, this.data});
 
   factory GenericResponse.fromJson(
     Map<String, dynamic> json,

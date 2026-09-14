@@ -192,7 +192,9 @@ class ProfileScreen extends ConsumerWidget {
                                           ),
                                           SizedBox(width: 3.w),
                                           Text(
-                                            user?.averageRatings
+                                            user?.stats?.averageRatings
+                                                    ?.toStringAsFixed(1) ??
+                                                user?.averageRatings
                                                     ?.toStringAsFixed(1) ??
                                                 '0.0',
                                             style: AppTextStyles.bodyMedium

@@ -11,6 +11,7 @@ GenericResponse<T> _$GenericResponseFromJson<T>(
   T Function(Object? json) fromJsonT,
 ) => GenericResponse<T>(
   detail: json['detail'] as String?,
+  message: json['message'] as String?,
   statusCode: (json['status_code'] as num?)?.toInt(),
   data: _$nullableGenericFromJson(json['data'], fromJsonT),
 );
@@ -20,6 +21,7 @@ Map<String, dynamic> _$GenericResponseToJson<T>(
   Object? Function(T value) toJsonT,
 ) => <String, dynamic>{
   'detail': instance.detail,
+  'message': instance.message,
   'status_code': instance.statusCode,
   'data': _$nullableGenericToJson(instance.data, toJsonT),
 };
