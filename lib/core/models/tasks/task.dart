@@ -276,6 +276,7 @@ abstract class CreateTaskLocationRequest with _$CreateTaskLocationRequest {
 
 @freezed
 abstract class CreateTaskRequest with _$CreateTaskRequest {
+  @JsonSerializable(explicitToJson: true)
   const factory CreateTaskRequest({
     String? title,
     String? description,

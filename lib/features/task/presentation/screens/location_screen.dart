@@ -50,7 +50,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
           locationType: 'SERVICE', // Should be capitalized for backend support
           latitude: address.lat,
           longitude: address.lng,
-          address: address.formattedAddress ?? address.street ?? 'My Location',
+          address: address.formattedAddress ?? address.street,
           city: address.city,
           state: address.state,
           country: address.country,

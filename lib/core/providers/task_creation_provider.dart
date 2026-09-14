@@ -134,7 +134,7 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
   Future<void> updateLocation(CreateTaskLocationRequest location) async {
     final current = state.value ?? CreateTaskRequest();
     _updateState(
-      current.copyWith(locations: [location.copyWith(locationType: 'service')]),
+      current.copyWith(locations: [location]),
     );
   }
 

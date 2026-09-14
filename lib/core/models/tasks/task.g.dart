@@ -262,5 +262,5 @@ Map<String, dynamic> _$CreateTaskRequestToJson(_CreateTaskRequest instance) =>
       'service_id': instance.serviceId,
       'expires_at': instance.expiresAt?.toIso8601String(),
       'scheduled_start_at': instance.scheduledStartAt?.toIso8601String(),
-      'locations': instance.locations,
+      'locations': instance.locations?.map((e) => e.toJson()).toList(),
     };
