@@ -261,7 +261,7 @@ class DispatchAttempt {
 @freezed
 abstract class CreateTaskLocationRequest with _$CreateTaskLocationRequest {
   const factory CreateTaskLocationRequest({
-    @JsonKey(name: 'location_type') @Default('service') String? locationType,
+    @JsonKey(name: 'location_type') @Default('SERVICE') String? locationType,
     double? latitude,
     double? longitude,
     String? address,

@@ -32,6 +32,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     'All',
     'Draft',
     'Open',
+    'Searching',
     'Assigned',
     'In Progress',
     'Cancelled',

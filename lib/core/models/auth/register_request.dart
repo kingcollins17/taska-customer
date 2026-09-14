@@ -21,7 +21,7 @@ class RegisterRequest {
     this.email,
     this.phoneNumber,
     this.password,
-    this.type = 'customer',
+    this.type = 'CUSTOMER',
     this.firstName,
     this.lastName,
     this.gender,

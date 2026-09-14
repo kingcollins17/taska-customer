@@ -43,6 +43,18 @@ class HomeScreen extends ConsumerWidget {
     ref.watch(pendingReviewPromptListenerProvider);
     ref.watch(recentPendingPriceAdjustmentListenerProvider);
 
+    ref.listen<AsyncValue<User?>>(userProvider, (previous, next) {
+      if (!next.isLoading && next.value == null) {
+        ref.read(userProvider.notifier).logout(
+              onSuccess: () {
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              },
+            );
+      }
+    });
+
     final String name = user?.customerProfile != null
         ? '${user!.customerProfile!.firstName ?? ''} ${user.customerProfile!.lastName ?? ''}'
               .trim()

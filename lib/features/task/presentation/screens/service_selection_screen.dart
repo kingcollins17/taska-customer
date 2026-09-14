@@ -103,8 +103,9 @@ class _ServiceSelectionScreenState
     final cardColor = isDark ? const Color(0xFF1A1A1E) : Colors.white;
 
     final categoriesAsync = ref.watch(categoriesProvider(null));
-    final servicesAsync =
-        ref.watch(availableServicesProvider(_selectedCategoryId));
+    final servicesAsync = ref.watch(
+      availableServicesProvider(_selectedCategoryId),
+    );
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -204,10 +205,8 @@ class _ServiceSelectionScreenState
                                 padding: EdgeInsets.only(left: 6.w),
                                 child: _CategoryChip(
                                   label: cat.name ?? 'Unknown',
-                                  isSelected:
-                                      _selectedCategoryId == cat.id,
-                                  onTap: () =>
-                                      _onCategorySelected(cat.id),
+                                  isSelected: _selectedCategoryId == cat.id,
+                                  onTap: () => _onCategorySelected(cat.id),
                                 ),
                               ),
                             ),
@@ -247,12 +246,14 @@ class _ServiceSelectionScreenState
                       data: (services) {
                         final filtered = _searchQuery != null
                             ? services
-                                .where((s) =>
-                                    s.name?.toLowerCase().contains(
+                                  .where(
+                                    (s) =>
+                                        s.name?.toLowerCase().contains(
                                           _searchQuery!.toLowerCase(),
                                         ) ??
-                                    false)
-                                .toList()
+                                        false,
+                                  )
+                                  .toList()
                             : services;
 
                         if (filtered.isEmpty) {
@@ -267,8 +268,9 @@ class _ServiceSelectionScreenState
                             subtitle: _searchQuery != null
                                 ? 'Try a different search term or browse all services'
                                 : 'There are no services available in your area right now',
-                            actionLabel:
-                                _searchQuery != null ? 'Clear Search' : null,
+                            actionLabel: _searchQuery != null
+                                ? 'Clear Search'
+                                : null,
                             onAction: _searchQuery != null
                                 ? () => setState(() => _searchQuery = null)
                                 : null,
@@ -279,11 +281,11 @@ class _ServiceSelectionScreenState
                           physics: const BouncingScrollPhysics(),
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 10.w,
-                            mainAxisSpacing: 10.h,
-                            childAspectRatio: 1.12,
-                          ),
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 10.w,
+                                mainAxisSpacing: 10.h,
+                                childAspectRatio: 1.12,
+                              ),
                           itemCount: filtered.length,
                           padding: EdgeInsets.only(
                             bottom: (draft.value?.serviceId != null)
@@ -295,8 +297,7 @@ class _ServiceSelectionScreenState
                             return _ServiceCard(
                               service: service,
                               index: index,
-                              isSelected:
-                                  service.id == draft.value?.serviceId,
+                              isSelected: service.id == draft.value?.serviceId,
                               onTap: () => _handleServiceTap(service),
                             );
                           },
@@ -304,8 +305,7 @@ class _ServiceSelectionScreenState
                       },
                       loading: () => GridView.builder(
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           crossAxisSpacing: 10.w,
                           mainAxisSpacing: 10.h,
@@ -313,10 +313,7 @@ class _ServiceSelectionScreenState
                         ),
                         itemCount: 6,
                         itemBuilder: (context, index) {
-                          return const _ServiceCard(
-                            service: null,
-                            index: 0,
-                          );
+                          return const _ServiceCard(service: null, index: 0);
                         },
                       ),
                       error: (error, _) => AppErrorWidget(
@@ -324,9 +321,11 @@ class _ServiceSelectionScreenState
                         error: error,
                         title: 'Failed to load services',
                         onRetry: () => ref
-                            .read(availableServicesProvider(
-                                    _selectedCategoryId)
-                                .notifier)
+                            .read(
+                              availableServicesProvider(
+                                _selectedCategoryId,
+                              ).notifier,
+                            )
                             .refresh(),
                       ),
                     ),
@@ -336,7 +335,11 @@ class _ServiceSelectionScreenState
             ),
 
             // Continue Button
-            if (servicesAsync.hasValue && draft.value?.serviceId != null)
+            if (servicesAsync.hasValue &&
+                servicesAsync.value != null &&
+                servicesAsync.value!.isNotEmpty &&
+                draft.value?.serviceId != null &&
+                servicesAsync.value!.any((s) => s.id == draft.value!.serviceId))
               Positioned(
                 bottom: 16.h,
                 left: 20.w,
@@ -344,15 +347,12 @@ class _ServiceSelectionScreenState
                 child: PrimaryButton(
                   text: 'Continue',
                   onPressed: () {
-                    final selectedService =
-                        servicesAsync.value!.firstWhere(
+                    final selectedService = servicesAsync.value!.firstWhere(
                       (s) => s.id == draft.value!.serviceId,
                     );
                     context.pushNamed(
                       RouteNames.taskDescription.name,
-                      queryParameters: {
-                        'service': selectedService.name ?? '',
-                      },
+                      queryParameters: {'service': selectedService.name ?? ''},
                     );
                   },
                 ),
@@ -391,15 +391,15 @@ class _CategoryChip extends StatelessWidget {
           color: isSelected
               ? AppColors.primary
               : (isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.black.withValues(alpha: 0.04)),
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.04)),
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
                 : (isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.06)),
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06)),
             width: 1,
           ),
         ),
@@ -411,8 +411,8 @@ class _CategoryChip extends StatelessWidget {
               color: isSelected
                   ? Colors.white
                   : (isDark
-                      ? Colors.white.withValues(alpha: 0.8)
-                      : AppColors.textSecondary),
+                        ? Colors.white.withValues(alpha: 0.8)
+                        : AppColors.textSecondary),
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
@@ -535,8 +535,8 @@ class _ServiceCard extends StatelessWidget {
                 color: isSelected
                     ? AppColors.primary
                     : (isDark
-                        ? Colors.white.withValues(alpha: 0.07)
-                        : Colors.black.withValues(alpha: 0.05)),
+                          ? Colors.white.withValues(alpha: 0.07)
+                          : Colors.black.withValues(alpha: 0.05)),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: [
@@ -591,14 +591,14 @@ class _ServiceCard extends StatelessWidget {
                         margin: EdgeInsets.only(top: 4.h, right: 2.w),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color:
-                              isAvailable ? Colors.green : Colors.redAccent,
+                          color: isAvailable ? Colors.green : Colors.redAccent,
                           boxShadow: [
                             BoxShadow(
-                              color: (isAvailable
-                                      ? Colors.green
-                                      : Colors.redAccent)
-                                  .withValues(alpha: 0.35),
+                              color:
+                                  (isAvailable
+                                          ? Colors.green
+                                          : Colors.redAccent)
+                                      .withValues(alpha: 0.35),
                               blurRadius: 4,
                             ),
                           ],
