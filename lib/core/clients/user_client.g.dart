@@ -264,7 +264,7 @@ class _UserClient implements UserClient {
   }
 
   @override
-  Future<GenericResponse<dynamic>> updateSeekerProfile(
+  Future<GenericResponse<dynamic>> updateCustomerProfile(
     UpdateProfileRequest request,
   ) async {
     final _extra = <String, dynamic>{};

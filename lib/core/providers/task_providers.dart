@@ -28,7 +28,7 @@ final activeTasksProvider = FutureProvider<List<TaskLite>>((ref) async {
   final user = await ref.watch(userProvider.future);
   final response = await ref
       .read(tasksClientProvider)
-      .listTasks(status: ['assigned', 'in_progress'], customerId: user?.id);
+      .listTasks(status: ['ASSIGNED', 'IN_PROGRESS'], customerId: user?.id);
   final data = response.data?.items ?? <TaskLite>[];
   data.shuffle();
 
@@ -133,7 +133,10 @@ class TasksNotifier extends AsyncNotifier<List<TaskLite>> {
     String? userId,
   ) async {
     final client = ref.read(tasksClientProvider);
-    final statuses = statusFilter ?? ref.read(taskStatusFilterProvider);
+    final rawStatuses = statusFilter ?? ref.read(taskStatusFilterProvider);
+    final statuses = rawStatuses
+        ?.map((s) => s.toUpperCase().replaceAll(' ', '_'))
+        .toList();
 
     final response = await client.listTasks(
       page: _page,

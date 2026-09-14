@@ -1,4 +1,5 @@
 enum RouteNames {
+  tasks,
   taskCategory,
   taskService,
   taskDescription,
@@ -12,4 +13,5 @@ enum RouteNames {
   notifications,
 
   updatePayoutAccount,
+  payoutsList,
 }

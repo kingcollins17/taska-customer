@@ -57,7 +57,7 @@ abstract class UserClient {
   Future<GenericResponse<User>> getMe();
 
   @PUT('/users/update-seeker-profile')
-  Future<GenericResponse<dynamic>> updateSeekerProfile(
+  Future<GenericResponse<dynamic>> updateCustomerProfile(
     @Body() UpdateProfileRequest request,
   );
 

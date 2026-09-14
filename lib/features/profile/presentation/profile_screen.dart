@@ -8,6 +8,7 @@ import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/payout_providers.dart';
 import 'package:seeker_app/features/profile/providers/account_issues_provider.dart';
 import 'package:seeker_app/core/providers/theme_provider.dart';
+import 'package:seeker_app/core/routes/route_names.dart';
 import '../../../../core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
 import '../../../../core/providers/user_provider.dart';
@@ -245,7 +246,9 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.payments_outlined,
                 title: 'See Transactions',
                 iconColor: Colors.orange,
-                onTap: () {},
+                onTap: () {
+                  context.pushNamed(RouteNames.payoutsList.name);
+                },
               ),
               _MenuItem(
                 icon: Icons.support_agent_outlined,

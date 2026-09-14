@@ -18,6 +18,7 @@ import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:seeker_app/core/utils/category_icon_helper.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:seeker_app/core/designs/widgets/payment_page.dart';
 import 'package:seeker_app/core/designs/widgets/task_matching_banner.dart';
 import 'widgets/home_app_bar.dart';
 
@@ -105,13 +106,13 @@ class HomeScreen extends ConsumerWidget {
                       greeting: greeting,
                       unreadCount: unreadCount,
                     ),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 16.h),
                     const _SearchBar(),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 16.h),
+                    const _PendingPayoutSection(),
                     const _ActiveWork(),
-                    SizedBox(height: 28.h),
                     const _MainHero(),
-                    SizedBox(height: 28.h),
+                    SizedBox(height: 24.h),
                     const _PopularCategories(),
                   ],
                 ),
@@ -253,26 +254,26 @@ class _MainHero extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 10.h),
           Text(
             'Get work done in real-time',
             style: AppTextStyles.heading2.copyWith(
               color: colorScheme.onSurface,
-              fontSize: 22.sp,
+              fontSize: 18.sp,
               fontWeight: FontWeight.w700,
-              height: 1.3,
+              height: 1.25,
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 6.h),
           Text(
             'Get matched with top-rated local pros in seconds. Fast, effortless, and reliable.',
             style: AppTextStyles.bodyMedium.copyWith(
               color: colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 13.sp,
-              height: 1.5,
+              fontSize: 12.sp,
+              height: 1.45,
             ),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 16.h),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -283,21 +284,21 @@ class _MainHero extends StatelessWidget {
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
                 elevation: 0,
-                padding: EdgeInsets.symmetric(vertical: 14.h),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(14.r),
                 ),
               ),
               icon: Icon(
                 Icons.bolt_rounded,
                 color: colorScheme.onPrimary,
-                size: 20.sp,
+                size: 18.sp,
               ),
               label: Text(
                 'Get Started Now',
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: colorScheme.onPrimary,
-                  fontSize: 15.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -329,7 +330,7 @@ class _PopularCategories extends ConsumerWidget {
               'Popular Categories',
               style: AppTextStyles.heading3.copyWith(
                 color: colorScheme.onSurface,
-                fontSize: 18.sp,
+                fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -478,14 +479,19 @@ class _ActiveWork extends ConsumerWidget {
                   'Active Work',
                   style: AppTextStyles.heading3.copyWith(
                     color: colorScheme.onSurface,
-                    fontSize: 18.sp,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 if (showSeeAll)
                   TextButton(
                     onPressed: () {
-                      context.go('/tasks', extra: ['assigned', 'in_progress']);
+                      context.pushNamed(
+                        RouteNames.tasks.name,
+                        queryParameters: {
+                          'statuses': ['IN_PROGRESS', 'ASSIGNED'],
+                        },
+                      );
                     },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
@@ -557,6 +563,7 @@ class _ActiveWork extends ConsumerWidget {
                 ),
               );
             }),
+            SizedBox(height: 20.h),
           ],
         );
       },
@@ -737,12 +744,16 @@ class _ActiveWorkShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Active Work',
-          style: AppTextStyles.heading3.copyWith(
-            color: colorScheme.onSurface,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w700,
+        Shimmer.fromColors(
+          baseColor: baseColor,
+          highlightColor: highlightColor,
+          child: Container(
+            width: 120.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4.r),
+            ),
           ),
         ),
         SizedBox(height: 14.h),
@@ -758,6 +769,7 @@ class _ActiveWorkShimmer extends StatelessWidget {
             ),
           ),
         ),
+        SizedBox(height: 20.h),
       ],
     );
   }
@@ -835,3 +847,181 @@ class _PopularCategoriesShimmer extends StatelessWidget {
     );
   }
 }
+
+class _PendingPayoutSection extends ConsumerWidget {
+  const _PendingPayoutSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pendingPayoutAsync = ref.watch(pendingPayoutProvider(null));
+
+    return pendingPayoutAsync.when(
+      data: (payout) {
+        if (payout == null) return const SizedBox.shrink();
+
+        final amount = payout.customerPaymentAmount?.toDouble() ??
+            payout.payoutAmount?.toDouble() ??
+            payout.task?.customerTotalPrice?.toDouble();
+
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final isDark = theme.brightness == Brightness.dark;
+
+        final title =
+            payout.task?.title ?? payout.description ?? 'Pending Payment';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pending Payment',
+              style: AppTextStyles.heading3.copyWith(
+                color: colorScheme.onSurface,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 14.h),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () async {
+                  await PaymentPage.show(
+                    amount: amount,
+                    userId: payout.customerId,
+                    taskId: payout.taskId,
+                  );
+                  ref.invalidate(pendingPayoutProvider(null));
+                  ref.invalidate(activeTasksProvider);
+                },
+                borderRadius: BorderRadius.circular(16.r),
+                child: Container(
+                  padding: EdgeInsets.all(14.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentOrange
+                        .withValues(alpha: isDark ? 0.12 : 0.08),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: AppColors.accentOrange
+                          .withValues(alpha: isDark ? 0.25 : 0.20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42.r,
+                        height: 42.r,
+                        decoration: BoxDecoration(
+                          color: AppColors.accentOrange.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: HugeIcon(
+                            icon: HugeIcons.strokeRoundedCreditCard,
+                            color: AppColors.accentOrange,
+                            size: 20.sp,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: colorScheme.onSurface,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              'Tap to complete payment',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.accentOrange,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      if (amount != null)
+                        Text(
+                          amount.toNaira(2),
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.accentOrange,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      SizedBox(width: 4.w),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.accentOrange,
+                        size: 20.sp,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 24.h),
+          ],
+        );
+      },
+      loading: () => const _PendingPayoutShimmer(),
+      error: (e, st) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _PendingPayoutShimmer extends StatelessWidget {
+  const _PendingPayoutShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final baseColor = colorScheme.onSurface.withValues(alpha: 0.06);
+    final highlightColor = colorScheme.onSurface.withValues(alpha: 0.15);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Shimmer.fromColors(
+          baseColor: baseColor,
+          highlightColor: highlightColor,
+          child: Container(
+            width: 140.w,
+            height: 20.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+          ),
+        ),
+        SizedBox(height: 14.h),
+        Shimmer.fromColors(
+          baseColor: baseColor,
+          highlightColor: highlightColor,
+          child: Container(
+            width: double.infinity,
+            height: 64.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+          ),
+        ),
+        SizedBox(height: 24.h),
+      ],
+    );
+  }
+}
+

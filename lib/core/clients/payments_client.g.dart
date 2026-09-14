@@ -85,6 +85,52 @@ class _PaymentsClient implements PaymentsClient {
     return _value;
   }
 
+  @override
+  Future<GenericResponse<PaginatedResponse<Payout>>> getCustomerPayouts({
+    int? page,
+    int? perPage,
+    String? sortBy,
+    bool? sortDesc,
+    List<String>? status,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'page': page,
+      r'per_page': perPage,
+      r'sort_by': sortBy,
+      r'sort_desc': sortDesc,
+      r'status': status,
+    };
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<GenericResponse<PaginatedResponse<Payout>>>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/payments/customer/payouts',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late GenericResponse<PaginatedResponse<Payout>> _value;
+    try {
+      _value = GenericResponse<PaginatedResponse<Payout>>.fromJson(
+        _result.data!,
+        (json) => PaginatedResponse<Payout>.fromJson(
+          json as Map<String, dynamic>,
+          (json) => Payout.fromJson(json as Map<String, dynamic>),
+        ),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, _result);
+      rethrow;
+    }
+    return _value;
+  }
+
   RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
     if (T != dynamic &&
         !(requestOptions.responseType == ResponseType.bytes ||

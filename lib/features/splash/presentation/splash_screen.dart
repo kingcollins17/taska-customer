@@ -1,12 +1,12 @@
-import 'package:seeker_app/core/designs/app_colors.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:seeker_app/core/providers/user_provider.dart';
+
+import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/services/local_storage_service.dart';
 import 'package:seeker_app/core/utils/app_ready_manager.dart';
 
@@ -21,14 +21,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
   // Master entrance sequence
   late final AnimationController _entranceController;
-  late final Animation<double> _logoScale;
-  late final Animation<double> _logoOpacity;
+  late final Animation<double> _emblemScale;
+  late final Animation<double> _emblemOpacity;
+  late final Animation<double> _drawProgress;
   late final Animation<double> _ringExpand;
   late final Animation<double> _ringOpacity;
   late final Animation<double> _textOpacity;
   late final Animation<Offset> _textSlide;
   late final Animation<double> _taglineOpacity;
   late final Animation<Offset> _taglineSlide;
+
+  // Continuous ambient rotation for outer graphic arcs
+  late final AnimationController _rotationController;
 
   // Continuous ambient glow pulse
   late final AnimationController _pulseController;
@@ -42,107 +46,119 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final Animation<double> _exitScale;
   late final Animation<double> _exitOpacity;
 
-  // Particles
+  // Particles list
   late final List<_Particle> _particles;
 
   @override
   void initState() {
     super.initState();
 
-    // ── Entrance (2.2 seconds) ──
+    // ── Entrance Animation (2.2s) ──
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2200),
     );
 
-    _logoScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _emblemScale = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.0, 0.35, curve: Curves.elasticOut),
+        curve: const Interval(0.0, 0.45, curve: Curves.easeOutBack),
       ),
     );
 
-    _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _emblemOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.0, 0.2, curve: Curves.easeOut),
+        curve: const Interval(0.0, 0.25, curve: Curves.easeOut),
       ),
     );
 
-    _ringExpand = Tween<double>(begin: 0.5, end: 1.0).animate(
+    _drawProgress = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.15, 0.5, curve: Curves.easeOutCubic),
+        curve: const Interval(0.1, 0.6, curve: Curves.easeInOutCubic),
       ),
     );
 
-    _ringOpacity =
-        TweenSequence<double>([
-          TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.6), weight: 30),
-          TweenSequenceItem(tween: Tween(begin: 0.6, end: 0.15), weight: 70),
-        ]).animate(
-          CurvedAnimation(
-            parent: _entranceController,
-            curve: const Interval(0.15, 0.55),
-          ),
-        );
+    _ringExpand = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.15, 0.55, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _ringOpacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.7), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 0.7, end: 0.25), weight: 65),
+    ]).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.15, 0.6),
+      ),
+    );
 
     _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.4, 0.6, curve: Curves.easeOut),
+        curve: const Interval(0.45, 0.7, curve: Curves.easeOut),
       ),
     );
 
-    _textSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+    _textSlide = Tween<Offset>(begin: const Offset(0, 0.35), end: Offset.zero)
         .animate(
           CurvedAnimation(
             parent: _entranceController,
-            curve: const Interval(0.4, 0.65, curve: Curves.easeOutCubic),
+            curve: const Interval(0.45, 0.7, curve: Curves.easeOutCubic),
           ),
         );
 
     _taglineOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.55, 0.75, curve: Curves.easeOut),
+        curve: const Interval(0.6, 0.85, curve: Curves.easeOut),
       ),
     );
 
-    _taglineSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+    _taglineSlide = Tween<Offset>(begin: const Offset(0, 0.35), end: Offset.zero)
         .animate(
           CurvedAnimation(
             parent: _entranceController,
-            curve: const Interval(0.55, 0.8, curve: Curves.easeOutCubic),
+            curve: const Interval(0.6, 0.85, curve: Curves.easeOutCubic),
           ),
         );
+
+    // ── Continuous Arc Rotation ──
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    );
 
     // ── Ambient Pulse ──
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 2500),
     );
 
     _pulseAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // ── Particles ──
+    // ── Floating Particles ──
     _particleController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 6),
+      duration: const Duration(seconds: 8),
     );
 
     final rng = math.Random(42);
-    _particles = List.generate(30, (_) => _Particle.random(rng));
+    _particles = List.generate(35, (_) => _Particle.random(rng));
 
-    // ── Exit ──
+    // ── Exit Animation ──
     _exitController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
 
-    _exitScale = Tween<double>(begin: 1.0, end: 1.15).animate(
+    _exitScale = Tween<double>(begin: 1.0, end: 1.12).animate(
       CurvedAnimation(parent: _exitController, curve: Curves.easeInCubic),
     );
 
@@ -150,38 +166,42 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       CurvedAnimation(parent: _exitController, curve: Curves.easeInCubic),
     );
 
-    // ── Start sequence ──
+    // Start controllers
     _entranceController.forward();
+    _rotationController.repeat();
     _pulseController.repeat(reverse: true);
     _particleController.repeat();
 
-    // Navigate after the splash plays
-    Future.delayed(const Duration(milliseconds: 3200), () async {
-      if (mounted) {
-        await _exitController.forward();
-        if (mounted) {
-          final isOnboardingComplete =
-              await appStorage.get(StorageKey.onboardingComplete) == true;
-          if (!isOnboardingComplete) {
-            context.go('/onboarding');
-          } else {
-            final accessToken = await appStorage.get(StorageKey.accessToken);
-            final isAuthenticated = accessToken != null && accessToken.toString().isNotEmpty;
-            if (mounted) {
-              if (isAuthenticated) {
-                context.go('/');
-                // context.go(
-                //   '/task-creation/matching/0b4a1cf4-716e-4a63-8fd1-f0b61272c00b',
-                // );
-              } else {
-                context.go('/login');
-              }
+    // Delayed navigation sequence
+    _scheduleNavigation();
+  }
 
-              // App is now fully loaded, and we are transitioning to the first real screen
-              AppReadyManager.instance.markAsReady();
-            }
-          }
+  void _scheduleNavigation() {
+    const ms = 5000;
+    Future.delayed(const Duration(milliseconds: ms), () async {
+      if (!mounted) return;
+      await _exitController.forward();
+      if (!mounted) return;
+
+      final isOnboardingComplete =
+          await appStorage.get(StorageKey.onboardingComplete) == true;
+      if (!mounted) return;
+
+      if (!isOnboardingComplete) {
+        context.go('/onboarding');
+      } else {
+        final accessToken = await appStorage.get(StorageKey.accessToken);
+        final isAuthenticated =
+            accessToken != null && accessToken.toString().isNotEmpty;
+        if (!mounted) return;
+
+        if (isAuthenticated) {
+          context.go('/');
+        } else {
+          context.go('/login');
         }
+
+        AppReadyManager.instance.markAsReady();
       }
     });
   }
@@ -189,6 +209,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   void dispose() {
     _entranceController.dispose();
+    _rotationController.dispose();
     _pulseController.dispose();
     _particleController.dispose();
     _exitController.dispose();
@@ -202,6 +223,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       body: AnimatedBuilder(
         animation: Listenable.merge([
           _entranceController,
+          _rotationController,
           _pulseController,
           _particleController,
           _exitController,
@@ -214,40 +236,52 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // ── Background gradient ──
+                  // Dynamic background gradient with ambient glow
                   _buildBackground(),
 
-                  // ── Floating particles ──
+                  // Floating particle network
                   _buildParticles(),
 
-                  // ── Center content ──
+                  // Center brand graphics & typography
                   Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Logo with ring
-                        _buildLogoWithRing(),
-                        SizedBox(height: 32.h),
+                        _buildCustomGraphicEmblem(),
+                        SizedBox(height: 36.h),
 
-                        // App Name
+                        // Title with glowing gradient text feel
                         SlideTransition(
                           position: _textSlide,
                           child: FadeTransition(
                             opacity: _textOpacity,
-                            child: Text(
-                              'Taska',
-                              style: GoogleFonts.inter(
-                                fontSize: 38.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                letterSpacing: 2.0,
+                            child: ShaderMask(
+                              shaderCallback: (bounds) {
+                                return LinearGradient(
+                                  colors: [
+                                    Colors.white,
+                                    Colors.white,
+                                    AppColors.secondary.withValues(alpha: 0.9),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ).createShader(bounds);
+                              },
+                              child: Text(
+                                'Taska',
+                                style: GoogleFonts.inter(
+                                  fontSize: 42.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 3.5,
+                                ),
                               ),
                             ),
                           ),
                         ),
                         SizedBox(height: 10.h),
 
-                        // Tagline
+                        // Tagline text
                         SlideTransition(
                           position: _taglineSlide,
                           child: FadeTransition(
@@ -257,8 +291,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               style: GoogleFonts.inter(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w400,
-                                color: Colors.white.withValues(alpha: 0.45),
-                                letterSpacing: 0.8,
+                                color: Colors.white.withValues(alpha: 0.5),
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ),
@@ -267,7 +301,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     ),
                   ),
 
-                  // ── Bottom shimmer bar ──
+                  // Bottom shimmer loading bar
                   _buildBottomLoader(),
                 ],
               ),
@@ -278,91 +312,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-
   Widget _buildBackground() {
     return CustomPaint(
       painter: _BackgroundPainter(
         pulse: _pulseAnim.value,
-        accentColor: AppColors.accentGreen,
-      ),
-    );
-  }
-
-  Widget _buildLogoWithRing() {
-    return SizedBox(
-      width: 140.w,
-      height: 140.w,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Expanding ring
-          Transform.scale(
-            scale: _ringExpand.value,
-            child: Container(
-              width: 140.w,
-              height: 140.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.accentGreen.withValues(
-                    alpha: _ringOpacity.value,
-                  ),
-                  width: 2.w,
-                ),
-              ),
-            ),
-          ),
-
-          // Ambient glow behind logo
-          Transform.scale(
-            scale: _pulseAnim.value,
-            child: Container(
-              width: 100.w,
-              height: 100.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accentGreen.withValues(alpha: 0.25),
-                    blurRadius: 40.r,
-                    spreadRadius: 8.r,
-                  ),
-                  BoxShadow(
-                    color: AppColors.accentOrange.withValues(alpha: 0.08),
-                    blurRadius: 60.r,
-                    spreadRadius: 15.r,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Logo image
-          FadeTransition(
-            opacity: _logoOpacity,
-            child: ScaleTransition(
-              scale: _logoScale,
-              child: Container(
-                width: 90.w,
-                height: 90.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/app_logo.png'),
-                    fit: BoxFit.cover,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accentGreen.withValues(alpha: 0.3),
-                      blurRadius: 20.r,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+        primaryColor: AppColors.primary,
+        secondaryColor: AppColors.secondary,
+        accentOrange: AppColors.accentOrange,
       ),
     );
   }
@@ -372,7 +328,87 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       painter: _ParticlePainter(
         particles: _particles,
         progress: _particleController.value,
-        accentColor: AppColors.accentGreen,
+        accentColor: AppColors.secondary,
+      ),
+    );
+  }
+
+  Widget _buildCustomGraphicEmblem() {
+    return SizedBox(
+      width: 170.w,
+      height: 170.w,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer expanding accent ring
+          Transform.scale(
+            scale: _ringExpand.value,
+            child: Container(
+              width: 165.w,
+              height: 165.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.secondary.withValues(
+                    alpha: _ringOpacity.value,
+                  ),
+                  width: 1.5.w,
+                ),
+              ),
+            ),
+          ),
+
+          // Central glowing aura behind the graphic
+          Transform.scale(
+            scale: _pulseAnim.value,
+            child: Container(
+              width: 110.w,
+              height: 110.w,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 45.r,
+                    spreadRadius: 10.r,
+                  ),
+                  BoxShadow(
+                    color: AppColors.secondary.withValues(alpha: 0.2),
+                    blurRadius: 65.r,
+                    spreadRadius: 15.r,
+                  ),
+                  BoxShadow(
+                    color: AppColors.accentOrange.withValues(alpha: 0.1),
+                    blurRadius: 85.r,
+                    spreadRadius: 20.r,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Custom Painted Animated Emblem
+          FadeTransition(
+            opacity: _emblemOpacity,
+            child: ScaleTransition(
+              scale: _emblemScale,
+              child: SizedBox(
+                width: 150.w,
+                height: 150.w,
+                child: CustomPaint(
+                  painter: _TaskaEmblemPainter(
+                    drawProgress: _drawProgress.value,
+                    rotationAngle: _rotationController.value * 2 * math.pi,
+                    pulse: _pulseAnim.value,
+                    primaryColor: AppColors.primary,
+                    secondaryColor: AppColors.secondary,
+                    accentOrange: AppColors.accentOrange,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -386,14 +422,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         opacity: _taglineOpacity,
         child: Center(
           child: SizedBox(
-            width: 48.w,
+            width: 56.w,
             height: 3.h,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(2.r),
               child: LinearProgressIndicator(
                 backgroundColor: Colors.white.withValues(alpha: 0.08),
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.accentGreen.withValues(alpha: 0.5),
+                  AppColors.secondary.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -404,55 +440,321 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
+// ─── Custom Emblem Painter ───────────────────────────────────────────────────
+
+class _TaskaEmblemPainter extends CustomPainter {
+  final double drawProgress;
+  final double rotationAngle;
+  final double pulse;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color accentOrange;
+
+  _TaskaEmblemPainter({
+    required this.drawProgress,
+    required this.rotationAngle,
+    required this.pulse,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.accentOrange,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // 1. Layer: Background Hexagonal Glass Shield
+    _drawGlassShield(canvas, center, radius * 0.68);
+
+    // 2. Layer: Outer Counter-Rotating Orbital Arcs
+    _drawOrbitalArcs(canvas, center, radius * 0.88);
+
+    // 3. Layer: Custom 'T' & Checkmark Brand Vector Path
+    _drawBrandVectorPath(canvas, center, size);
+  }
+
+  void _drawGlassShield(Canvas canvas, Offset center, double radius) {
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      final angle = (i * 60 - 30) * math.pi / 180;
+      final x = center.dx + radius * math.cos(angle);
+      final y = center.dy + radius * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+
+    // Shield fill gradient
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          primaryColor.withValues(alpha: 0.25),
+          secondaryColor.withValues(alpha: 0.08),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    canvas.drawPath(path, fillPaint);
+
+    // Shield subtle border
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..shader = LinearGradient(
+        colors: [
+          secondaryColor.withValues(alpha: 0.5),
+          Colors.white.withValues(alpha: 0.1),
+          accentOrange.withValues(alpha: 0.3),
+        ],
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    canvas.drawPath(path, borderPaint);
+  }
+
+  void _drawOrbitalArcs(Canvas canvas, Offset center, double radius) {
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(rotationAngle);
+
+    final rect = Rect.fromCircle(center: Offset.zero, radius: radius);
+
+    // Arc 1 - Primary Teal Arc
+    final arc1Paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..shader = SweepGradient(
+        colors: [
+          secondaryColor.withValues(alpha: 0.8),
+          primaryColor.withValues(alpha: 0.1),
+        ],
+      ).createShader(rect);
+    canvas.drawArc(rect, 0, math.pi * 0.75, false, arc1Paint);
+
+    // Arc 2 - Accent Orange Arc
+    final arc2Paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round
+      ..shader = SweepGradient(
+        colors: [
+          accentOrange.withValues(alpha: 0.7),
+          accentOrange.withValues(alpha: 0.05),
+        ],
+      ).createShader(rect);
+    canvas.drawArc(rect, math.pi * 1.1, math.pi * 0.45, false, arc2Paint);
+
+    // Orbital Nodes
+    final nodeAngle = math.pi * 0.75;
+    final nodeOffset = Offset(
+      radius * math.cos(nodeAngle),
+      radius * math.sin(nodeAngle),
+    );
+
+    final nodeGlow = Paint()
+      ..color = secondaryColor.withValues(alpha: 0.6)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawCircle(nodeOffset, 4, nodeGlow);
+
+    final nodeCore = Paint()..color = Colors.white;
+    canvas.drawCircle(nodeOffset, 2, nodeCore);
+
+    canvas.restore();
+
+    // Secondary Counter-rotating Dotted Outer Ring
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(-rotationAngle * 0.6);
+
+    final outerRect = Rect.fromCircle(center: Offset.zero, radius: radius * 1.08);
+    final outerArcPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round
+      ..color = Colors.white.withValues(alpha: 0.15);
+
+    for (int i = 0; i < 12; i++) {
+      canvas.drawArc(
+        outerRect,
+        i * (math.pi / 6),
+        math.pi / 24,
+        false,
+        outerArcPaint,
+      );
+    }
+
+    canvas.restore();
+  }
+
+  void _drawBrandVectorPath(Canvas canvas, Offset center, Size size) {
+    // Construct the vector path representing stylized 'T' integrated into a Checkmark:
+    // 1. Top bar of 'T': (cx - 24, cy - 20) -> (cx + 22, cy - 20)
+    // 2. Stem down: (cx - 2, cy - 20) -> (cx - 2, cy + 12)
+    // 3. Sweep checkmark: (cx - 14, cy + 2) -> (cx - 2, cy + 16) -> (cx + 24, cy - 10)
+
+    final cx = center.dx;
+    final cy = center.dy;
+
+    // Top Bar Path
+    final topBarPath = Path()
+      ..moveTo(cx - 26, cy - 18)
+      ..lineTo(cx + 24, cy - 18);
+
+    // Stem & Checkmark continuous Path
+    final checkmarkPath = Path()
+      ..moveTo(cx - 2, cy - 18)
+      ..lineTo(cx - 2, cy + 14)
+      ..moveTo(cx - 18, cy + 2)
+      ..lineTo(cx - 3, cy + 17)
+      ..lineTo(cx + 26, cy - 12);
+
+    final fullPath = Path()
+      ..addPath(topBarPath, Offset.zero)
+      ..addPath(checkmarkPath, Offset.zero);
+
+    // Apply draw progress via PathMetrics
+    final animatedPath = Path();
+    for (final metric in fullPath.computeMetrics()) {
+      final extractLength = metric.length * drawProgress;
+      animatedPath.addPath(metric.extractPath(0, extractLength), Offset.zero);
+    }
+
+    // Glow effect behind main stroke
+    final glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = secondaryColor.withValues(alpha: 0.4 * pulse)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
+    canvas.drawPath(animatedPath, glowPaint);
+
+    // Main Gradient Stroke
+    final strokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..shader = LinearGradient(
+        colors: [
+          secondaryColor,
+          Colors.white,
+          accentOrange,
+        ],
+        stops: const [0.0, 0.6, 1.0],
+      ).createShader(
+        Rect.fromPoints(Offset(cx - 26, cy - 18), Offset(cx + 26, cy + 18)),
+      );
+
+    canvas.drawPath(animatedPath, strokePaint);
+
+    // Render node circles at key vector points if progress complete
+    if (drawProgress > 0.4) {
+      final nodeOpacity = ((drawProgress - 0.4) / 0.6).clamp(0.0, 1.0);
+      final nodes = [
+        Offset(cx - 26, cy - 18),
+        Offset(cx + 24, cy - 18),
+        Offset(cx - 18, cy + 2),
+        Offset(cx + 26, cy - 12),
+      ];
+
+      for (final n in nodes) {
+        final nodeGlow = Paint()
+          ..color = secondaryColor.withValues(alpha: 0.5 * nodeOpacity)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+        canvas.drawCircle(n, 3.5, nodeGlow);
+
+        final nodePaint = Paint()
+          ..color = Colors.white.withValues(alpha: nodeOpacity);
+        canvas.drawCircle(n, 2.0, nodePaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _TaskaEmblemPainter old) {
+    return old.drawProgress != drawProgress ||
+        old.rotationAngle != rotationAngle ||
+        old.pulse != pulse;
+  }
+}
+
 // ─── Background Painter ──────────────────────────────────────────────────────
 
 class _BackgroundPainter extends CustomPainter {
   final double pulse;
-  final Color accentColor;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color accentOrange;
 
-  _BackgroundPainter({required this.pulse, required this.accentColor});
+  _BackgroundPainter({
+    required this.pulse,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.accentOrange,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height * 0.42);
+    final center = Offset(size.width / 2, size.height * 0.44);
 
-    // Primary radial glow
-    final primaryPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          accentColor.withValues(alpha: 0.12 * pulse),
-          accentColor.withValues(alpha: 0.04 * pulse),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.4, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.7));
-    canvas.drawCircle(center, size.width * 0.7, primaryPaint);
+    // 1. Main Primary Radial Glow
+    final primaryShader = RadialGradient(
+      colors: [
+        primaryColor.withValues(alpha: 0.18 * pulse),
+        primaryColor.withValues(alpha: 0.05 * pulse),
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.45, 1.0],
+    ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.75));
 
-    // Warm secondary glow (offset)
-    final warmCenter = Offset(size.width * 0.65, size.height * 0.38);
-    final warmPaint = Paint()
-      ..shader =
-          RadialGradient(
-            colors: [
-              AppColors.accentOrange.withValues(alpha: 0.06 * pulse),
-              Colors.transparent,
-            ],
-          ).createShader(
-            Rect.fromCircle(center: warmCenter, radius: size.width * 0.4),
-          );
-    canvas.drawCircle(warmCenter, size.width * 0.4, warmPaint);
+    final primaryPaint = Paint()..shader = primaryShader;
+    canvas.drawCircle(center, size.width * 0.75, primaryPaint);
+
+    // 2. Secondary Teal Glow Highlight
+    final tealShader = RadialGradient(
+      colors: [
+        secondaryColor.withValues(alpha: 0.10 * pulse),
+        Colors.transparent,
+      ],
+    ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.45));
+
+    final tealPaint = Paint()..shader = tealShader;
+    canvas.drawCircle(center, size.width * 0.45, tealPaint);
+
+    // 3. Warm Orange Top Right Ambient Glow
+    final warmCenter = Offset(size.width * 0.75, size.height * 0.28);
+    final warmShader = RadialGradient(
+      colors: [
+        accentOrange.withValues(alpha: 0.07 * pulse),
+        Colors.transparent,
+      ],
+    ).createShader(
+      Rect.fromCircle(center: warmCenter, radius: size.width * 0.5),
+    );
+
+    final warmPaint = Paint()..shader = warmShader;
+    canvas.drawCircle(warmCenter, size.width * 0.5, warmPaint);
   }
 
   @override
   bool shouldRepaint(covariant _BackgroundPainter old) => old.pulse != pulse;
 }
 
-// ─── Particle Model ──────────────────────────────────────────────────────────
+// ─── Particle Model & Painter ────────────────────────────────────────────────
 
 class _Particle {
-  final double x; // 0..1
-  final double y; // 0..1
-  final double speed; // radians per cycle
+  final double x;
+  final double y;
+  final double speed;
   final double radius;
   final double opacity;
   final double phase;
@@ -470,15 +772,13 @@ class _Particle {
     return _Particle(
       x: rng.nextDouble(),
       y: rng.nextDouble(),
-      speed: 0.3 + rng.nextDouble() * 0.7,
-      radius: 1.0 + rng.nextDouble() * 2.5,
-      opacity: 0.15 + rng.nextDouble() * 0.35,
+      speed: 0.25 + rng.nextDouble() * 0.75,
+      radius: 1.0 + rng.nextDouble() * 2.2,
+      opacity: 0.12 + rng.nextDouble() * 0.35,
       phase: rng.nextDouble() * math.pi * 2,
     );
   }
 }
-
-// ─── Particle Painter ────────────────────────────────────────────────────────
 
 class _ParticlePainter extends CustomPainter {
   final List<_Particle> particles;
@@ -495,14 +795,14 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
       final angle = progress * math.pi * 2 * p.speed + p.phase;
-      final dx = math.cos(angle) * 18;
-      final dy = math.sin(angle) * 12;
+      final dx = math.cos(angle) * 16;
+      final dy = math.sin(angle) * 14;
 
       final offset = Offset(p.x * size.width + dx, p.y * size.height + dy);
 
       final paint = Paint()
         ..color = accentColor.withValues(
-          alpha: p.opacity * (0.5 + 0.5 * math.sin(angle)),
+          alpha: p.opacity * (0.4 + 0.6 * math.sin(angle)),
         )
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
 
