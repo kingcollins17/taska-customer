@@ -14,7 +14,6 @@ import 'package:seeker_app/core/designs/app_text_styles.dart';
 import '../../../../core/providers/user_provider.dart';
 import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:flutter/foundation.dart';
 import 'package:seeker_app/core/designs/widgets/debug_console_view.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -254,7 +253,9 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.support_agent_outlined,
                 title: 'Customer support',
                 iconColor: Colors.pink,
-                onTap: () {},
+                onTap: () {
+                  context.pushNamed(RouteNames.supportCasesList.name);
+                },
               ),
               _MenuItem(
                 icon: Icons.info_outline,

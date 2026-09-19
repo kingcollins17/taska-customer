@@ -53,7 +53,7 @@ class _TaskMatchingBannerState extends ConsumerState<TaskMatchingBanner> {
         'Finding your Tasker...',
         'Tap to view live matching status',
         AppColors.primary,
-        SpinKitRipple(color: AppColors.primary, size: 20.r, borderWidth: 2.0),
+        SpinKitRipple(color: AppColors.primary, size: 24.r, borderWidth: 2.0),
       ),
       MatchingStatus.success => (
         'Tasker Found!',
@@ -62,21 +62,15 @@ class _TaskMatchingBannerState extends ConsumerState<TaskMatchingBanner> {
         Icon(
           Icons.check_circle_rounded,
           color: Colors.green.shade500,
-          size: 18.sp,
+          size: 20.sp,
         ),
       ),
       MatchingStatus.cancelled => (
         'Matching Cancelled',
         'Tap to view task status',
         Colors.red.shade500,
-        Icon(Icons.cancel_rounded, color: Colors.red.shade500, size: 18.sp),
+        Icon(Icons.cancel_rounded, color: Colors.red.shade500, size: 20.sp),
       ),
-    };
-
-    final shortTitle = switch (status) {
-      MatchingStatus.pending => 'Finding Tasker...',
-      MatchingStatus.success => 'Tasker Found!',
-      MatchingStatus.cancelled => 'Cancelled',
     };
 
     return Material(
@@ -88,7 +82,7 @@ class _TaskMatchingBannerState extends ConsumerState<TaskMatchingBanner> {
           curve: Curves.easeInOutCubic,
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF222222) : Colors.white,
-            borderRadius: BorderRadius.circular(_isExpanded ? 16.r : 20.r),
+            borderRadius: BorderRadius.circular(_isExpanded ? 16.r : 24.r),
             border: Border.all(
               color: accentColor.withValues(alpha: isDark ? 0.25 : 0.18),
               width: 1.0,
@@ -119,12 +113,7 @@ class _TaskMatchingBannerState extends ConsumerState<TaskMatchingBanner> {
               isDark: isDark,
             ),
             secondChild: _buildCollapsedView(
-              context: context,
-              matchingState: matchingState,
-              shortTitle: shortTitle,
-              accentColor: accentColor,
               iconWidget: iconWidget,
-              isDark: isDark,
             ),
           ),
         ),
@@ -246,89 +235,20 @@ class _TaskMatchingBannerState extends ConsumerState<TaskMatchingBanner> {
   }
 
   Widget _buildCollapsedView({
-    required BuildContext context,
-    required TaskMatchingState matchingState,
-    required String shortTitle,
-    required Color accentColor,
     required Widget iconWidget,
-    required bool isDark,
   }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: () {
-              context.pushNamed(
-                RouteNames.taskMatching.name,
-                pathParameters: {'taskId': matchingState.taskId!},
-              );
-            },
-            borderRadius: BorderRadius.circular(16.r),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 24.r,
-                    height: 24.r,
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(child: iconWidget),
-                  ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    shortTitle,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(width: 4.w),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    _isExpanded = true;
-                  });
-                },
-                borderRadius: BorderRadius.circular(12.r),
-                child: Padding(
-                  padding: EdgeInsets.all(4.w),
-                  child: Icon(
-                    Icons.keyboard_arrow_up_rounded,
-                    color: isDark ? Colors.white54 : AppColors.textSecondary,
-                    size: 18.sp,
-                  ),
-                ),
-              ),
-              SizedBox(width: 2.w),
-              InkWell(
-                onTap: _closeBanner,
-                borderRadius: BorderRadius.circular(12.r),
-                child: Padding(
-                  padding: EdgeInsets.all(4.w),
-                  child: Icon(
-                    Icons.close_rounded,
-                    color: isDark ? Colors.white54 : AppColors.textSecondary,
-                    size: 16.sp,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _isExpanded = true;
+        });
+      },
+      borderRadius: BorderRadius.circular(24.r),
+      child: Container(
+        width: 48.r,
+        height: 48.r,
+        alignment: Alignment.center,
+        child: iconWidget,
       ),
     );
   }

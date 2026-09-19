@@ -72,6 +72,12 @@ abstract class TasksClient {
     @Path('task_id') String taskId,
   );
 
+  @PUT('/tasks/{task_id}/cancel')
+  Future<GenericResponse<Task>> cancelTask(
+    @Path('task_id') String taskId,
+    @Body() CancelTaskRequest request,
+  );
+
   @GET('/tasks')
   Future<GenericResponse<PaginatedResponse<TaskLite>>> listTasks({
     @Query('page') int? page = 1,

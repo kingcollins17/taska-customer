@@ -298,7 +298,7 @@ class ConfirmTaskSheet extends ConsumerWidget {
                     onPressed: () {
                       context.showLoading();
                       ref
-                          .read(taskDraftActionProvider.notifier)
+                          .read(taskManagementProvider.notifier)
                           .confirmDraft(
                             taskId: taskId,
                             onSuccess: () {

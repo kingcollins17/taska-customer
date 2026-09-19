@@ -11,4 +11,5 @@ export 'notifications/notifications.dart';
 export 'payout/payout_models.dart';
 export 'payout/webhook_payload.dart';
 export 'review/reviews.dart';
+export 'support/support.dart';
 

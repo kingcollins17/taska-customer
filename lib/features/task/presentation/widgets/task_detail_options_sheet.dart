@@ -14,6 +14,8 @@ import 'package:seeker_app/core/utils/flushbar_message.dart';
 
 import 'package:seeker_app/core/utils/num_extension.dart';
 
+import 'package:seeker_app/features/task/presentation/screens/cancel_task_screen.dart';
+
 class TaskDetailOptionsSheet extends ConsumerWidget {
   final Task task;
 
@@ -114,7 +116,7 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                           Navigator.of(context).pop();
                           if (task.id != null) {
                             ref
-                                .read(taskDraftActionProvider.notifier)
+                                .read(taskManagementProvider.notifier)
                                 .confirmDraft(
                                   taskId: task.id!,
                                   onSuccess: () {
@@ -203,10 +205,11 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                       iconColor: Colors.blue.shade700,
                       onTap: () {
                         Navigator.of(context).pop();
-                        context.showMessage(
-                          'Connecting to customer support...',
-                          type: MessageType.info,
-                          title: 'Support',
+                        context.pushNamed(
+                          RouteNames.createSupportCase.name,
+                          queryParameters: {
+                            if (task.id != null) 'taskId': task.id!,
+                          },
                         );
                       },
                     ),
@@ -221,16 +224,8 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                         iconColor: Colors.orange.shade800,
                         onTap: () {
                           Navigator.of(context).pop();
-                          if (task.id != null && isDraft) {
-                            ref
-                                .read(taskDraftActionProvider.notifier)
-                                .cancelDraft(taskId: task.id!);
-                          } else {
-                            context.showMessage(
-                              'Task cancellation request submitted',
-                              type: MessageType.info,
-                              title: 'Cancellation',
-                            );
+                          if (task.id != null) {
+                            CancelTaskScreen.navigate(context, task: task);
                           }
                         },
                       ),
@@ -245,10 +240,15 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                       iconColor: colorScheme.error,
                       onTap: () {
                         Navigator.of(context).pop();
-                        context.showMessage(
-                          'Report submitted for review',
-                          type: MessageType.info,
-                          title: 'Report',
+                        context.pushNamed(
+                          RouteNames.createSupportCase.name,
+                          queryParameters: {
+                            'type': 'DISPUTE',
+                            'subject': 'Provider Issue',
+                            if (task.id != null) 'taskId': task.id!,
+                            if (task.assignment?.id != null)
+                              'assignmentId': task.assignment!.id!,
+                          },
                         );
                       },
                     ),

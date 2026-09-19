@@ -44,7 +44,7 @@ final activeTasksProvider = FutureProvider<List<TaskLite>>((ref) async {
   return data;
 });
 
-class TaskDraftActionNotifier extends AsyncNotifier<void> {
+class TaskManagementNotifier extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
@@ -81,6 +81,9 @@ class TaskDraftActionNotifier extends AsyncNotifier<void> {
       final response = await client.cancelDraftTask(taskId);
 
       if (response.success) {
+        ref.invalidate(taskDetailProvider(taskId));
+        ref.invalidate(activeTasksProvider);
+        ref.read(tasksProvider.notifier).refresh();
         onSuccess?.call();
       } else {
         final error = response.detail ?? 'Failed to cancel draft';
@@ -91,11 +94,40 @@ class TaskDraftActionNotifier extends AsyncNotifier<void> {
       onError?.call(e.toString());
     }
   }
+
+  Future<void> cancelTask({
+    required String taskId,
+    required CancelTaskRequest request,
+    void Function(Task task)? onSuccess,
+    void Function(String error)? onError,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final client = ref.read(tasksClientProvider);
+      final response = await client.cancelTask(taskId, request);
+
+      if (response.success && response.data != null) {
+        state = const AsyncValue.data(null);
+        ref.invalidate(taskDetailProvider(taskId));
+        ref.invalidate(activeTasksProvider);
+        ref.read(tasksProvider.notifier).refresh();
+        onSuccess?.call(response.data!);
+      } else {
+        final error = response.detail ?? response.message ?? 'Failed to cancel task';
+        state = AsyncValue.error(error, StackTrace.current);
+        onError?.call(error);
+      }
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      AppErrorHandler.instance.handleError(e, st);
+      onError?.call(e.toFriendlyMessage());
+    }
+  }
 }
 
-final taskDraftActionProvider =
-    AsyncNotifierProvider<TaskDraftActionNotifier, void>(
-      () => TaskDraftActionNotifier(),
+final taskManagementProvider =
+    AsyncNotifierProvider<TaskManagementNotifier, void>(
+      () => TaskManagementNotifier(),
     );
 
 final taskStatusFilterProvider = StateProvider<List<String>>((ref) => []);

@@ -9,8 +9,10 @@ import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/utils/utils.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
+import 'package:seeker_app/core/designs/app_text_styles.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
+import 'package:seeker_app/core/providers/support_providers.dart';
 import 'package:seeker_app/core/providers/payout_providers.dart';
 import 'package:seeker_app/core/designs/widgets/payment_page.dart';
 import 'package:seeker_app/core/utils/num_extension.dart';
@@ -127,6 +129,7 @@ class _TaskDetailContent extends ConsumerWidget {
         if (id != null && id.isNotEmpty) {
           ref.invalidate(taskDetailProvider(id));
           ref.invalidate(taskAssignmentProvider(id));
+          ref.invalidate(userCasesProvider(id));
           try {
             await Future.wait([
               ref.read(taskDetailProvider(id).future),
@@ -269,6 +272,8 @@ class _TaskDetailContent extends ConsumerWidget {
                       ),
                       SizedBox(height: 14.h),
                     ],
+                    if (task.id != null && task.id!.isNotEmpty)
+                      _TaskSupportBanner(taskId: task.id!),
                     if (task.status?.toLowerCase() == 'assigned') ...[
                       _TaskAssignmentDisplay(taskId: task.id ?? ''),
                       SizedBox(height: 14.h),
@@ -449,6 +454,12 @@ class _StatusPill extends StatelessWidget {
         Colors.purple.shade600,
         Colors.white,
       ),
+      'no_match' || 'no match' || 'nomatch' => (
+        'No Match',
+        Icons.search_off_rounded,
+        Colors.deepOrange.shade700,
+        Colors.white,
+      ),
       'completed' => (
         'Completed',
         Icons.check_circle_rounded,
@@ -468,7 +479,7 @@ class _StatusPill extends StatelessWidget {
         Colors.white,
       ),
       _ => (
-        s.replaceAll('_', ' ').toUpperCase(),
+        s.replaceAll('_', ' ').toLowerCase().split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' '),
         Icons.info_outline_rounded,
         AppColors.primary,
         Colors.white,
@@ -1610,6 +1621,152 @@ class _TaskDetailErrorState extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TaskSupportBanner extends ConsumerWidget {
+  final String taskId;
+
+  const _TaskSupportBanner({required this.taskId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final casesAsync = ref.watch(userCasesProvider(taskId));
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return casesAsync.when(
+      data: (cases) {
+        if (cases.isEmpty) return const SizedBox.shrink();
+
+        final supportCase = cases.first;
+        final statusStr = (supportCase.status ?? 'OPEN').toUpperCase();
+
+        Color statusColor;
+        switch (statusStr) {
+          case 'RESOLVED':
+          case 'CLOSED':
+            statusColor = Colors.green;
+            break;
+          case 'IN_PROGRESS':
+            statusColor = Colors.amber.shade700;
+            break;
+          case 'OPEN':
+          default:
+            statusColor = Colors.blue;
+            break;
+        }
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 14.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF1E1E1E)
+                : Colors.blue.shade50.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: statusColor.withValues(alpha: isDark ? 0.3 : 0.25),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36.r,
+                height: 36.r,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Center(
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedCustomerSupport,
+                    color: statusColor,
+                    size: 18.sp,
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Support Ticket #${supportCase.caseNumber ?? ''}',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(width: 6.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            statusStr,
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 9.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      supportCase.subject ?? 'Support Case',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 11.5.sp,
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const _TaskSupportShimmerCard(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _TaskSupportShimmerCard extends StatelessWidget {
+  const _TaskSupportShimmerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Shimmer.fromColors(
+      baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+      highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+      child: Container(
+        height: 54.h,
+        margin: EdgeInsets.only(bottom: 14.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14.r),
         ),
       ),
     );

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
-import 'package:seeker_app/core/models/tasks/assignment.dart';
-import 'package:seeker_app/core/models/tasks/task_matching_state.dart';
+import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_matching_provider.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
+import 'package:seeker_app/core/utils/num_extension.dart';
 
 class MatchingScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -67,13 +67,46 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
           child: Column(
             children: [
+              // Top Header Row with back button and screen title
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      size: 18.sp,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Matching Status',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.heading3.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 40.w),
+                ],
+              ),
+              SizedBox(height: 8.h),
+
+              // Task Summary Card displaying current task details
+              if (task != null) ...[
+                _TaskSummaryCard(task: task, isDark: isDark),
+                SizedBox(height: 12.h),
+              ],
+
               const Spacer(),
               // Radar spinner — scales down when assigned or cancelled
               _RadarSpinner(isAssigned: isAssigned, isCancelled: isCancelled),
-              SizedBox(height: (isAssigned || isCancelled) ? 32.h : 48.h),
+              SizedBox(height: (isAssigned || isCancelled) ? 24.h : 36.h),
               // Timeline — always visible, text changes on assignment or cancellation
               _TimelineSection(
                 isAssigned: isAssigned,
@@ -145,6 +178,122 @@ class _MatchingScreenState extends ConsumerState<MatchingScreen> {
         ),
       ),
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Task Summary Card — displays task title, address, and total price
+// ---------------------------------------------------------------------------
+class _TaskSummaryCard extends StatelessWidget {
+  final Task task;
+  final bool isDark;
+
+  const _TaskSummaryCard({required this.task, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final locationText = task.locations?.firstOrNull?.address ??
+        task.locations?.firstOrNull?.city ??
+        'Location provided';
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : colorScheme.onSurface.withValues(alpha: 0.08),
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: HugeIcon(
+              icon: HugeIcons.strokeRoundedTask01,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  task.title ?? 'Task Request',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 3.h),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 13.sp,
+                      color: isDark ? Colors.white54 : AppColors.textSecondary,
+                    ),
+                    SizedBox(width: 3.w),
+                    Expanded(
+                      child: Text(
+                        locationText,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: isDark ? Colors.white54 : AppColors.textSecondary,
+                          fontSize: 11.5.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (task.customerTotalPrice != null) ...[
+            SizedBox(width: 8.w),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                task.customerTotalPrice!.toNaira(),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.1, end: 0);
   }
 }
 

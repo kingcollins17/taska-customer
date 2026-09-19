@@ -167,6 +167,11 @@ class TaskCard extends StatelessWidget {
         textColor = isDark ? Colors.purple.shade300 : Colors.purple.shade700;
         displayStatus = 'In Progress';
         break;
+      case 'no_match' || 'no match' || 'nomatch':
+        bgColor = Colors.deepOrange.withValues(alpha: 0.15);
+        textColor = isDark ? Colors.deepOrange.shade300 : Colors.deepOrange.shade700;
+        displayStatus = 'No Match';
+        break;
       case 'completed':
         bgColor = Colors.green.withValues(alpha: 0.15);
         textColor = isDark ? Colors.green.shade300 : Colors.green.shade700;
@@ -180,7 +185,15 @@ class TaskCard extends StatelessWidget {
       default:
         bgColor = Colors.grey.withValues(alpha: 0.15);
         textColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
-        displayStatus = status;
+        final clean = status.replaceAll('_', ' ').toLowerCase();
+        displayStatus = clean.isEmpty
+            ? status
+            : clean
+                .split(' ')
+                .map((w) => w.isNotEmpty
+                    ? '${w[0].toUpperCase()}${w.substring(1)}'
+                    : '')
+                .join(' ');
     }
 
     return Container(

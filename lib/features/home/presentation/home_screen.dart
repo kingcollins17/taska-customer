@@ -320,49 +320,49 @@ class _PopularCategories extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final categoriesAsync = ref.watch(categoriesProvider(null));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return categoriesAsync.when(
+      data: (categories) {
+        final displayCategories = categories.take(4).toList();
+        if (displayCategories.isEmpty) return const SizedBox.shrink();
+
+        final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Popular Categories',
-              style: AppTextStyles.heading3.copyWith(
-                color: colorScheme.onSurface,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                context.pushNamed(RouteNames.taskCategory.name);
-              },
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                'See all',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: colorScheme.primary,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Popular Categories',
+                  style: AppTextStyles.heading3.copyWith(
+                    color: colorScheme.onSurface,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
+                TextButton(
+                  onPressed: () {
+                    context.pushNamed(RouteNames.taskCategory.name);
+                  },
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'See all',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: colorScheme.primary,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        SizedBox(height: 14.h),
-        categoriesAsync.when(
-          data: (categories) {
-            final displayCategories = categories.take(4).toList();
-            if (displayCategories.isEmpty) return const SizedBox.shrink();
-
-            final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-
-            return GridView.builder(
+            SizedBox(height: 14.h),
+            GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -443,12 +443,12 @@ class _PopularCategories extends ConsumerWidget {
                   ),
                 );
               },
-            );
-          },
-          loading: () => const _PopularCategoriesShimmer(),
-          error: (e, st) => const SizedBox.shrink(),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
+      loading: () => const _PopularCategoriesShimmer(),
+      error: (e, st) => const SizedBox.shrink(),
     );
   }
 }

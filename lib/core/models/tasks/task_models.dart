@@ -1,4 +1,5 @@
 export 'assignment.dart';
+export 'cancel_task_request.dart';
 export 'price_adjustment.dart';
 export 'task.dart';
 export 'task_lite.dart';

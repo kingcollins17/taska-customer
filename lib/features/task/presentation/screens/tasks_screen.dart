@@ -158,8 +158,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 child: Row(
                   children: [
                     ...selectedStatuses.map((statusKey) {
-                      final displayName =
-                          _statusDisplayNames[statusKey] ?? statusKey;
+                      final displayName = _statusDisplayNames[statusKey] ??
+                          statusKey
+                              .replaceAll('_', ' ')
+                              .toLowerCase()
+                              .split(' ')
+                              .map((w) => w.isNotEmpty
+                                  ? '${w[0].toUpperCase()}${w.substring(1)}'
+                                  : '')
+                              .join(' ');
                       return Padding(
                         padding: EdgeInsets.only(right: 6.w),
                         child: Container(

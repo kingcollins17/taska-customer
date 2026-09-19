@@ -12,6 +12,7 @@ class PrimaryButton extends StatelessWidget {
   final Gradient? gradient;
   final double? height;
   final EdgeInsetsGeometry? margin;
+  final double? fontSize;
 
   const PrimaryButton({
     super.key,
@@ -24,6 +25,7 @@ class PrimaryButton extends StatelessWidget {
     this.gradient,
     this.height,
     this.margin,
+    this.fontSize,
   });
 
   @override
@@ -67,7 +69,7 @@ class PrimaryButton extends StatelessWidget {
                       text,
                       style: GoogleFonts.inter(
                         color: fg,
-                        fontSize: 16.sp,
+                        fontSize: fontSize ?? 16.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

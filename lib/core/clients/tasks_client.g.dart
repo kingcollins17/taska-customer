@@ -359,6 +359,40 @@ class _TasksClient implements TasksClient {
   }
 
   @override
+  Future<GenericResponse<Task>> cancelTask(
+    String taskId,
+    CancelTaskRequest request,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(request.toJson());
+    final _options = _setStreamType<GenericResponse<Task>>(
+      Options(method: 'PUT', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/tasks/${taskId}/cancel',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late GenericResponse<Task> _value;
+    try {
+      _value = GenericResponse<Task>.fromJson(
+        _result.data!,
+        (json) => Task.fromJson(json as Map<String, dynamic>),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
   Future<GenericResponse<PaginatedResponse<TaskLite>>> listTasks({
     int? page = 1,
     int? perPage = 20,

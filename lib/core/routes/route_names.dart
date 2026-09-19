@@ -14,4 +14,9 @@ enum RouteNames {
 
   updatePayoutAccount,
   payoutsList,
+  createSupportCase,
+  supportCasesList,
+  supportCaseDetail,
+  supportChat,
 }
+

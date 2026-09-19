@@ -8,6 +8,7 @@ import '../features/home/routes.dart';
 import '../features/profile/routes.dart';
 import '../features/task/routes.dart';
 import '../features/notifications/routes.dart';
+import '../features/support/routes.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -24,6 +25,7 @@ class AppRoutes {
       ...profileRoutes,
       ...taskRoutes,
       ...notificationsRoutes,
+      ...supportRoutes,
     ],
   );
 }
