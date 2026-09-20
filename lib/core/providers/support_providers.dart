@@ -7,7 +7,9 @@ import 'package:seeker_app/core/constants.dart';
 import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 
-/// Notifier for listing user cases with pagination and optional taskId filter.
+typedef UserCasesParam = ({String? taskId, String? status});
+
+/// Notifier for listing user cases with pagination and optional taskId and status filter.
 class UserCasesNotifier extends AsyncNotifier<List<SupportCase>> {
   int _page = 1;
   final int _perPage = 20;
@@ -15,9 +17,9 @@ class UserCasesNotifier extends AsyncNotifier<List<SupportCase>> {
 
   bool get hasMore => _hasMore;
 
-  final String? taskId;
+  final UserCasesParam param;
 
-  UserCasesNotifier([this.taskId]);
+  UserCasesNotifier([this.param = (taskId: null, status: null)]);
 
   @override
   FutureOr<List<SupportCase>> build() async {
@@ -31,7 +33,8 @@ class UserCasesNotifier extends AsyncNotifier<List<SupportCase>> {
     final response = await client.listUserCases(
       page: _page,
       perPage: _perPage,
-      taskId: taskId,
+      taskId: param.taskId,
+      status: param.status,
     );
 
     if (response.success && response.data != null) {
@@ -68,7 +71,7 @@ class UserCasesNotifier extends AsyncNotifier<List<SupportCase>> {
 }
 
 final userCasesProvider = AsyncNotifierProvider.family<
-    UserCasesNotifier, List<SupportCase>, String?>((param) =>
+    UserCasesNotifier, List<SupportCase>, UserCasesParam>((param) =>
   UserCasesNotifier(param),
   retry: retryFunc(2)
 );
@@ -219,6 +222,72 @@ final caseTimelineProvider = AsyncNotifierProvider.family<
   retry: retryFunc(2)
 );
 
+/// Notifier for fetching case attachments with pagination.
+class CaseAttachmentsNotifier extends AsyncNotifier<List<SupportCaseAttachment>> {
+  int _page = 1;
+  final int _perPage = 20;
+  bool _hasMore = true;
+
+  bool get hasMore => _hasMore;
+
+  final String caseId;
+
+  CaseAttachmentsNotifier(this.caseId);
+
+  @override
+  FutureOr<List<SupportCaseAttachment>> build() async {
+    _page = 1;
+    _hasMore = true;
+    return _fetchAttachments();
+  }
+
+  Future<List<SupportCaseAttachment>> _fetchAttachments() async {
+    final client = ref.read(supportClientProvider);
+    final response = await client.getCaseAttachments(
+      caseId,
+      page: _page,
+      perPage: _perPage,
+    );
+
+    if (response.success && response.data != null) {
+      final items = response.data!.items ?? [];
+      if (items.length < _perPage) {
+        _hasMore = false;
+      }
+      return items;
+    } else {
+      throw Exception(response.detail ?? response.message ?? 'Failed to load case attachments');
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (!_hasMore || state.isLoading || state.isRefreshing) return;
+
+    final currentData = state.value ?? [];
+    _page++;
+
+    try {
+      final newItems = await _fetchAttachments();
+      state = AsyncData([...currentData, ...newItems]);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
+
+  Future<void> refresh() async {
+    _page = 1;
+    _hasMore = true;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _fetchAttachments());
+  }
+}
+
+final caseAttachmentsProvider = AsyncNotifierProvider.family<
+    CaseAttachmentsNotifier, List<SupportCaseAttachment>, String>(
+  (caseId) => CaseAttachmentsNotifier(caseId),
+  retry: retryFunc(2)
+);
+
 /// Notifier for performing actions on support cases (create case, send message, upload attachment, close/reopen case).
 class SupportActionsNotifier extends AsyncNotifier<void> {
   @override
@@ -237,10 +306,7 @@ class SupportActionsNotifier extends AsyncNotifier<void> {
 
       if (response.success && response.data != null) {
         state = const AsyncData(null);
-        ref.invalidate(userCasesProvider(null));
-        if (request.taskId != null) {
-          ref.invalidate(userCasesProvider(request.taskId));
-        }
+        ref.invalidate(userCasesProvider);
         onSuccess?.call(response.data!);
       } else {
         final error = response.detail ?? response.message ?? 'Failed to create support case';
@@ -303,6 +369,7 @@ class SupportActionsNotifier extends AsyncNotifier<void> {
       if (response.success && response.data != null) {
         state = const AsyncData(null);
         ref.invalidate(caseMessagesProvider(caseId));
+        ref.invalidate(caseAttachmentsProvider(caseId));
         onSuccess?.call(response.data!);
       } else {
         final error = response.detail ?? response.message ?? 'Failed to upload attachment';
@@ -330,7 +397,7 @@ class SupportActionsNotifier extends AsyncNotifier<void> {
       if (response.success && response.data != null) {
         state = const AsyncData(null);
         ref.invalidate(caseDetailProvider(caseId));
-        ref.invalidate(userCasesProvider(null));
+        ref.invalidate(userCasesProvider);
         ref.invalidate(caseTimelineProvider(caseId));
         onSuccess?.call(response.data!);
       } else {
@@ -359,7 +426,7 @@ class SupportActionsNotifier extends AsyncNotifier<void> {
       if (response.success && response.data != null) {
         state = const AsyncData(null);
         ref.invalidate(caseDetailProvider(caseId));
-        ref.invalidate(userCasesProvider(null));
+        ref.invalidate(userCasesProvider);
         ref.invalidate(caseTimelineProvider(caseId));
         onSuccess?.call(response.data!);
       } else {

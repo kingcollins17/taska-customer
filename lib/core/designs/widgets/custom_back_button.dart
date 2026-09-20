@@ -18,7 +18,7 @@ class CustomBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     Widget child = Container(
-      margin: margin ?? EdgeInsets.zero,
+      margin: margin ?? EdgeInsets.symmetric(horizontal: 6.w),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: colorScheme.onSurface.withValues(alpha: 0.05),
@@ -27,7 +27,7 @@ class CustomBackButton extends StatelessWidget {
         padding: EdgeInsets.all(10.w),
         constraints: const BoxConstraints(),
         icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface),
-        iconSize: 18.sp,
+        iconSize: 14.sp,
         onPressed:
             onPressed ??
             () {

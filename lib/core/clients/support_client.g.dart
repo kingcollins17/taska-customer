@@ -59,12 +59,14 @@ class _SupportClient implements SupportClient {
     int? page = 1,
     int? perPage = 20,
     String? taskId,
+    String? status,
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
       r'page': page,
       r'per_page': perPage,
       r'task_id': taskId,
+      r'status': status,
     };
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
@@ -241,6 +243,51 @@ class _SupportClient implements SupportClient {
               (json) => SupportCaseTimelineItem.fromJson(
                 json as Map<String, dynamic>,
               ),
+            ),
+          );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<GenericResponse<PaginatedResponse<SupportCaseAttachment>>>
+  getCaseAttachments(String caseId, {int? page = 1, int? perPage = 20}) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'page': page,
+      r'per_page': perPage,
+    };
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options =
+        _setStreamType<
+          GenericResponse<PaginatedResponse<SupportCaseAttachment>>
+        >(
+          Options(method: 'GET', headers: _headers, extra: _extra)
+              .compose(
+                _dio.options,
+                '/support/cases/${caseId}/attachments',
+                queryParameters: queryParameters,
+                data: _data,
+              )
+              .copyWith(
+                baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl),
+              ),
+        );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late GenericResponse<PaginatedResponse<SupportCaseAttachment>> _value;
+    try {
+      _value =
+          GenericResponse<PaginatedResponse<SupportCaseAttachment>>.fromJson(
+            _result.data!,
+            (json) => PaginatedResponse<SupportCaseAttachment>.fromJson(
+              json as Map<String, dynamic>,
+              (json) =>
+                  SupportCaseAttachment.fromJson(json as Map<String, dynamic>),
             ),
           );
     } on Object catch (e, s) {

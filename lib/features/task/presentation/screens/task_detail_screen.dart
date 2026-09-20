@@ -129,7 +129,7 @@ class _TaskDetailContent extends ConsumerWidget {
         if (id != null && id.isNotEmpty) {
           ref.invalidate(taskDetailProvider(id));
           ref.invalidate(taskAssignmentProvider(id));
-          ref.invalidate(userCasesProvider(id));
+          ref.invalidate(userCasesProvider((taskId: id, status: null)));
           try {
             await Future.wait([
               ref.read(taskDetailProvider(id).future),
@@ -1634,7 +1634,7 @@ class _TaskSupportBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final casesAsync = ref.watch(userCasesProvider(taskId));
+    final casesAsync = ref.watch(userCasesProvider((taskId: taskId, status: null)));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;

@@ -27,6 +27,7 @@ abstract class SupportClient {
     @Query('page') int? page = 1,
     @Query('per_page') int? perPage = 20,
     @Query('task_id') String? taskId,
+    @Query('status') String? status,
   });
 
   @GET('/support/cases/{case_id}')
@@ -49,6 +50,13 @@ abstract class SupportClient {
 
   @GET('/support/cases/{case_id}/timeline')
   Future<GenericResponse<PaginatedResponse<SupportCaseTimelineItem>>> getCaseTimeline(
+    @Path('case_id') String caseId, {
+    @Query('page') int? page = 1,
+    @Query('per_page') int? perPage = 20,
+  });
+
+  @GET('/support/cases/{case_id}/attachments')
+  Future<GenericResponse<PaginatedResponse<SupportCaseAttachment>>> getCaseAttachments(
     @Path('case_id') String caseId, {
     @Query('page') int? page = 1,
     @Query('per_page') int? perPage = 20,

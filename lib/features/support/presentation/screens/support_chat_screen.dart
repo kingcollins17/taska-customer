@@ -38,7 +38,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   int? _selectedAttachmentSize;
   bool _isSending = false;
   bool _isUploadingFile = false;
-  bool _isHeaderExpanded = false;
 
   @override
   void initState() {
@@ -68,7 +67,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
 
   Future<void> _refreshAll() async {
     ref.invalidate(caseDetailProvider(widget.caseId));
-    await ref.read(caseTimelineProvider(widget.caseId).notifier).refresh();
     await ref.read(caseMessagesProvider(widget.caseId).notifier).refresh();
   }
 
@@ -102,85 +100,173 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
 
   void _showAttachmentOptions() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.darkBackground : AppColors.surface;
+    final tileBgColor = isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.surface;
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE5E7EB);
+    final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
+    final textSecondary = isDark ? const Color(0xFF9CA3AF) : AppColors.textSecondary;
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1E2128) : Colors.white,
+      backgroundColor: surfaceColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 36.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
-              SizedBox(height: 14.h),
-              Text(
-                'Attach Media or Document',
-                style: AppTextStyles.heading3.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
+              Center(
+                child: Container(
+                  width: 36.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
                 ),
               ),
               SizedBox(height: 16.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAttachmentOptionTile(
-                      icon: HugeIcons.strokeRoundedCamera01,
-                      title: 'Camera',
-                      color: Colors.blue,
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        final picker = ImagePicker();
-                        final photo = await picker.pickImage(source: ImageSource.camera);
-                        if (photo != null) {
-                          _setAttachmentFile(File(photo.path), photo.name);
-                        }
-                      },
-                    ),
+              Text(
+                'Attach File or Photo',
+                style: AppTextStyles.heading3.copyWith(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+              SizedBox(height: 14.h),
+              _buildSimpleAttachmentTile(
+                icon: HugeIcons.strokeRoundedCamera01,
+                title: 'Take Photo',
+                subtitle: 'Use camera to capture image',
+                surfaceColor: tileBgColor,
+                borderColor: borderColor,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final picker = ImagePicker();
+                  final photo = await picker.pickImage(source: ImageSource.camera);
+                  if (photo != null) {
+                    _setAttachmentFile(File(photo.path), photo.name);
+                  }
+                },
+              ),
+              SizedBox(height: 10.h),
+              _buildSimpleAttachmentTile(
+                icon: HugeIcons.strokeRoundedImage01,
+                title: 'Choose from Gallery',
+                subtitle: 'Select photos or media files',
+                surfaceColor: tileBgColor,
+                borderColor: borderColor,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final picker = ImagePicker();
+                  final image = await picker.pickImage(source: ImageSource.gallery);
+                  if (image != null) {
+                    _setAttachmentFile(File(image.path), image.name);
+                  }
+                },
+              ),
+              SizedBox(height: 10.h),
+              _buildSimpleAttachmentTile(
+                icon: HugeIcons.strokeRoundedFile01,
+                title: 'Upload Document',
+                subtitle: 'Select PDF, DOC, or file attachment',
+                surfaceColor: tileBgColor,
+                borderColor: borderColor,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final result = await FilePicker.pickFiles();
+                  if (result != null && result.files.single.path != null) {
+                    final f = File(result.files.single.path!);
+                    _setAttachmentFile(f, result.files.single.name);
+                  }
+                },
+              ),
+              SizedBox(height: 12.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSimpleAttachmentTile({
+    required dynamic icon,
+    required String title,
+    required String subtitle,
+    required Color surfaceColor,
+    required Color borderColor,
+    required Color textPrimary,
+    required Color textSecondary,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: borderColor, width: 1.w),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38.w,
+                height: 38.w,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Center(
+                  child: HugeIcon(
+                    icon: icon,
+                    size: 20.sp,
+                    color: AppColors.primary,
                   ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: _buildAttachmentOptionTile(
-                      icon: HugeIcons.strokeRoundedImage01,
-                      title: 'Gallery',
-                      color: Colors.purple,
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        final picker = ImagePicker();
-                        final image = await picker.pickImage(source: ImageSource.gallery);
-                        if (image != null) {
-                          _setAttachmentFile(File(image.path), image.name);
-                        }
-                      },
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: _buildAttachmentOptionTile(
-                      icon: HugeIcons.strokeRoundedFile01,
-                      title: 'Document',
-                      color: AppColors.primary,
-                      onTap: () async {
-                        Navigator.pop(ctx);
-                        final result = await FilePicker.pickFiles();
-                        if (result != null && result.files.single.path != null) {
-                          final f = File(result.files.single.path!);
-                          _setAttachmentFile(f, result.files.single.name);
-                        }
-                      },
+                    SizedBox(height: 2.h),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 11.sp,
+                        color: textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowRight01,
+                size: 16.sp,
+                color: textSecondary,
               ),
             ],
           ),
@@ -215,7 +301,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     });
 
     FocusScope.of(context).unfocus();
-    context.showLoading();
 
     try {
       SupportCaseMessage? sentMessage;
@@ -252,49 +337,20 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       }
 
       if (!mounted) return;
-      context.hideLoading();
+      _messageController.clear();
       setState(() {
         _isSending = false;
         _isUploadingFile = false;
-        _messageController.clear();
       });
-      context.showMessage('Message sent', type: MessageType.success);
       ref.read(caseMessagesProvider(widget.caseId).notifier).refresh();
-      ref.read(caseTimelineProvider(widget.caseId).notifier).refresh();
     } catch (e) {
       if (!mounted) return;
-      context.hideLoading();
       setState(() {
         _isSending = false;
         _isUploadingFile = false;
       });
       context.showMessage(e.toString().replaceAll('Exception: ', ''), type: MessageType.error);
     }
-  }
-
-  Future<void> _attachFileToSpecificMessage(String messageId) async {
-    final result = await FilePicker.pickFiles();
-    if (result == null || result.files.single.path == null || !mounted) return;
-
-    final file = File(result.files.single.path!);
-    context.showLoading();
-
-    await ref.read(supportActionsProvider.notifier).uploadAttachment(
-          caseId: widget.caseId,
-          file: file,
-          messageId: messageId,
-          onSuccess: (_) {
-            if (!mounted) return;
-            context.hideLoading();
-            context.showMessage('Attachment added to message', type: MessageType.success);
-            ref.read(caseMessagesProvider(widget.caseId).notifier).refresh();
-          },
-          onError: (err) {
-            if (!mounted) return;
-            context.hideLoading();
-            context.showMessage(err, type: MessageType.error);
-          },
-        );
   }
 
   Future<void> _toggleCaseStatus(bool isClosed) async {
@@ -362,18 +418,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     }
   }
 
-  void _showTimelineOverviewSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _TimelineOverviewSheet(
-        caseId: widget.caseId,
-        formatDate: _formatDate,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -381,8 +425,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
     final messagesAsync = ref.watch(caseMessagesProvider(widget.caseId));
 
     final backgroundColor = isDark ? AppColors.darkBackground : AppColors.background;
-    final surfaceColor = isDark ? const Color(0xFF16181C) : AppColors.surface;
-    final borderColor = isDark ? const Color(0xFF2C2F36) : const Color(0xFFE5E7EB);
+    final surfaceColor = isDark ? AppColors.darkBackground : AppColors.surface;
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06);
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
     final textSecondary = isDark ? const Color(0xFF9CA3AF) : AppColors.textSecondary;
 
@@ -390,7 +434,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: surfaceColor,
-        elevation: 0.5,
+        elevation: 0,
         leading: const CustomBackButton(),
         titleSpacing: 0,
         title: detailAsync.when(
@@ -398,132 +442,128 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
             final caseNum = caseItem.caseNumber != null && caseItem.caseNumber!.isNotEmpty
                 ? '#${caseItem.caseNumber}'
                 : '#${caseItem.id?.substring(0, 8).toUpperCase()}';
-            return Row(
+            final typeStr = caseItem.type?.replaceAll('_', ' ').toUpperCase() ?? 'GENERAL';
+            final priorityStr = caseItem.priority?.toUpperCase();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 32.w,
-                  height: 32.w,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: HugeIcon(
-                      icon: HugeIcons.strokeRoundedCustomerSupport,
-                      size: 16.sp,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              'Support Chat',
-                              style: AppTextStyles.heading3.copyWith(
-                                color: textPrimary,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          SizedBox(width: 5.w),
-                          Flexible(
-                            fit: FlexFit.loose,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                              child: Text(
-                                caseNum,
-                                style: AppTextStyles.label.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 9.5.sp,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        caseItem.subject ?? 'Help & Assistance',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: textSecondary,
-                          fontSize: 10.5.sp,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'Support Chat',
+                        style: AppTextStyles.heading3.copyWith(
+                          color: textPrimary,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        caseNum,
+                        style: AppTextStyles.label.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 9.5.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 2.h),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        caseItem.subject ?? 'Help & Assistance',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: textSecondary,
+                          fontSize: 11.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        typeStr,
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 8.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ),
+                    if (priorityStr != null && priorityStr.isNotEmpty) ...[
+                      SizedBox(width: 4.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+                        decoration: BoxDecoration(
+                          color: priorityStr == 'URGENT' || priorityStr == 'HIGH'
+                              ? AppColors.error.withValues(alpha: 0.12)
+                              : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9)),
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                        child: Text(
+                          priorityStr,
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 8.5.sp,
+                            fontWeight: FontWeight.w600,
+                            color: priorityStr == 'URGENT' || priorityStr == 'HIGH'
+                                ? AppColors.error
+                                : textSecondary,
+                          ),
+                        ),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
               ],
             );
           },
-          loading: () => Text('Support Chat', style: AppTextStyles.heading3.copyWith(fontSize: 14.sp)),
-          error: (_, _) => Text('Support Ticket', style: AppTextStyles.heading3.copyWith(fontSize: 14.sp)),
+          loading: () => Text('Support Chat', style: AppTextStyles.heading3.copyWith(fontSize: 15.sp, color: textPrimary)),
+          error: (_, _) => Text('Support Ticket', style: AppTextStyles.heading3.copyWith(fontSize: 15.sp, color: textPrimary)),
         ),
         actions: [
-          IconButton(
-            onPressed: _showTimelineOverviewSheet,
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedTime02,
-              color: AppColors.primary,
-              size: 20.sp,
-            ),
-            tooltip: 'Timeline History',
-          ),
-          PopupMenuButton<String>(
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedMoreVertical,
-              color: textPrimary,
-              size: 20.sp,
-            ),
-            color: surfaceColor,
-            onSelected: (val) {
-              if (val == 'refresh') _refreshAll();
-              if (val == 'timeline') _showTimelineOverviewSheet();
-              if (val == 'toggle_status') {
-                final isClosed = detailAsync.value?.status?.toUpperCase() == 'CLOSED' ||
-                    detailAsync.value?.status?.toUpperCase() == 'RESOLVED';
-                _toggleCaseStatus(isClosed);
-              }
-            },
-            itemBuilder: (ctx) => [
-              PopupMenuItem(
-                value: 'timeline',
-                child: Row(
-                  children: [
-                    HugeIcon(icon: HugeIcons.strokeRoundedTime02, size: 16.sp, color: AppColors.primary),
-                    SizedBox(width: 8.w),
-                    const Text('View Timeline'),
-                  ],
-                ),
+          if (detailAsync.value != null)
+            PopupMenuButton<String>(
+              icon: HugeIcon(
+                icon: HugeIcons.strokeRoundedMoreVertical,
+                color: textPrimary,
+                size: 20.sp,
               ),
-              PopupMenuItem(
-                value: 'refresh',
-                child: Row(
-                  children: [
-                    HugeIcon(icon: HugeIcons.strokeRoundedRefresh, size: 16.sp, color: textPrimary),
-                    SizedBox(width: 8.w),
-                    const Text('Refresh Chat'),
-                  ],
-                ),
+              color: isDark ? AppColors.darkBackground : AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                side: BorderSide(color: borderColor, width: 1.w),
               ),
-              if (detailAsync.value != null)
+              onSelected: (val) {
+                if (val == 'toggle_status') {
+                  final isClosed = detailAsync.value?.status?.toUpperCase() == 'CLOSED' ||
+                      detailAsync.value?.status?.toUpperCase() == 'RESOLVED';
+                  _toggleCaseStatus(isClosed);
+                }
+              },
+              itemBuilder: (ctx) => [
                 PopupMenuItem(
                   value: 'toggle_status',
                   child: Row(
@@ -542,13 +582,18 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                                 detailAsync.value?.status?.toUpperCase() == 'RESOLVED')
                             ? 'Reopen Ticket'
                             : 'Close Ticket',
+                        style: AppTextStyles.label.copyWith(
+                          fontSize: 12.sp,
+                          color: textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
                 ),
-            ],
-          ),
-          SizedBox(width: 4.w),
+              ],
+            ),
+          SizedBox(width: 6.w),
         ],
       ),
       body: detailAsync.when(
@@ -562,15 +607,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
 
           return Column(
             children: [
-              _buildCollapsibleTicketBanner(
-                caseItem: caseItem,
-                isDark: isDark,
-                surfaceColor: surfaceColor,
-                borderColor: borderColor,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-              ),
-
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _refreshAll,
@@ -588,9 +624,9 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                       return ListView.separated(
                         controller: _messagesScrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                         itemCount: messages.length,
-                        separatorBuilder: (context, index) => SizedBox(height: 8.h),
+                        separatorBuilder: (context, index) => SizedBox(height: 12.h),
                         itemBuilder: (context, index) {
                           final msg = messages[index];
                           final isCustomer = (msg.senderType?.toUpperCase() == 'CUSTOMER' ||
@@ -605,9 +641,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                             borderColor: borderColor,
                             textPrimary: textPrimary,
                             textSecondary: textSecondary,
-                            onAttachFile: () => _attachFileToSpecificMessage(msg.id!),
                           ).animate(key: ValueKey(msg.id ?? index.toString())).fade(duration: 180.ms).slideY(
-                                begin: 0.05,
+                                begin: 0.04,
                                 duration: 180.ms,
                                 curve: Curves.easeOut,
                               );
@@ -627,23 +662,26 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
 
               if (_selectedAttachmentFile != null)
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  color: isDark ? const Color(0xFF22252D) : const Color(0xFFEFF6FF),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFEFF6FF),
+                    border: Border(top: BorderSide(color: borderColor, width: 1.w)),
+                  ),
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(5.w),
+                        padding: EdgeInsets.all(6.w),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6.r),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: HugeIcon(
                           icon: HugeIcons.strokeRoundedFile01,
-                          size: 15.sp,
+                          size: 16.sp,
                           color: AppColors.primary,
                         ),
                       ),
-                      SizedBox(width: 8.w),
+                      SizedBox(width: 10.w),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -651,7 +689,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                             Text(
                               _selectedAttachmentName ?? 'Attachment',
                               style: AppTextStyles.label.copyWith(
-                                fontSize: 11.5.sp,
+                                fontSize: 12.sp,
                                 fontWeight: FontWeight.bold,
                                 color: textPrimary,
                               ),
@@ -662,7 +700,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                               Text(
                                 _formatFileSize(_selectedAttachmentSize!),
                                 style: AppTextStyles.bodySmall.copyWith(
-                                  fontSize: 9.5.sp,
+                                  fontSize: 10.sp,
                                   color: textSecondary,
                                 ),
                               ),
@@ -673,7 +711,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                         onPressed: _clearSelectedAttachment,
                         icon: Icon(
                           Icons.cancel,
-                          size: 18.sp,
+                          size: 20.sp,
                           color: AppColors.error,
                         ),
                         padding: EdgeInsets.zero,
@@ -683,92 +721,137 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
                   ),
                 ).animate().fade(duration: 150.ms).slideY(begin: 0.2, duration: 150.ms),
 
+              // Enhanced Spacious Input Area
               Container(
-                padding: EdgeInsets.only(left: 8.w, right: 8.w, top: 4.h, bottom: 4.h),
+                padding: EdgeInsets.only(
+                  left: 12.w,
+                  right: 12.w,
+                  top: 10.h,
+                  bottom: 12.h,
+                ),
                 decoration: BoxDecoration(
                   color: surfaceColor,
                   border: Border(top: BorderSide(color: borderColor, width: 1.w)),
                 ),
                 child: SafeArea(
                   top: false,
-                  bottom: false,
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      IconButton(
-                        onPressed: isClosed ? null : _showAttachmentOptions,
-                        icon: HugeIcon(
-                          icon: HugeIcons.strokeRoundedAttachment01,
-                          color: isClosed ? textSecondary : AppColors.primary,
-                          size: 19.sp,
-                        ),
-                        tooltip: 'Attach File',
-                        padding: EdgeInsets.all(4.w),
-                        constraints: const BoxConstraints(),
-                      ),
-                      SizedBox(width: 4.w),
-                      Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          enabled: !isClosed && !_isSending,
-                          maxLines: 4,
-                          minLines: 1,
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: textPrimary,
-                            fontSize: 12.5.sp,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: isClosed
-                                ? 'This ticket is closed'
-                                : 'Type your message...',
-                            hintStyle: AppTextStyles.bodySmall.copyWith(
-                              color: textSecondary,
-                              fontSize: 12.sp,
-                            ),
-                            fillColor: isDark ? const Color(0xFF242730) : const Color(0xFFF3F5F8),
-                            filled: true,
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12.w,
-                              vertical: 7.h,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(20.r),
-                              borderSide: BorderSide.none,
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 2.h),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: (isClosed || _isSending) ? null : _showAttachmentOptions,
+                            borderRadius: BorderRadius.circular(20.r),
+                            child: Padding(
+                              padding: EdgeInsets.all(8.w),
+                              child: HugeIcon(
+                                icon: HugeIcons.strokeRoundedAttachment01,
+                                color: (isClosed || _isSending) ? textSecondary : AppColors.primary,
+                                size: 22.sp,
+                              ),
                             ),
                           ),
                         ),
                       ),
                       SizedBox(width: 6.w),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        curve: Curves.easeInOut,
-                        decoration: BoxDecoration(
-                          color: canSend
-                              ? AppColors.primary
-                              : Colors.grey.withValues(alpha: 0.25),
-                          shape: BoxShape.circle,
-                          boxShadow: canSend
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.primary.withValues(alpha: 0.3),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : [],
+                      Expanded(
+                        child: TextField(
+                          controller: _messageController,
+                          enabled: !isClosed && !_isSending,
+                          maxLines: 5,
+                          minLines: 1,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: textPrimary,
+                            fontSize: 13.5.sp,
+                            height: 1.35,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: isClosed
+                                ? 'This ticket is closed'
+                                : (_isSending ? 'Sending message...' : 'Type your message...'),
+                            hintStyle: AppTextStyles.bodySmall.copyWith(
+                              color: textSecondary,
+                              fontSize: 13.sp,
+                            ),
+                            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF3F5F8),
+                            filled: true,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: BorderSide(
+                                color: borderColor,
+                                width: 1.w,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: BorderSide(
+                                color: borderColor,
+                                width: 1.w,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5.w,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: Material(
-                          color: Colors.transparent,
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            onTap: canSend ? _sendMessageAndAttachment : null,
-                            customBorder: const CircleBorder(),
-                            child: Padding(
-                              padding: EdgeInsets.all(8.w),
-                              child: HugeIcon(
-                                icon: HugeIcons.strokeRoundedSent,
-                                color: canSend ? Colors.white : (isDark ? Colors.white38 : Colors.black26),
-                                size: 16.sp,
+                      ),
+                      SizedBox(width: 8.w),
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 2.h),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeInOut,
+                          decoration: BoxDecoration(
+                            color: (canSend || _isSending)
+                                ? AppColors.primary
+                                : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE5E7EB)),
+                            shape: BoxShape.circle,
+                            boxShadow: canSend
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(alpha: 0.35),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              onTap: (canSend && !_isSending) ? _sendMessageAndAttachment : null,
+                              customBorder: const CircleBorder(),
+                              child: Padding(
+                                padding: EdgeInsets.all(10.w),
+                                child: _isSending
+                                    ? SizedBox(
+                                        width: 18.w,
+                                        height: 18.w,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : HugeIcon(
+                                        icon: HugeIcons.strokeRoundedSent,
+                                        color: canSend
+                                            ? Colors.white
+                                            : (isDark ? Colors.white38 : Colors.black26),
+                                        size: 18.sp,
+                                      ),
                               ),
                             ),
                           ),
@@ -788,234 +871,6 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
           textPrimary,
           textSecondary,
         ),
-      ),
-    );
-  }
-
-  Widget _buildCollapsibleTicketBanner({
-    required SupportCase caseItem,
-    required bool isDark,
-    required Color surfaceColor,
-    required Color borderColor,
-    required Color textPrimary,
-    required Color textSecondary,
-  }) {
-    final statusStr = caseItem.status ?? 'OPEN';
-    final typeStr = caseItem.type?.replaceAll('_', ' ').toUpperCase() ?? 'GENERAL';
-    final priorityStr = caseItem.priority?.toUpperCase();
-
-    final statusIsClosed = statusStr.toUpperCase() == 'CLOSED' || statusStr.toUpperCase() == 'RESOLVED';
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        border: Border(bottom: BorderSide(color: borderColor, width: 1.w)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: () {
-              setState(() {
-                _isHeaderExpanded = !_isHeaderExpanded;
-              });
-            },
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.5.h),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF262930) : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                            child: Text(
-                              typeStr,
-                              style: AppTextStyles.label.copyWith(
-                                fontSize: 9.sp,
-                                fontWeight: FontWeight.w600,
-                                color: textSecondary,
-                              ),
-                            ),
-                          ),
-                          if (priorityStr != null && priorityStr.isNotEmpty) ...[
-                            SizedBox(width: 6.w),
-                            Container(
-                              padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.5.h),
-                              decoration: BoxDecoration(
-                                color: priorityStr == 'URGENT' || priorityStr == 'HIGH'
-                                    ? AppColors.error.withValues(alpha: 0.12)
-                                    : (isDark ? const Color(0xFF262930) : const Color(0xFFF1F5F9)),
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                              child: Text(
-                                'PRIORITY: $priorityStr',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 9.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: priorityStr == 'URGENT' || priorityStr == 'HIGH'
-                                      ? AppColors.error
-                                      : textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                          SizedBox(width: 6.w),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.5.h),
-                            decoration: BoxDecoration(
-                              color: statusIsClosed
-                                  ? (isDark ? Colors.white10 : const Color(0xFFF0F2F5))
-                                  : Colors.blue.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                            child: Text(
-                              statusStr.replaceAll('_', ' ').toUpperCase(),
-                              style: AppTextStyles.label.copyWith(
-                                color: statusIsClosed ? textSecondary : Colors.blue.shade700,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 9.sp,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _isHeaderExpanded ? 'Hide info' : 'Ticket info',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: 10.sp,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(width: 2.w),
-                      AnimatedRotation(
-                        turns: _isHeaderExpanded ? 0.5 : 0.0,
-                        duration: const Duration(milliseconds: 200),
-                        child: HugeIcon(
-                          icon: HugeIcons.strokeRoundedArrowDown01,
-                          size: 14.sp,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
-            child: _isHeaderExpanded
-                ? Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.only(left: 14.w, right: 14.w, bottom: 10.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Divider(color: borderColor, height: 1.h),
-                        SizedBox(height: 8.h),
-                        Text(
-                          caseItem.subject ?? 'No Subject',
-                          style: AppTextStyles.label.copyWith(
-                            color: textPrimary,
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (caseItem.description != null && caseItem.description!.isNotEmpty) ...[
-                          SizedBox(height: 4.h),
-                          Text(
-                            caseItem.description!,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: textSecondary,
-                              fontSize: 11.sp,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                        SizedBox(height: 8.h),
-                        InkWell(
-                          onTap: _showTimelineOverviewSheet,
-                          borderRadius: BorderRadius.circular(6.r),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 2.h),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                HugeIcon(
-                                  icon: HugeIcons.strokeRoundedTime02,
-                                  size: 13.sp,
-                                  color: AppColors.primary,
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  'View Full Timeline & Activity History',
-                                  style: AppTextStyles.label.copyWith(
-                                    fontSize: 10.5.sp,
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttachmentOptionTile({
-    required dynamic icon,
-    required String title,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: HugeIcon(
-              icon: icon,
-              size: 20.sp,
-              color: color,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            title,
-            style: AppTextStyles.label.copyWith(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1068,8 +923,8 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
   }
 
   Widget _buildShimmerChatFeed(bool isDark, Color surfaceColor) {
-    final baseColor = isDark ? const Color(0xFF262930) : Colors.grey[300]!;
-    final highlightColor = isDark ? const Color(0xFF383C45) : Colors.grey[100]!;
+    final baseColor = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[100]!;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -1077,17 +932,17 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
       child: ListView.separated(
         padding: EdgeInsets.all(16.w),
         itemCount: 5,
-        separatorBuilder: (context, index) => SizedBox(height: 10.h),
+        separatorBuilder: (context, index) => SizedBox(height: 12.h),
         itemBuilder: (context, index) {
           final isRight = index % 2 == 0;
           return Align(
             alignment: isRight ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
-              width: 190.w,
-              height: 46.h,
+              width: 210.w,
+              height: 52.h,
               decoration: BoxDecoration(
                 color: surfaceColor,
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(14.r),
               ),
             ),
           );
@@ -1160,7 +1015,6 @@ class _ChatMessageBubble extends StatelessWidget {
   final Color borderColor;
   final Color textPrimary;
   final Color textSecondary;
-  final VoidCallback onAttachFile;
 
   const _ChatMessageBubble({
     required this.message,
@@ -1171,14 +1025,13 @@ class _ChatMessageBubble extends StatelessWidget {
     required this.borderColor,
     required this.textPrimary,
     required this.textSecondary,
-    required this.onAttachFile,
   });
 
   @override
   Widget build(BuildContext context) {
     final bubbleBg = isCustomer
         ? AppColors.primary
-        : (isDark ? const Color(0xFF22252D) : const Color(0xFFF1F5F9));
+        : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF3F4F6));
     final textColor = isCustomer ? Colors.white : textPrimary;
     final subTextColor = isCustomer ? Colors.white70 : textSecondary;
 
@@ -1186,23 +1039,28 @@ class _ChatMessageBubble extends StatelessWidget {
       alignment: isCustomer ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         constraints: BoxConstraints(maxWidth: 0.78.sw),
-        padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         decoration: BoxDecoration(
           color: bubbleBg,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(14.r),
-            topRight: Radius.circular(14.r),
-            bottomLeft: Radius.circular(isCustomer ? 14.r : 3.r),
-            bottomRight: Radius.circular(isCustomer ? 3.r : 14.r),
+            topLeft: Radius.circular(16.r),
+            topRight: Radius.circular(16.r),
+            bottomLeft: Radius.circular(isCustomer ? 16.r : 4.r),
+            bottomRight: Radius.circular(isCustomer ? 4.r : 16.r),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 1.5),
+              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
-          border: isCustomer ? null : Border.all(color: borderColor, width: 1.w),
+          border: isCustomer
+              ? null
+              : Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                  width: 1.w,
+                ),
         ),
         child: Column(
           crossAxisAlignment:
@@ -1221,30 +1079,30 @@ class _ChatMessageBubble extends StatelessWidget {
                     ),
                     child: HugeIcon(
                       icon: HugeIcons.strokeRoundedCustomerSupport,
-                      size: 10.sp,
+                      size: 11.sp,
                       color: AppColors.primary,
                     ),
                   ),
                   SizedBox(width: 5.w),
                   Text(
-                    'Support Agent',
+                    'Support Team',
                     style: AppTextStyles.label.copyWith(
-                      fontSize: 9.5.sp,
+                      fontSize: 10.sp,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 4.h),
+              SizedBox(height: 5.h),
             ],
             if (message.body != null && message.body!.isNotEmpty)
               Text(
                 message.body!,
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: textColor,
-                  fontSize: 12.5.sp,
-                  height: 1.32,
+                  fontSize: 13.sp,
+                  height: 1.38,
                 ),
               ),
             SizedBox(height: 4.h),
@@ -1254,7 +1112,7 @@ class _ChatMessageBubble extends StatelessWidget {
                 Text(
                   formattedDate,
                   style: AppTextStyles.bodySmall.copyWith(
-                    fontSize: 8.5.sp,
+                    fontSize: 9.sp,
                     color: subTextColor,
                   ),
                 ),
@@ -1262,7 +1120,7 @@ class _ChatMessageBubble extends StatelessWidget {
                   SizedBox(width: 4.w),
                   Icon(
                     Icons.done_all,
-                    size: 11.sp,
+                    size: 12.sp,
                     color: Colors.white70,
                   ),
                 ],
@@ -1270,228 +1128,6 @@ class _ChatMessageBubble extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _TimelineOverviewSheet extends ConsumerWidget {
-  final String caseId;
-  final String Function(DateTime?) formatDate;
-
-  const _TimelineOverviewSheet({
-    required this.caseId,
-    required this.formatDate,
-  });
-
-  dynamic _getIconForType(String? type, String? actor) {
-    final t = type?.toUpperCase() ?? '';
-    if (t.contains('CREATE')) return HugeIcons.strokeRoundedTicket01;
-    if (t.contains('CLOSE') || t.contains('RESOLV')) return HugeIcons.strokeRoundedCheckmarkCircle02;
-    if (t.contains('REOPEN')) return HugeIcons.strokeRoundedRefresh;
-    if (t.contains('MSG') || t.contains('MESSAGE')) return HugeIcons.strokeRoundedBubbleChat;
-    if (actor?.toUpperCase() == 'AGENT') return HugeIcons.strokeRoundedCustomerSupport;
-    return HugeIcons.strokeRoundedNotification01;
-  }
-
-  Color _getIconColor(String? type, String? actor) {
-    final t = type?.toUpperCase() ?? '';
-    if (t.contains('CREATE')) return AppColors.primary;
-    if (t.contains('CLOSE') || t.contains('RESOLV')) return Colors.green;
-    if (t.contains('REOPEN')) return Colors.orange;
-    if (t.contains('MSG') || t.contains('MESSAGE')) return Colors.blue;
-    return AppColors.primary;
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timelineAsync = ref.watch(caseTimelineProvider(caseId));
-
-    final surfaceColor = isDark ? const Color(0xFF1A1D24) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2C2F36) : const Color(0xFFE5E7EB);
-    final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSecondary = isDark ? const Color(0xFF9CA3AF) : AppColors.textSecondary;
-
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      child: Column(
-        children: [
-          SizedBox(height: 12.h),
-          Container(
-            width: 40.w,
-            height: 4.h,
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white24 : Colors.grey[300],
-              borderRadius: BorderRadius.circular(2.r),
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedTime02,
-                      size: 18.sp,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      'Ticket Timeline History',
-                      style: AppTextStyles.heading3.copyWith(
-                        color: textPrimary,
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.close, size: 20.sp, color: textSecondary),
-                ),
-              ],
-            ),
-          ),
-          Divider(color: borderColor, height: 1),
-
-          Expanded(
-            child: timelineAsync.when(
-              data: (items) {
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No timeline history available',
-                      style: AppTextStyles.bodyMedium.copyWith(color: textSecondary),
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: EdgeInsets.all(16.w),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    final isLast = index == items.length - 1;
-                    final iconData = _getIconForType(item.itemType, item.actorType);
-                    final iconColor = _getIconColor(item.itemType, item.actorType);
-
-                    return IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            children: [
-                              Container(
-                                width: 28.w,
-                                height: 28.w,
-                                decoration: BoxDecoration(
-                                  color: iconColor.withValues(alpha: 0.12),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: iconColor.withValues(alpha: 0.4), width: 1.5.w),
-                                ),
-                                child: Center(
-                                  child: HugeIcon(
-                                    icon: iconData,
-                                    size: 14.sp,
-                                    color: iconColor,
-                                  ),
-                                ),
-                              ),
-                              if (!isLast)
-                                Expanded(
-                                  child: Container(
-                                    width: 2.w,
-                                    margin: EdgeInsets.symmetric(vertical: 4.h),
-                                    color: isDark ? const Color(0xFF2C2F36) : const Color(0xFFE2E8F0),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.only(bottom: isLast ? 0 : 16.h),
-                              child: Container(
-                                padding: EdgeInsets.all(10.w),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF22252C) : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(10.r),
-                                  border: Border.all(color: borderColor, width: 1.w),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            item.title ?? 'Timeline Event',
-                                            style: AppTextStyles.label.copyWith(
-                                              color: textPrimary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12.sp,
-                                            ),
-                                          ),
-                                        ),
-                                        Text(
-                                          formatDate(item.timestamp),
-                                          style: AppTextStyles.bodySmall.copyWith(
-                                            fontSize: 9.sp,
-                                            color: textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (item.description != null && item.description!.isNotEmpty) ...[
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        item.description!,
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: textSecondary,
-                                          fontSize: 11.sp,
-                                          height: 1.3,
-                                        ),
-                                      ),
-                                    ],
-                                    if (item.actorType != null && item.actorType!.isNotEmpty) ...[
-                                      SizedBox(height: 4.h),
-                                      Text(
-                                        'By: ${item.actorType!.toUpperCase()}',
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 9.sp,
-                                          color: iconColor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-              error: (err, stack) => Center(
-                child: Text('Error: $err', style: TextStyle(color: AppColors.error)),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

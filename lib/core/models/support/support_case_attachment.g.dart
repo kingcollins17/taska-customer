@@ -12,10 +12,14 @@ SupportCaseAttachment _$SupportCaseAttachmentFromJson(
   id: json['id'] as String?,
   caseId: json['case_id'] as String?,
   messageId: json['message_id'] as String?,
-  fileName: json['file_name'] as String?,
+  uploadedBy: json['uploaded_by'] as String?,
+  storageKey: json['storage_key'] as String?,
+  fileName: SupportCaseAttachment._readFileName(json, 'file_name') as String?,
   fileUrl: json['file_url'] as String?,
-  fileSize: (json['file_size'] as num?)?.toInt(),
-  contentType: json['content_type'] as String?,
+  fileSize: (SupportCaseAttachment._readFileSize(json, 'file_size') as num?)
+      ?.toInt(),
+  contentType:
+      SupportCaseAttachment._readContentType(json, 'content_type') as String?,
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
@@ -27,6 +31,8 @@ Map<String, dynamic> _$SupportCaseAttachmentToJson(
   'id': instance.id,
   'case_id': instance.caseId,
   'message_id': instance.messageId,
+  'uploaded_by': instance.uploadedBy,
+  'storage_key': instance.storageKey,
   'file_name': instance.fileName,
   'file_url': instance.fileUrl,
   'file_size': instance.fileSize,

@@ -5,10 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
+import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
-import 'package:seeker_app/core/designs/widgets/custom_back_button.dart';
-import 'package:seeker_app/core/designs/widgets/primary_button.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/support_providers.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
@@ -40,17 +39,28 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
     super.dispose();
   }
 
+  UserCasesParam get _currentParam {
+    switch (_selectedFilter) {
+      case TicketFilter.open:
+        return (taskId: null, status: 'open');
+      case TicketFilter.closed:
+        return (taskId: null, status: 'closed');
+      case TicketFilter.all:
+        return (taskId: null, status: null);
+    }
+  }
+
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      ref.read(userCasesProvider(null).notifier).loadMore();
+      ref.read(userCasesProvider(_currentParam).notifier).loadMore();
     }
   }
 
   Future<void> _openCreateTicket() async {
     await context.pushNamed(RouteNames.createSupportCase.name);
     if (!mounted) return;
-    ref.read(userCasesProvider(null).notifier).refresh();
+    ref.read(userCasesProvider(_currentParam).notifier).refresh();
   }
 
   List<SupportCase> _filterCases(List<SupportCase> cases) {
@@ -95,18 +105,18 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final casesAsync = ref.watch(userCasesProvider(null));
+    final casesAsync = ref.watch(userCasesProvider(_currentParam));
 
     final backgroundColor = isDark ? AppColors.darkBackground : AppColors.background;
-    final surfaceColor = isDark ? const Color(0xFF16181C) : AppColors.surface;
-    final borderColor = isDark ? const Color(0xFF2C2F36) : const Color(0xFFE5E7EB);
+    final surfaceColor = isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.surface;
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06);
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
     final textSecondary = isDark ? const Color(0xFF9CA3AF) : AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: surfaceColor,
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.surface,
         elevation: 0,
         centerTitle: true,
         leading: const CustomBackButton(),
@@ -149,7 +159,7 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref.read(userCasesProvider(null).notifier).refresh();
+          await ref.read(userCasesProvider(_currentParam).notifier).refresh();
         },
         color: AppColors.primary,
         child: Column(
@@ -181,7 +191,7 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
                       bottom: 80.h,
                     ),
                     itemCount: filtered.length +
-                        (ref.read(userCasesProvider(null).notifier).hasMore ? 1 : 0),
+                        (ref.read(userCasesProvider(_currentParam).notifier).hasMore ? 1 : 0),
                     separatorBuilder: (_, index) => SizedBox(height: 10.h),
                     itemBuilder: (context, index) {
                       if (index == filtered.length) {
@@ -275,7 +285,7 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
                 padding: EdgeInsets.symmetric(vertical: 8.h),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? (isDark ? const Color(0xFF2C2F36) : AppColors.primary.withValues(alpha: 0.1))
+                      ? (isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.primary.withValues(alpha: 0.1))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8.r),
                 ),
@@ -326,7 +336,7 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
           Text(
             _selectedFilter == TicketFilter.all
                 ? 'No Support Tickets Yet'
-                : 'No ${_selectedFilter.name.toUpperCase()} Tickets Found',
+                : 'No ${_selectedFilter.name.capitalize} Tickets Found',
             style: AppTextStyles.heading3.copyWith(
               color: textPrimary,
               fontSize: 16.sp,
@@ -344,14 +354,7 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 24.h),
-          SizedBox(
-            width: 200.w,
-            child: PrimaryButton(
-              text: 'Create Ticket',
-              height: 40.h,
-              onPressed: _openCreateTicket,
-            ),
-          ),
+          
         ],
       ),
     );
@@ -394,7 +397,7 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
           SizedBox(height: 20.h),
           ElevatedButton.icon(
             onPressed: () {
-              ref.read(userCasesProvider(null).notifier).refresh();
+              ref.read(userCasesProvider(_currentParam).notifier).refresh();
             },
             icon: HugeIcon(
               icon: HugeIcons.strokeRoundedRefresh,
@@ -413,9 +416,9 @@ class _SupportCasesListScreenState extends ConsumerState<SupportCasesListScreen>
   }
 
   Widget _buildShimmerList(bool isDark, Color surfaceColor, Color borderColor) {
-    final baseColor = isDark ? const Color(0xFF1F222A) : const Color(0xFFE5E7EB);
-    final highlightColor = isDark ? const Color(0xFF2C303B) : const Color(0xFFF3F4F6);
-    final placeholderColor = isDark ? const Color(0xFF282B34) : const Color(0xFFD1D5DB);
+    final baseColor = isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFE5E7EB);
+    final highlightColor = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF3F4F6);
+    final placeholderColor = isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFD1D5DB);
 
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
@@ -685,7 +688,7 @@ class _TicketCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF262930) : const Color(0xFFF1F5F9),
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                     child: Text(
@@ -705,7 +708,7 @@ class _TicketCard extends StatelessWidget {
                         color: caseItem.priority!.toUpperCase() == 'URGENT' ||
                                 caseItem.priority!.toUpperCase() == 'HIGH'
                             ? AppColors.error.withValues(alpha: 0.1)
-                            : (isDark ? const Color(0xFF262930) : const Color(0xFFF1F5F9)),
+                            : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(4.r),
                       ),
                       child: Text(

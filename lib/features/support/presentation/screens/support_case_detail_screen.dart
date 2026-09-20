@@ -15,6 +15,7 @@ import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/utils/flushbar_message.dart';
 import 'package:seeker_app/core/utils/loading_overlay.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SupportCaseDetailScreen extends ConsumerStatefulWidget {
   final String caseId;
@@ -30,10 +31,30 @@ class SupportCaseDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(caseAttachmentsProvider(widget.caseId).notifier).loadMore();
+    }
+  }
+
   Future<void> _refreshAll() async {
     ref.invalidate(caseDetailProvider(widget.caseId));
-    await ref.read(caseTimelineProvider(widget.caseId).notifier).refresh();
-    await ref.read(caseMessagesProvider(widget.caseId).notifier).refresh();
+    await ref.read(caseAttachmentsProvider(widget.caseId).notifier).refresh();
   }
 
   String _formatDate(DateTime? dateTime) {
@@ -56,6 +77,13 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
     }
 
     return DateFormat('MMM d, yyyy · HH:mm').format(local);
+  }
+
+  String _formatFileSize(int? bytes) {
+    if (bytes == null || bytes <= 0) return '0 B';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   void _navigateToChat() {
@@ -130,26 +158,35 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
     }
   }
 
+  Future<void> _openAttachmentUrl(String? url) async {
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      context.showMessage('Could not open file URL', type: MessageType.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final detailAsync = ref.watch(caseDetailProvider(widget.caseId));
-    final timelineAsync = ref.watch(caseTimelineProvider(widget.caseId));
-    final messagesAsync = ref.watch(caseMessagesProvider(widget.caseId));
+    final attachmentsAsync = ref.watch(caseAttachmentsProvider(widget.caseId));
 
     final backgroundColor = isDark ? AppColors.darkBackground : AppColors.background;
-    final surfaceColor = isDark ? const Color(0xFF16181C) : AppColors.surface;
-    final borderColor = isDark ? const Color(0xFF2C2F36) : const Color(0xFFE5E7EB);
+    final surfaceColor = isDark ? Colors.white.withValues(alpha: 0.04) : AppColors.surface;
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06);
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
     final textSecondary = isDark ? const Color(0xFF9CA3AF) : AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: surfaceColor,
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.surface,
         elevation: 0,
         centerTitle: true,
-        leading: const CustomBackButton(),
+        leading: CustomBackButton(),
         title: Text(
           'Ticket Details',
           style: AppTextStyles.heading3.copyWith(
@@ -158,26 +195,7 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
           ),
         ),
         actions: [
-          // Open Chat IconButton
-          IconButton(
-            onPressed: _navigateToChat,
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedBubbleChat,
-              color: AppColors.primary,
-              size: 20.sp,
-            ),
-            tooltip: 'Open Chat',
-          ),
-          IconButton(
-            onPressed: _refreshAll,
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedRefresh,
-              color: textPrimary,
-              size: 20.sp,
-            ),
-            tooltip: 'Refresh',
-          ),
-          SizedBox(width: 4.w),
+
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -199,9 +217,10 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
                 caseItem.status?.toUpperCase() == 'RESOLVED' ||
                 caseItem.status?.toUpperCase() == 'CANCELLED');
 
-            final recentMessageCount = messagesAsync.value?.length ?? 0;
+            final attachmentCount = attachmentsAsync.value?.length ?? 0;
 
             return SingleChildScrollView(
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               child: Column(
@@ -218,79 +237,94 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
                     isClosed: isClosed,
                   ).animate().fade(duration: 200.ms),
 
-                  SizedBox(height: 14.h),
+                  SizedBox(height: 20.h),
 
-                  // Open Support Chat Banner Card
-                  _buildChatBannerCard(
-                    messageCount: recentMessageCount,
-                    isDark: isDark,
-                    surfaceColor: surfaceColor,
-                    borderColor: borderColor,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                  ).animate().fade(duration: 220.ms).slideY(begin: 0.05, duration: 220.ms),
-
-                  SizedBox(height: 16.h),
-
-                  // Timeline Section Header
+                  // Attachments Section Header
                   Row(
                     children: [
                       HugeIcon(
-                        icon: HugeIcons.strokeRoundedTime02,
+                        icon: HugeIcons.strokeRoundedAttachment01,
                         size: 16.sp,
                         color: AppColors.primary,
                       ),
                       SizedBox(width: 6.w),
                       Text(
-                        'Timeline & Event History',
+                        'Attachments',
                         style: AppTextStyles.heading3.copyWith(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
                           color: textPrimary,
                         ),
                       ),
+                      if (attachmentCount > 0) ...[
+                        SizedBox(width: 6.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Text(
+                            '$attachmentCount',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 10.sp,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   SizedBox(height: 10.h),
 
-                  // Timeline Stepper List
-                  timelineAsync.when(
+                  // Attachments List
+                  attachmentsAsync.when(
                     data: (items) {
                       if (items.isEmpty) {
-                        return Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20.h),
-                          child: Center(
-                            child: Text(
-                              'No timeline events available',
-                              style: AppTextStyles.bodySmall.copyWith(color: textSecondary),
-                            ),
-                          ),
-                        );
+                        return _buildEmptyAttachmentsState(isDark, surfaceColor, borderColor, textSecondary);
                       }
 
-                      return Column(
-                        children: items.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final item = entry.value;
-                          final isLast = index == items.length - 1;
+                      final hasMore = ref.read(caseAttachmentsProvider(widget.caseId).notifier).hasMore;
 
-                          return _TimelineItemTile(
-                            item: item,
-                            formattedDate: _formatDate(item.timestamp),
-                            isLast: isLast,
-                            isDark: isDark,
-                            surfaceColor: surfaceColor,
-                            borderColor: borderColor,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                          );
-                        }).toList(),
+                      return Column(
+                        children: [
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: items.length + (hasMore ? 1 : 0),
+                            separatorBuilder: (context, index) => SizedBox(height: 8.h),
+                            itemBuilder: (context, index) {
+                              if (index == items.length) {
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  child: const Center(
+                                    child: CircularProgressIndicator.adaptive(),
+                                  ),
+                                );
+                              }
+
+                              final item = items[index];
+                              return _AttachmentTile(
+                                item: item,
+                                formattedDate: _formatDate(item.createdAt),
+                                formattedSize: _formatFileSize(item.fileSize),
+                                isDark: isDark,
+                                surfaceColor: surfaceColor,
+                                borderColor: borderColor,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                onTap: () => _openAttachmentUrl(item.fileUrl),
+                              );
+                            },
+                          ),
+                        ],
                       );
                     },
-                    loading: () => _buildShimmerTimeline(isDark, surfaceColor),
+                    loading: () => _buildShimmerAttachments(isDark, surfaceColor, borderColor),
                     error: (err, _) => Padding(
                       padding: EdgeInsets.all(12.w),
-                      child: Text('Failed to load timeline: $err', style: TextStyle(color: AppColors.error)),
+                      child: Text('Failed to load attachments: $err', style: TextStyle(color: AppColors.error)),
                     ),
                   ),
 
@@ -329,7 +363,7 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(14.r),
@@ -409,7 +443,7 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 10.h),
 
           Text(
             caseItem.subject ?? 'No Subject',
@@ -420,17 +454,17 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
             ),
           ),
           if (caseItem.description != null && caseItem.description!.isNotEmpty) ...[
-            SizedBox(height: 4.h),
+            SizedBox(height: 6.h),
             Text(
               caseItem.description!,
               style: AppTextStyles.bodySmall.copyWith(
                 color: textSecondary,
                 fontSize: 12.sp,
-                height: 1.3,
+                height: 1.4,
               ),
             ),
           ],
-          SizedBox(height: 10.h),
+          SizedBox(height: 12.h),
 
           Wrap(
             spacing: 6.w,
@@ -452,96 +486,37 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
     );
   }
 
-  Widget _buildChatBannerCard({
-    required int messageCount,
-    required bool isDark,
-    required Color surfaceColor,
-    required Color borderColor,
-    required Color textPrimary,
-    required Color textSecondary,
-  }) {
-    return InkWell(
-      onTap: _navigateToChat,
-      borderRadius: BorderRadius.circular(14.r),
-      child: Container(
-        padding: EdgeInsets.all(14.w),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E242B) : const Color(0xFFF0FDF4),
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            width: 1.2.w,
+  Widget _buildEmptyAttachmentsState(
+    bool isDark,
+    Color surfaceColor,
+    Color borderColor,
+    Color textSecondary,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: borderColor, width: 1.w),
+      ),
+      child: Column(
+        children: [
+          HugeIcon(
+            icon: HugeIcons.strokeRoundedAttachment01,
+            size: 32.sp,
+            color: textSecondary.withValues(alpha: 0.5),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedBubbleChat,
-                size: 22.sp,
-                color: AppColors.primary,
-              ),
+          SizedBox(height: 8.h),
+          Text(
+            'No Attachments Uploaded Yet',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: textSecondary,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w500,
             ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Support Chat Channel',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
-                      ),
-                      if (messageCount > 0) ...[
-                        SizedBox(width: 6.w),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Text(
-                            '$messageCount msgs',
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 9.sp,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    'Chat directly with support representatives & send file attachments.',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      fontSize: 11.sp,
-                      color: textSecondary,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 6.w),
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowRight01,
-              size: 16.sp,
-              color: AppColors.primary,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -550,7 +525,7 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF262930) : const Color(0xFFF1F5F9),
+        color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(4.r),
       ),
       child: Text(
@@ -565,8 +540,8 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
   }
 
   Widget _buildShimmerDetail(bool isDark, Color surfaceColor, Color borderColor) {
-    final baseColor = isDark ? const Color(0xFF262930) : Colors.grey[300]!;
-    final highlightColor = isDark ? const Color(0xFF383C45) : Colors.grey[100]!;
+    final baseColor = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[100]!;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -584,7 +559,7 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
             ),
             SizedBox(height: 16.h),
             Container(
-              height: 70.h,
+              height: 100.h,
               decoration: BoxDecoration(
                 color: surfaceColor,
                 borderRadius: BorderRadius.circular(12.r),
@@ -596,22 +571,22 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
     );
   }
 
-  Widget _buildShimmerTimeline(bool isDark, Color surfaceColor) {
-    final baseColor = isDark ? const Color(0xFF262930) : Colors.grey[300]!;
-    final highlightColor = isDark ? const Color(0xFF383C45) : Colors.grey[100]!;
+  Widget _buildShimmerAttachments(bool isDark, Color surfaceColor, Color borderColor) {
+    final baseColor = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey[300]!;
+    final highlightColor = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[100]!;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
       highlightColor: highlightColor,
       child: Column(
         children: List.generate(
-          3,
+          2,
           (index) => Container(
-            height: 60.h,
-            margin: EdgeInsets.only(bottom: 10.h),
+            height: 56.h,
+            margin: EdgeInsets.only(bottom: 8.h),
             decoration: BoxDecoration(
               color: surfaceColor,
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(10.r),
             ),
           ),
         ),
@@ -674,148 +649,122 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
   }
 }
 
-class _TimelineItemTile extends StatelessWidget {
-  final SupportCaseTimelineItem item;
+class _AttachmentTile extends StatelessWidget {
+  final SupportCaseAttachment item;
   final String formattedDate;
-  final bool isLast;
+  final String formattedSize;
   final bool isDark;
   final Color surfaceColor;
   final Color borderColor;
   final Color textPrimary;
   final Color textSecondary;
+  final VoidCallback onTap;
 
-  const _TimelineItemTile({
+  const _AttachmentTile({
     required this.item,
     required this.formattedDate,
-    required this.isLast,
+    required this.formattedSize,
     required this.isDark,
     required this.surfaceColor,
     required this.borderColor,
     required this.textPrimary,
     required this.textSecondary,
+    required this.onTap,
   });
 
-  dynamic _getIconForType(String? type, String? actor) {
-    final t = type?.toUpperCase() ?? '';
-    if (t.contains('CREATE')) return HugeIcons.strokeRoundedTicket01;
-    if (t.contains('CLOSE') || t.contains('RESOLV')) return HugeIcons.strokeRoundedCheckmarkCircle02;
-    if (t.contains('REOPEN')) return HugeIcons.strokeRoundedRefresh;
-    if (t.contains('MSG') || t.contains('MESSAGE')) return HugeIcons.strokeRoundedBubbleChat;
-    if (actor?.toUpperCase() == 'AGENT') return HugeIcons.strokeRoundedCustomerSupport;
-    return HugeIcons.strokeRoundedNotification01;
-  }
+  dynamic _getIconForFile(String? contentType, String? fileName) {
+    final type = contentType?.toLowerCase() ?? '';
+    final ext = fileName?.toLowerCase().split('.').last ?? '';
 
-  Color _getIconColor(String? type, String? actor) {
-    final t = type?.toUpperCase() ?? '';
-    if (t.contains('CREATE')) return AppColors.primary;
-    if (t.contains('CLOSE') || t.contains('RESOLV')) return Colors.green;
-    if (t.contains('REOPEN')) return Colors.orange;
-    if (t.contains('MSG') || t.contains('MESSAGE')) return Colors.blue;
-    return AppColors.primary;
+    if (type.contains('image') || ['png', 'jpg', 'jpeg', 'gif', 'webp'].contains(ext)) {
+      return HugeIcons.strokeRoundedImage01;
+    }
+    if (type.contains('pdf') || ext == 'pdf') {
+      return HugeIcons.strokeRoundedFile02;
+    }
+    if (type.contains('video') || ['mp4', 'mov', 'avi'].contains(ext)) {
+      return HugeIcons.strokeRoundedVideo01;
+    }
+    return HugeIcons.strokeRoundedAttachment01;
   }
 
   @override
   Widget build(BuildContext context) {
-    final iconData = _getIconForType(item.itemType, item.actorType);
-    final iconColor = _getIconColor(item.itemType, item.actorType);
+    final iconData = _getIconForFile(item.contentType, item.fileName);
+    final name = item.fileName ?? 'Attachment';
+    final hasUrl = item.fileUrl != null && item.fileUrl!.isNotEmpty;
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            children: [
-              Container(
-                width: 28.w,
-                height: 28.w,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: iconColor.withValues(alpha: 0.4), width: 1.5.w),
-                ),
-                child: Center(
-                  child: HugeIcon(
-                    icon: iconData,
-                    size: 14.sp,
-                    color: iconColor,
-                  ),
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2.w,
-                    margin: EdgeInsets.symmetric(vertical: 4.h),
-                    color: isDark ? const Color(0xFF2C2F36) : const Color(0xFFE2E8F0),
-                  ),
-                ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: borderColor, width: 1.w),
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        leading: Container(
+          width: 36.w,
+          height: 36.w,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8.r),
           ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 16.h),
-              child: Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: surfaceColor,
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: borderColor, width: 1.w),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.title ?? 'Timeline Event',
-                            style: AppTextStyles.label.copyWith(
-                              color: textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12.sp,
-                            ),
-                          ),
-                        ),
-                        if (formattedDate.isNotEmpty)
-                          Text(
-                            formattedDate,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontSize: 9.sp,
-                              color: textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (item.description != null && item.description!.isNotEmpty) ...[
-                      SizedBox(height: 4.h),
-                      Text(
-                        item.description!,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: textSecondary,
-                          fontSize: 11.sp,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                    if (item.actorType != null && item.actorType!.isNotEmpty) ...[
-                      SizedBox(height: 4.h),
-                      Text(
-                        'By: ${item.actorType!.toUpperCase()}',
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 9.sp,
-                          color: iconColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+          child: Center(
+            child: HugeIcon(
+              icon: iconData,
+              size: 18.sp,
+              color: AppColors.primary,
             ),
           ),
-        ],
+        ),
+        title: Text(
+          name,
+          style: AppTextStyles.label.copyWith(
+            color: textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 12.sp,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Row(
+          children: [
+            Text(
+              formattedSize,
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: 10.sp,
+                color: textSecondary,
+              ),
+            ),
+            if (formattedDate.isNotEmpty) ...[
+              Text(
+                ' · ',
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 10.sp,
+                  color: textSecondary,
+                ),
+              ),
+              Text(
+                formattedDate,
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontSize: 10.sp,
+                  color: textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
+        trailing: hasUrl
+            ? IconButton(
+                onPressed: onTap,
+                icon: HugeIcon(
+                  icon: HugeIcons.strokeRoundedDownload01,
+                  size: 16.sp,
+                  color: AppColors.primary,
+                ),
+                tooltip: 'View / Download',
+              )
+            : null,
       ),
     );
   }
