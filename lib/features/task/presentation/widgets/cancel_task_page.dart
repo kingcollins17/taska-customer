@@ -4,8 +4,8 @@ import 'package:seeker_app/features/task/presentation/screens/cancel_task_screen
 
 export 'package:seeker_app/features/task/presentation/screens/cancel_task_screen.dart';
 
-class CancelTaskSheet {
-  CancelTaskSheet._();
+class CancelTaskPage {
+  CancelTaskPage._();
 
   static Future<T?> show<T>(BuildContext context, {required Task task}) {
     return CancelTaskScreen.navigate<T>(context, task: task);

@@ -7,6 +7,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:seeker_app/core/designs/app_colors.dart';
 import 'package:seeker_app/core/designs/app_text_styles.dart';
+import 'package:seeker_app/core/designs/widgets/confirmation_dialog.dart';
 import 'package:seeker_app/core/designs/widgets/custom_back_button.dart';
 import 'package:seeker_app/core/designs/widgets/primary_button.dart';
 import 'package:seeker_app/core/models/models.dart';
@@ -94,31 +95,16 @@ class _SupportCaseDetailScreenState extends ConsumerState<SupportCaseDetailScree
   }
 
   Future<void> _toggleCaseStatus(bool isClosed) async {
-    final actionName = isClosed ? 'reopen' : 'close';
-    final confirm = await showDialog<bool>(
+    final confirm = await ConfirmationDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('${actionName.toUpperCase()} Ticket?'),
-        content: Text(
-          isClosed
-              ? 'Are you sure you want to reopen this support ticket?'
-              : 'Are you sure you want to mark this support ticket as closed?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isClosed ? AppColors.primary : AppColors.error,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(actionName.toUpperCase()),
-          ),
-        ],
-      ),
+      title: isClosed ? 'Reopen Ticket?' : 'Close Ticket?',
+      description: isClosed
+          ? 'Are you sure you want to reopen this support ticket?'
+          : 'Are you sure you want to mark this support ticket as closed?',
+      confirmText: isClosed ? 'Reopen Ticket' : 'Close Ticket',
+      cancelText: 'Cancel',
+      isDestructive: !isClosed,
+      customColor: isClosed ? AppColors.primary : AppColors.error,
     );
 
     if (confirm != true || !mounted) return;

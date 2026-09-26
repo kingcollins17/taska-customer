@@ -70,9 +70,11 @@ class _CancelTaskScreenState extends ConsumerState<CancelTaskScreen> {
 
     final pinText = _pinController.text.trim();
     final status = widget.task.status?.toLowerCase() ?? 'open';
-    final isInProgress = status == 'in_progress' || status == 'started';
+    final isInProgress = status == 'in_progress' || status == 'in progress' || status == 'inprogress' || status == 'started';
+    final isAssigned = status == 'assigned' || status == 'matched' || status == 'booked';
+    final requiresPin = isAssigned || isInProgress;
 
-    if (isInProgress && pinText.isEmpty) {
+    if (requiresPin && pinText.isEmpty) {
       context.showMessage(
         'Please enter the cancellation PIN provided by your provider',
         type: MessageType.error,
@@ -118,7 +120,7 @@ class _CancelTaskScreenState extends ConsumerState<CancelTaskScreen> {
     } else {
       final request = CancelTaskRequest(
         cancellationReason: combinedReason,
-        cancellationPin: pinText.isNotEmpty ? pinText : null,
+        cancellationPin: (requiresPin && pinText.isNotEmpty) ? pinText : null,
       );
 
       await ref.read(taskManagementProvider.notifier).cancelTask(
@@ -157,19 +159,27 @@ class _CancelTaskScreenState extends ConsumerState<CancelTaskScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final status = widget.task.status?.toLowerCase() ?? 'open';
-    final isInProgress = status == 'in_progress' || status == 'started';
-    final isAssigned = status == 'assigned' || status == 'matched' || status == 'booked';
+    final isInProgress = status == 'in_progress' ||
+        status == 'in progress' ||
+        status == 'inprogress' ||
+        status == 'started';
+    final isAssigned = status == 'assigned' ||
+        status == 'matched' ||
+        status == 'booked';
     final isDraft = status == 'draft';
+    final requiresPin = isAssigned || isInProgress;
 
     final priceStr = widget.task.customerTotalPrice != null
         ? widget.task.customerTotalPrice!.toNaira(2)
-        : (widget.task.basePrice != null ? widget.task.basePrice!.toNaira(2) : 'TBD');
+        : (widget.task.basePrice != null
+            ? widget.task.basePrice!.toNaira(2)
+            : 'TBD');
 
     String getNoticeText() {
       if (isInProgress) {
         return 'This task is in progress. Enter the cancellation PIN provided by your task provider for mutual cancellation.';
       } else if (isAssigned) {
-        return 'Cancelling this assigned task will notify your assigned provider immediately.';
+        return 'Cancelling this assigned task will notify your assigned provider immediately. Enter the cancellation PIN provided by your provider.';
       } else if (isDraft) {
         return 'Cancelling this draft task will remove your draft order.';
       } else {
@@ -177,9 +187,11 @@ class _CancelTaskScreenState extends ConsumerState<CancelTaskScreen> {
       }
     }
 
-    final borderColor = isDark ? const Color(0xFF2C2F36) : const Color(0xFFE5E7EB);
+    final borderColor =
+        isDark ? const Color(0xFF2C2F36) : const Color(0xFFE5E7EB);
     final textPrimary = isDark ? Colors.white : AppColors.textPrimary;
-    final textSecondary = isDark ? const Color(0xFF9CA3AF) : AppColors.textSecondary;
+    final textSecondary =
+        isDark ? const Color(0xFF9CA3AF) : AppColors.textSecondary;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -201,228 +213,136 @@ class _CancelTaskScreenState extends ConsumerState<CancelTaskScreen> {
           ),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Task Overview Summary Card
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF22252D) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: borderColor, width: 1.w),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            widget.task.title ?? 'Task Details',
-                            style: AppTextStyles.label.copyWith(
-                              color: textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15.sp,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Text(
-                          priceStr,
-                          style: textTheme.titleMedium?.copyWith(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8.h),
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                          child: Text(
-                            status.toUpperCase(),
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontSize: 10.5.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Task Overview Summary Card
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF22252D)
+                    : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: borderColor, width: 1.w),
               ),
-
-              SizedBox(height: 16.h),
-
-              // Informative Notice Banner
-              Container(
-                padding: EdgeInsets.all(14.w),
-                decoration: BoxDecoration(
-                  color: (isInProgress ? Colors.amber : Colors.blue).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(
-                    color: (isInProgress ? Colors.amber : Colors.blue).withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedAlertCircle,
-                      size: 20.sp,
-                      color: isInProgress ? Colors.amber.shade800 : Colors.blue.shade700,
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Text(
-                        getNoticeText(),
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: textPrimary,
-                          fontSize: 12.sp,
-                          height: 1.4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.task.title ?? 'Task Details',
+                          style: AppTextStyles.label.copyWith(
+                            color: textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20.h),
-
-              // Reason Header
-              Text(
-                'Reason for Cancellation',
-                style: AppTextStyles.label.copyWith(
-                  color: textPrimary,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 10.h),
-
-              // Quick Reasons List
-              ..._quickReasons.map((reason) {
-                final isSelected = _selectedReasonOption == reason;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedReasonOption = reason;
-                    });
-                  },
-                  child: Container(
-                    margin: EdgeInsets.only(bottom: 8.h),
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                      SizedBox(width: 8.w),
+                      Text(
+                        priceStr,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.08)
-                          : (isDark ? const Color(0xFF22252C) : const Color(0xFFF9FAFB)),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(
-                        color: isSelected ? AppColors.primary : borderColor,
-                        width: isSelected ? 1.5.w : 1.w,
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Text(
+                      status.toUpperCase(),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                          size: 20.sp,
-                          color: isSelected ? AppColors.primary : textSecondary,
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            reason,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: textPrimary,
-                              fontSize: 13.sp,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                );
-              }),
+                ],
+              ),
+            ),
 
-              SizedBox(height: 10.h),
+            SizedBox(height: 10.h),
 
-              // Custom Reason Input Field
-              TextField(
-                controller: _reasonController,
-                maxLines: 3,
-                minLines: 2,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: textPrimary,
-                  fontSize: 13.sp,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Additional details or custom reason...',
-                  hintStyle: AppTextStyles.bodySmall.copyWith(
-                    color: textSecondary,
-                    fontSize: 12.5.sp,
-                  ),
-                  fillColor: isDark ? const Color(0xFF242730) : const Color(0xFFF3F5F8),
-                  filled: true,
-                  contentPadding: EdgeInsets.all(14.w),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
+            // Informative Notice Banner
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: (requiresPin ? Colors.amber : Colors.blue)
+                    .withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: (requiresPin ? Colors.amber : Colors.blue)
+                      .withValues(alpha: 0.25),
                 ),
               ),
+              child: Row(
+                children: [
+                  HugeIcon(
+                    icon: HugeIcons.strokeRoundedAlertCircle,
+                    size: 18.sp,
+                    color: requiresPin
+                        ? Colors.amber.shade800
+                        : Colors.blue.shade700,
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Text(
+                      getNoticeText(),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: textPrimary,
+                        fontSize: 11.5.sp,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-              SizedBox(height: 20.h),
-
-              // Cancellation PIN Header & Input
+            // Cancellation PIN Header & Input (Rendered BEFORE Reason when required)
+            if (requiresPin) ...[
+              SizedBox(height: 14.h),
               Row(
                 children: [
                   Text(
                     'Cancellation PIN',
                     style: AppTextStyles.label.copyWith(
                       color: textPrimary,
-                      fontSize: 14.sp,
+                      fontSize: 13.5.sp,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(width: 6.w),
                   Text(
-                    isInProgress ? '(Required for Mutual Cancellation)' : '(Optional)',
+                    '(Required for Mutual Cancellation)',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: isInProgress ? AppColors.error : textSecondary,
-                      fontSize: 11.5.sp,
-                      fontWeight: isInProgress ? FontWeight.bold : FontWeight.normal,
+                      color: AppColors.error,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               TextField(
                 controller: _pinController,
                 keyboardType: TextInputType.number,
@@ -438,17 +358,20 @@ class _CancelTaskScreenState extends ConsumerState<CancelTaskScreen> {
                   hintText: 'Enter provider PIN (e.g. 1234)',
                   hintStyle: AppTextStyles.bodySmall.copyWith(
                     color: textSecondary,
-                    fontSize: 12.5.sp,
+                    fontSize: 12.sp,
                     letterSpacing: 0,
                   ),
                   prefixIcon: Icon(
                     Icons.lock_outline,
-                    size: 20.sp,
+                    size: 18.sp,
                     color: AppColors.primary,
                   ),
-                  fillColor: isDark ? const Color(0xFF242730) : const Color(0xFFF3F5F8),
+                  fillColor: isDark
+                      ? const Color(0xFF242730)
+                      : const Color(0xFFF3F5F8),
                   filled: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
                     borderSide: BorderSide(color: borderColor),
@@ -463,23 +386,147 @@ class _CancelTaskScreenState extends ConsumerState<CancelTaskScreen> {
                   ),
                 ),
               ),
+            ],
 
-              SizedBox(height: 32.h),
+            SizedBox(height: 14.h),
 
-              // Action Button
-              SizedBox(
-                width: double.infinity,
-                child: PrimaryButton(
-                  text: 'Cancel Task',
-                  backgroundColor: AppColors.error,
-                  foregroundColor: Colors.white,
-                  height: 48.h,
-                  fontSize: 14.sp,
-                  onPressed: _isSubmitting ? null : _handleCancelTask,
+            // Reason Header
+            Text(
+              'Reason for Cancellation',
+              style: AppTextStyles.label.copyWith(
+                color: textPrimary,
+                fontSize: 13.5.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8.h),
+
+            // Quick Reasons List
+            ..._quickReasons.map((reason) {
+              final isSelected = _selectedReasonOption == reason;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedReasonOption = reason;
+                  });
+                },
+                child: Container(
+                  margin: EdgeInsets.only(bottom: 6.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.08)
+                        : (isDark
+                            ? const Color(0xFF22252C)
+                            : const Color(0xFFF9FAFB)),
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : borderColor,
+                      width: isSelected ? 1.5.w : 1.w,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        size: 18.sp,
+                        color: isSelected ? AppColors.primary : textSecondary,
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Text(
+                          reason,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: textPrimary,
+                            fontSize: 12.5.sp,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+
+            SizedBox(height: 6.h),
+
+            // Custom Reason Input Field
+            TextField(
+              controller: _reasonController,
+              maxLines: 2,
+              minLines: 2,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: textPrimary,
+                fontSize: 12.5.sp,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Additional details or custom reason...',
+                hintStyle: AppTextStyles.bodySmall.copyWith(
+                  color: textSecondary,
+                  fontSize: 12.sp,
+                ),
+                fillColor: isDark
+                    ? const Color(0xFF242730)
+                    : const Color(0xFFF3F5F8),
+                filled: true,
+                contentPadding: EdgeInsets.all(12.w),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: AppColors.primary),
                 ),
               ),
-              SizedBox(height: 16.h),
-            ],
+            ),
+
+            SizedBox(height: 16.h),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.only(
+          left: 16.w,
+          right: 16.w,
+          top: 10.h,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 12.h,
+        ),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+          border: Border(
+            top: BorderSide(color: borderColor.withValues(alpha: 0.5), width: 1.w),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            width: double.infinity,
+            child: PrimaryButton(
+              text: 'Cancel Task',
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              height: 46.h,
+              fontSize: 14.sp,
+              onPressed: _isSubmitting ? null : _handleCancelTask,
+            ),
           ),
         ),
       ),

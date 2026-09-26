@@ -14,8 +14,6 @@ import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/providers/support_providers.dart';
 import 'package:seeker_app/core/providers/payout_providers.dart';
-import 'package:seeker_app/core/designs/widgets/payment_page.dart';
-import 'package:seeker_app/core/utils/num_extension.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/task_detail_options_sheet.dart';
 
@@ -274,7 +272,16 @@ class _TaskDetailContent extends ConsumerWidget {
                     ],
                     if (task.id != null && task.id!.isNotEmpty)
                       _TaskSupportBanner(taskId: task.id!),
-                    if (task.status?.toLowerCase() == 'assigned') ...[
+                    if (const {
+                      'assigned',
+                      'matched',
+                      'booked',
+                      'in_progress',
+                      'in progress',
+                      'inprogress',
+                      'started',
+                      'completed',
+                    }.contains(task.status?.toLowerCase())) ...[
                       _TaskAssignmentDisplay(taskId: task.id ?? ''),
                       SizedBox(height: 14.h),
                     ],
@@ -1661,92 +1668,110 @@ class _TaskSupportBanner extends ConsumerWidget {
             break;
         }
 
-        return Container(
-          margin: EdgeInsets.only(bottom: 14.h),
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF1E1E1E)
-                : Colors.blue.shade50.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(
-              color: statusColor.withValues(alpha: isDark ? 0.3 : 0.25),
+        return GestureDetector(
+          onTap: () {
+            if (supportCase.id != null) {
+              context.pushNamed(
+                RouteNames.supportCaseDetail.name,
+                pathParameters: {'caseId': supportCase.id!},
+              );
+            }
+          },
+          child: Container(
+            margin: EdgeInsets.only(bottom: 14.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF1E1E1E)
+                  : Colors.blue.shade50.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(
+                color: statusColor.withValues(alpha: isDark ? 0.3 : 0.25),
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36.r,
-                height: 36.r,
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Center(
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedCustomerSupport,
-                    color: statusColor,
-                    size: 18.sp,
+            child: Row(
+              children: [
+                Container(
+                  width: 36.r,
+                  height: 36.r,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Center(
+                    child: HugeIcon(
+                      icon: HugeIcons.strokeRoundedCustomerSupport,
+                      color: statusColor,
+                      size: 18.sp,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Support Ticket #${supportCase.caseNumber ?? ''}',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            fontSize: 12.5.sp,
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurface,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(width: 6.w),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 6.w,
-                            vertical: 2.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                          child: Text(
-                            statusStr,
-                            style: AppTextStyles.label.copyWith(
-                              fontSize: 9.5.sp,
-                              fontWeight: FontWeight.w700,
-                              color: statusColor,
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Support Ticket #${supportCase.caseNumber ?? ''}',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                fontSize: 12.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      supportCase.subject ?? 'Support Case',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        fontSize: 11.5.sp,
-                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          SizedBox(width: 6.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6.w,
+                              vertical: 2.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6.r),
+                            ),
+                            child: Text(
+                              statusStr,
+                              style: AppTextStyles.label.copyWith(
+                                fontSize: 9.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      SizedBox(height: 2.h),
+                      Text(
+                        supportCase.subject ?? 'Support Case',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize: 11.5.sp,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(width: 6.w),
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedArrowRight01,
+                  size: 16.sp,
+                  color: colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ],
+            ),
           ),
         );
       },
       loading: () => const _TaskSupportShimmerCard(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (err, stack) => const SizedBox.shrink(),
     );
   }
 }

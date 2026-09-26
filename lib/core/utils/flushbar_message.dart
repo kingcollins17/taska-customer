@@ -9,14 +9,16 @@ enum MessageType { info, error, success }
 class _MessageStyle {
   final Color backgroundColor;
   final Color borderColor;
-  final Color iconColor;
+  final Color accentColor;
+  final Color iconBgColor;
   final Color titleColor;
   final Color messageColor;
 
   const _MessageStyle({
     required this.backgroundColor,
     required this.borderColor,
-    required this.iconColor,
+    required this.accentColor,
+    required this.iconBgColor,
     required this.titleColor,
     required this.messageColor,
   });
@@ -39,7 +41,7 @@ class _MessageConfig {
   _MessageStyle getStyle(bool isDark) => isDark ? darkStyle : lightStyle;
 }
 
-/// Extension on [BuildContext] for showing beautifully styled, theme-adaptive flushbar messages.
+/// Extension on [BuildContext] for showing beautifully styled, compact, theme-adaptive flushbar messages.
 ///
 /// Usage:
 /// ```dart
@@ -53,59 +55,65 @@ extension FlushbarMessageExtension on BuildContext {
       icon: Icons.check_circle_rounded,
       defaultTitle: 'Success',
       darkStyle: _MessageStyle(
-        backgroundColor: Color(0xFF0D2818),
-        borderColor: Color(0xFF22C55E),
-        iconColor: Color(0xFF4ADE80),
+        backgroundColor: Color(0xFF0F172A),
+        borderColor: Color(0xFF10B981),
+        accentColor: Color(0xFF34D399),
+        iconBgColor: Color(0xFF064E3B),
         titleColor: Colors.white,
-        messageColor: Color(0xD9FFFFFF),
+        messageColor: Color(0xFFCBD5E1),
       ),
       lightStyle: _MessageStyle(
-        backgroundColor: Color(0xFFF0FDF4),
-        borderColor: Color(0xFF86EFAC),
-        iconColor: Color(0xFF16A34A),
-        titleColor: Color(0xFF14532D),
-        messageColor: Color(0xFF166534),
+        backgroundColor: Colors.white,
+        borderColor: Color(0xFFA7F3D0),
+        accentColor: Color(0xFF059669),
+        iconBgColor: Color(0xFFECFDF5),
+        titleColor: Color(0xFF065F46),
+        messageColor: Color(0xFF374151),
       ),
     ),
     MessageType.error: const _MessageConfig(
       icon: Icons.error_rounded,
       defaultTitle: 'Error',
       darkStyle: _MessageStyle(
-        backgroundColor: Color(0xFF2D0A0A),
-        borderColor: Color(0xFFEF4444),
-        iconColor: Color(0xFFF87171),
+        backgroundColor: Color(0xFF0F172A),
+        borderColor: Color(0xFFF43F5E),
+        accentColor: Color(0xFFFB7185),
+        iconBgColor: Color(0xFF881337),
         titleColor: Colors.white,
-        messageColor: Color(0xD9FFFFFF),
+        messageColor: Color(0xFFCBD5E1),
       ),
       lightStyle: _MessageStyle(
-        backgroundColor: Color(0xFFFEF2F2),
-        borderColor: Color(0xFFFCA5A5),
-        iconColor: Color(0xFFDC2626),
-        titleColor: Color(0xFF7F1D1D),
-        messageColor: Color(0xFF991B1B),
+        backgroundColor: Colors.white,
+        borderColor: Color(0xFFFECDD3),
+        accentColor: Color(0xFFE11D48),
+        iconBgColor: Color(0xFFFFF1F2),
+        titleColor: Color(0xFF9F1239),
+        messageColor: Color(0xFF374151),
       ),
     ),
     MessageType.info: const _MessageConfig(
       icon: Icons.info_rounded,
-      defaultTitle: 'Info',
+      defaultTitle: 'Notice',
       darkStyle: _MessageStyle(
-        backgroundColor: Color(0xFF0A1628),
-        borderColor: Color(0xFF6366F1),
-        iconColor: Color(0xFF818CF8),
+        backgroundColor: Color(0xFF0F172A),
+        borderColor: Color(0xFF3B82F6),
+        accentColor: Color(0xFF60A5FA),
+        iconBgColor: Color(0xFF1E3A8A),
         titleColor: Colors.white,
-        messageColor: Color(0xD9FFFFFF),
+        messageColor: Color(0xFFCBD5E1),
       ),
       lightStyle: _MessageStyle(
-        backgroundColor: Color(0xFFEEF2FF),
-        borderColor: Color(0xFFA5B4FC),
-        iconColor: Color(0xFF4F46E5),
-        titleColor: Color(0xFF312E81),
-        messageColor: Color(0xFF3730A3),
+        backgroundColor: Colors.white,
+        borderColor: Color(0xFFBAE6FD),
+        accentColor: Color(0xFF0284C7),
+        iconBgColor: Color(0xFFF0F9FF),
+        titleColor: Color(0xFF0369A1),
+        messageColor: Color(0xFF374151),
       ),
     ),
   };
 
-  /// Shows a flushbar message with the specified [type] adapted to current app theme.
+  /// Shows a compact, theme-adaptive floating flushbar message with the specified [type].
   ///
   /// - [message] – The main body text of the flushbar.
   /// - [type] – One of [MessageType.info], [MessageType.error], or [MessageType.success].
@@ -117,95 +125,140 @@ extension FlushbarMessageExtension on BuildContext {
     String? title,
     Duration duration = const Duration(seconds: 3),
   }) {
-    final isDark = Theme.of(this).colorScheme.brightness == Brightness.dark;
+    final isDark = Theme.of(this).brightness == Brightness.dark;
     final config = _configs[type]!;
     final style = config.getStyle(isDark);
+    final displayTitle = title ?? config.defaultTitle;
 
-    Flushbar(
-      messageText: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: style.iconColor.withValues(alpha: isDark ? 0.15 : 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(config.icon, color: style.iconColor, size: 22),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title ?? config.defaultTitle,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: style.titleColor,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: style.messageColor,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      duration: duration,
+    late Flushbar flushbar;
+
+    flushbar = Flushbar(
       flushbarPosition: FlushbarPosition.TOP,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      borderRadius: BorderRadius.circular(16),
-      backgroundColor: style.backgroundColor,
-      borderColor: style.borderColor.withValues(alpha: isDark ? 0.4 : 0.5),
-      borderWidth: 1.5,
-      boxShadows: [
-        BoxShadow(
-          color: style.borderColor.withValues(alpha: isDark ? 0.15 : 0.1),
-          blurRadius: 20,
-          spreadRadius: 0,
-          offset: const Offset(0, 4),
-        ),
-        BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
-          blurRadius: 12,
-          spreadRadius: -2,
-          offset: const Offset(0, 2),
-        ),
-      ],
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: EdgeInsets.zero,
+      backgroundColor: Colors.transparent,
+      duration: duration,
+      animationDuration: const Duration(milliseconds: 350),
       forwardAnimationCurve: Curves.easeOutCubic,
       reverseAnimationCurve: Curves.easeInCubic,
-      animationDuration: const Duration(milliseconds: 500),
       dismissDirection: FlushbarDismissDirection.HORIZONTAL,
       isDismissible: true,
-    ).show(this);
+      messageText: Container(
+        decoration: BoxDecoration(
+          color: style.backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: style.borderColor.withValues(alpha: isDark ? 0.6 : 0.7),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: style.accentColor.withValues(alpha: isDark ? 0.25 : 0.12),
+              blurRadius: 18,
+              spreadRadius: 0,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
+              blurRadius: 12,
+              spreadRadius: -2,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(
+          children: [
+            // Icon Badge
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: style.iconBgColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: style.accentColor.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  config.icon,
+                  color: style.accentColor,
+                  size: 20,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Title & Message Content
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (displayTitle.isNotEmpty) ...[
+                    Text(
+                      displayTitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: style.titleColor,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  Text(
+                    message,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: style.messageColor,
+                      height: 1.35,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Dismiss Button
+            GestureDetector(
+              onTap: () {
+                flushbar.dismiss();
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.05),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 14,
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    flushbar.show(this);
   }
 
   /// Shows a small, simple toast notification at the bottom of the screen.
-  ///
-  /// - [message] – The text to display inside the toast.
-  /// - [type] – One of [MessageType.info], [MessageType.error], or [MessageType.success].
-  /// - [icon] – Optional custom icon override.
-  /// - [duration] – How long the toast stays visible. Defaults to 2 seconds.
   void showToast(
     String message, {
     MessageType type = MessageType.info,
     IconData? icon,
     Duration duration = const Duration(seconds: 2),
   }) {
-    final isDark = Theme.of(this).colorScheme.brightness == Brightness.dark;
+    final isDark = Theme.of(this).brightness == Brightness.dark;
     final config = _configs[type]!;
     final style = config.getStyle(isDark);
 
@@ -213,48 +266,62 @@ extension FlushbarMessageExtension on BuildContext {
         ? const Color(0xFF1E293B)
         : const Color(0xFF0F172A);
 
-    Flushbar(
-      messageText: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon ?? config.icon,
-            color: style.iconColor,
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-      duration: duration,
+    late Flushbar toastFlushbar;
+
+    toastFlushbar = Flushbar(
       flushbarPosition: FlushbarPosition.BOTTOM,
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-      borderRadius: BorderRadius.circular(24),
-      backgroundColor: toastBgColor,
-      boxShadows: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.25),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
-        ),
-      ],
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.zero,
+      backgroundColor: Colors.transparent,
+      duration: duration,
+      animationDuration: const Duration(milliseconds: 250),
       forwardAnimationCurve: Curves.easeOutCubic,
       reverseAnimationCurve: Curves.easeInCubic,
-      animationDuration: const Duration(milliseconds: 300),
       dismissDirection: FlushbarDismissDirection.HORIZONTAL,
       isDismissible: true,
-    ).show(this);
+      messageText: Container(
+        decoration: BoxDecoration(
+          color: toastBgColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: style.accentColor.withValues(alpha: 0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon ?? config.icon,
+              color: style.accentColor,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    toastFlushbar.show(this);
   }
 }

@@ -41,6 +41,9 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
 
     final status = task.status?.toLowerCase() ?? 'open';
     final isDraft = status == 'draft';
+    final isNoMatch = status == 'no_match' || status == 'no match' || status == 'nomatch';
+    final isCompleted = status == 'completed';
+    final isCancelled = status == 'cancelled';
     final showPinActions = const {
       'assigned',
       'booked',
@@ -214,7 +217,7 @@ class TaskDetailOptionsSheet extends ConsumerWidget {
                       },
                     ),
 
-                    if (status != 'completed' && status != 'cancelled')
+                    if (!isCompleted && !isCancelled && !isNoMatch)
                       _OptionTile(
                         icon: HugeIcons.strokeRoundedCancel01,
                         title: 'Cancel Task',
