@@ -112,5 +112,19 @@ abstract class TasksClient {
 
   @GET('/tasks/price-adjustments/recent')
   Future<GenericResponse<PriceAdjustment>> getRecentPendingPriceAdjustment();
+
+  /// Fetches price adjustments for a specific task.
+  ///
+  /// [taskId] Path parameter (required).
+  /// [status] Optional filter array of status strings. Allowed values: `"PENDING"`, `"APPROVED"`, `"REJECTED"`.
+  /// [requestedBy] Optional filter for requested_by.
+  /// [sortDesc] Whether to sort descending (default: true).
+  @GET('/tasks/{task_id}/price-adjustments')
+  Future<GenericResponse<List<PriceAdjustment>>> getTaskPriceAdjustments(
+    @Path('task_id') String taskId, {
+    @Query('status') List<String>? status,
+    @Query('requested_by') String? requestedBy,
+    @Query('sort_desc') bool? sortDesc = true,
+  });
 }
 

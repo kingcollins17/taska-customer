@@ -11,6 +11,8 @@ class PriceAdjustment {
   final double? amount;
   @JsonKey(name: 'requested_by')
   final String? requestedBy;
+  /// The status of the price adjustment.
+  /// Allowed values: "PENDING", "APPROVED", "REJECTED".
   final String? status;
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
@@ -29,6 +31,15 @@ class PriceAdjustment {
       _$PriceAdjustmentFromJson(json);
 
   Map<String, dynamic> toJson() => _$PriceAdjustmentToJson(this);
+}
+
+/// Allowed status values for price adjustments.
+abstract class PriceAdjustmentStatus {
+  static const String pending = 'PENDING';
+  static const String approved = 'APPROVED';
+  static const String rejected = 'REJECTED';
+
+  static const List<String> values = [pending, approved, rejected];
 }
 
 @JsonSerializable()

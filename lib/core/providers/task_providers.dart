@@ -412,5 +412,43 @@ final recentPendingPriceAdjustmentListenerProvider = FutureProvider<void>((ref) 
   }
 });
 
+/// Parameters for taskPriceAdjustmentsProvider.
+typedef TaskPriceAdjustmentsParams = ({
+  String taskId,
+  List<String>? status,
+  String? requestedBy,
+  bool? sortDesc,
+});
+
+/// FutureProvider family to fetch price adjustments for a task with optional status filters.
+///
+/// Allowed status filter values: `"PENDING"`, `"APPROVED"`, `"REJECTED"`.
+final taskPriceAdjustmentsProvider = FutureProvider.family
+    .autoDispose<List<PriceAdjustment>, TaskPriceAdjustmentsParams>((
+  ref,
+  params,
+) async {
+  if (params.taskId.isEmpty) {
+    throw Exception('Task ID is required');
+  }
+
+  final client = ref.read(tasksClientProvider);
+  final response = await client.getTaskPriceAdjustments(
+    params.taskId,
+    status: params.status,
+    requestedBy: params.requestedBy,
+    sortDesc: params.sortDesc ?? true,
+  );
+
+  if (response.success && response.data != null) {
+    return response.data!;
+  }
+
+  throw Exception(
+    response.detail ?? response.message ?? 'Failed to fetch price adjustments',
+  );
+}, retry: (retryCount, error) => null);
+
+
 
 

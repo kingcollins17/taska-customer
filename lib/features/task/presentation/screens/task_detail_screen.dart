@@ -320,6 +320,10 @@ class _TaskDetailContent extends ConsumerWidget {
                       _PaymentRequestedBanner(task: task),
                     ],
                     _PriceBreakdownCard(task: task),
+                    if (task.id != null && task.id!.isNotEmpty) ...[
+                      SizedBox(height: 16.h),
+                      _TaskPriceAdjustmentsSection(taskId: task.id!),
+                    ],
                     SizedBox(height: 16.h),
                     _AttachmentsSection(attachments: task.attachments ?? []),
                     SizedBox(height: 24.h),
@@ -1792,6 +1796,396 @@ class _TaskSupportShimmerCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14.r),
+        ),
+      ),
+    );
+  }
+}
+
+class _TaskPriceAdjustmentsSection extends ConsumerStatefulWidget {
+  final String taskId;
+
+  const _TaskPriceAdjustmentsSection({required this.taskId});
+
+  @override
+  ConsumerState<_TaskPriceAdjustmentsSection> createState() =>
+      _TaskPriceAdjustmentsSectionState();
+}
+
+class _TaskPriceAdjustmentsSectionState
+    extends ConsumerState<_TaskPriceAdjustmentsSection> {
+  bool _isExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final adjustmentsAsync = ref.watch(
+      taskPriceAdjustmentsProvider((
+        taskId: widget.taskId,
+        status: null,
+        requestedBy: null,
+        sortDesc: true,
+      )),
+    );
+
+    return adjustmentsAsync.when(
+      data: (adjustments) {
+        if (adjustments.isEmpty) return const SizedBox.shrink();
+
+        final latest = adjustments.first;
+        final hasMultiple = adjustments.length > 1;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section Header matching app's standard typography
+            InkWell(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              borderRadius: BorderRadius.circular(8.r),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Row(
+                  children: [
+                    Text(
+                      'Price Adjustments (${adjustments.length})',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const Spacer(),
+                    AnimatedRotation(
+                      turns: _isExpanded ? 0 : 0.5,
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        Icons.keyboard_arrow_up_rounded,
+                        size: 20.sp,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 8.h),
+
+            // Collapsible Content
+            AnimatedCrossFade(
+              firstChild: _PriceAdjustmentCard(
+                adjustment: latest,
+                onViewHistory: hasMultiple
+                    ? () => _TaskPriceAdjustmentsBottomSheet.show(
+                          context,
+                          adjustments: adjustments,
+                        )
+                    : null,
+                totalCount: adjustments.length,
+              ),
+              secondChild: const SizedBox.shrink(),
+              crossFadeState: _isExpanded
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              duration: const Duration(milliseconds: 200),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (error, stackTrace) => const SizedBox.shrink(),
+    );
+  }
+}class _PriceAdjustmentCard extends StatelessWidget {
+  final PriceAdjustment adjustment;
+  final VoidCallback? onViewHistory;
+  final int totalCount;
+
+  const _PriceAdjustmentCard({
+    required this.adjustment,
+    this.onViewHistory,
+    this.totalCount = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final cardColor = isDark
+        ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+        : colorScheme.surfaceContainerLow;
+
+    final amount = adjustment.amount ?? 0;
+    final isIncrease = amount >= 0;
+    final status = (adjustment.status ?? 'PENDING').toUpperCase();
+
+    final (statusBg, statusFg) = switch (status) {
+      'APPROVED' => (
+        const Color(0xFF10B981).withValues(alpha: 0.12),
+        const Color(0xFF10B981)
+      ),
+      'REJECTED' => (
+        const Color(0xFFEF4444).withValues(alpha: 0.12),
+        const Color(0xFFEF4444)
+      ),
+      _ => (
+        const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        const Color(0xFFD97706)
+      ),
+    };
+
+    final amountColor = switch (status) {
+      'APPROVED' => const Color(0xFF10B981),
+      'REJECTED' => colorScheme.onSurfaceVariant,
+      _ => isIncrease ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+    };
+
+    final formattedDate = adjustment.createdAt != null
+        ? DateFormat('MMM d, h:mm a').format(adjustment.createdAt!)
+        : null;
+
+    final requester = adjustment.requestedBy != null &&
+            adjustment.requestedBy!.isNotEmpty
+        ? (adjustment.requestedBy!.toLowerCase().contains('customer')
+            ? 'Customer'
+            : 'Provider')
+        : 'Provider';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Status Badge
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 7.w,
+                        vertical: 2.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(5.r),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w700,
+                          color: statusFg,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+
+                    // Amount Display
+                    Text(
+                      isIncrease
+                          ? '+${amount.toNaira()}'
+                          : '-${amount.abs().toNaira()}',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                        color: amountColor,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ],
+                ),
+                if (adjustment.description != null &&
+                    adjustment.description!.isNotEmpty) ...[
+                  SizedBox(height: 6.h),
+                  Text(
+                    adjustment.description!,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: colorScheme.onSurface,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                SizedBox(height: 6.h),
+                Text(
+                  'By $requester${formattedDate != null ? ' • $formattedDate' : ''}',
+                  style: TextStyle(
+                    fontSize: 10.5.sp,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onViewHistory != null) ...[
+            Divider(
+              height: 1,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.2),
+            ),
+            InkWell(
+              onTap: onViewHistory,
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(12.r),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'View all $totalCount adjustments',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 14.sp,
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskPriceAdjustmentsBottomSheet extends StatelessWidget {
+  final List<PriceAdjustment> adjustments;
+
+  const _TaskPriceAdjustmentsBottomSheet({required this.adjustments});
+
+  static void show(
+    BuildContext context, {
+    required List<PriceAdjustment> adjustments,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _TaskPriceAdjustmentsBottomSheet(adjustments: adjustments),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Handle Bar
+            SizedBox(height: 10.h),
+            Center(
+              child: Container(
+                width: 36.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 14.h),
+
+            // Header Row
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Adjustment History',
+                          style: TextStyle(
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          '${adjustments.length} total adjustment${adjustments.length == 1 ? '' : 's'}',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Container(
+                      padding: EdgeInsets.all(6.r),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16.sp,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
+
+            // Adjustments List
+            Flexible(
+              child: ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                itemCount: adjustments.length,
+                separatorBuilder: (context, index) => SizedBox(height: 12.h),
+                itemBuilder: (context, index) {
+                  final item = adjustments[index];
+                  return _PriceAdjustmentCard(
+                    adjustment: item,
+                    totalCount: adjustments.length,
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
