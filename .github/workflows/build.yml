@@ -38,9 +38,6 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
 
-    - name: Generate code
-      run: dart run build_runner build --delete-conflicting-outputs
-
     - name: Build AAB
       run: flutter build appbundle --release
 

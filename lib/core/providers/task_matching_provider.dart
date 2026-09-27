@@ -7,6 +7,7 @@ import 'package:seeker_app/core/core.dart';
 import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/services/local_storage_service.dart';
+import 'package:seeker_app/core/providers/user_provider.dart';
 
 /// Provider to manage visibility state of the floating Task Matching Banner.
 final showTaskMatchingBannerProvider = StateProvider<bool>((ref) => true);
@@ -14,13 +15,25 @@ final showTaskMatchingBannerProvider = StateProvider<bool>((ref) => true);
 class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
   Timer? _timer;
 
+  String? get _currentUserId => ref.read(userProvider).value?.id;
+
+  String _getStorageKey(String? userId) {
+    if (userId != null && userId.isNotEmpty) {
+      return '${StorageKey.matchingState.name}_$userId';
+    }
+    return StorageKey.matchingState.name;
+  }
+
   @override
   FutureOr<TaskMatchingState?> build() async {
     ref.onDispose(() {
       _timer?.cancel();
     });
 
-    final savedState = await _getSavedState();
+    final user = ref.watch(userProvider).value;
+    final userId = user?.id;
+
+    final savedState = await _getSavedState(userId);
     if (savedState != null &&
         savedState.status == MatchingStatus.pending &&
         savedState.taskId != null &&
@@ -31,9 +44,10 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
     return savedState;
   }
 
-  Future<TaskMatchingState?> _getSavedState() async {
+  Future<TaskMatchingState?> _getSavedState(String? userId) async {
     try {
-      final jsonStr = await appStorage.get(StorageKey.matchingState);
+      final key = _getStorageKey(userId);
+      final jsonStr = await appStorage.get(key);
       if (jsonStr != null && jsonStr.toString().isNotEmpty) {
         final map = jsonDecode(jsonStr.toString()) as Map<String, dynamic>;
         return TaskMatchingState.fromJson(map);
@@ -44,13 +58,14 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
     return null;
   }
 
-  Future<void> _saveState(TaskMatchingState? matchingState) async {
+  Future<void> _saveState(TaskMatchingState? matchingState, String? userId) async {
     try {
+      final key = _getStorageKey(userId);
       if (matchingState == null) {
-        await appStorage.delete(StorageKey.matchingState);
+        await appStorage.delete(key);
       } else {
         await appStorage.set(
-          StorageKey.matchingState,
+          key,
           jsonEncode(matchingState.toJson()),
         );
       }
@@ -72,7 +87,7 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
     );
 
     state = AsyncData(initialState);
-    await _saveState(initialState);
+    await _saveState(initialState, _currentUserId);
 
     _startPolling(taskId, interval: interval);
   }
@@ -119,7 +134,7 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
       );
 
       state = AsyncData(newState);
-      await _saveState(newState);
+      await _saveState(newState, _currentUserId);
 
       if (status == MatchingStatus.success ||
           status == MatchingStatus.cancelled) {
@@ -140,7 +155,7 @@ class TaskMatchingNotifier extends AsyncNotifier<TaskMatchingState?> {
   Future<void> clear() async {
     stop();
     state = const AsyncData(null);
-    await _saveState(null);
+    await _saveState(null, _currentUserId);
   }
 }
 

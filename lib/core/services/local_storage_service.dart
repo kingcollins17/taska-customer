@@ -30,19 +30,24 @@ class LocalStorageService {
   
   Box get syncBox => Hive.box(boxName);
 
-  Future<dynamic> get(StorageKey key, {dynamic defaultValue}) async {
-    final box = await _getBox();
-    return box.get(key.name, defaultValue: defaultValue);
+  String _getKeyString(dynamic key) {
+    if (key is StorageKey) return key.name;
+    return key.toString();
   }
 
-  Future<void> set(StorageKey key, dynamic value) async {
+  Future<dynamic> get(dynamic key, {dynamic defaultValue}) async {
     final box = await _getBox();
-    await box.put(key.name, value);
+    return box.get(_getKeyString(key), defaultValue: defaultValue);
   }
 
-  Future<void> delete(StorageKey key) async {
+  Future<void> set(dynamic key, dynamic value) async {
     final box = await _getBox();
-    await box.delete(key.name);
+    await box.put(_getKeyString(key), value);
+  }
+
+  Future<void> delete(dynamic key) async {
+    final box = await _getBox();
+    await box.delete(_getKeyString(key));
   }
 
   Future<void> clear() async {
