@@ -2,7 +2,7 @@ name: seeker_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+18
+version: 1.0.0+19
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -42,6 +42,7 @@ dependencies:
   cached_network_image: ^3.4.1
   url_launcher: ^6.3.1
   queue: ^3.4.0
+  flutter_client_sse: ^2.0.3
 
 dev_dependencies:
 

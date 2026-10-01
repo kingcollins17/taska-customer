@@ -131,6 +131,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           username: email,
           password: password,
           onSuccess: () {
+            ref.invalidate(isAuthenticatedProvider);
             context.hideLoading();
             if (mounted) {
               context.go('/');
@@ -162,9 +163,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               SizedBox(height: 16.h),
 
               // Back Button
-              CustomBackButton(
-                offset: Offset(-10.w, 0),
-              ),
+              CustomBackButton(offset: Offset(-10.w, 0)),
 
               SizedBox(height: 32.h),
 

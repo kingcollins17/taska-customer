@@ -8,6 +8,8 @@ import 'package:seeker_app/core/core.dart';
 import '../models/models.dart';
 import '../services/local_storage_service.dart';
 
+import 'file_upload_provider.dart';
+
 /// Notifier responsible for managing the state of a task being created.
 /// It persists the draft to local storage to prevent data loss.
 class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
@@ -152,6 +154,17 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     );
   }
 
+  /// Updates the attachments list for the task draft.
+  ///
+  /// Parameters:
+  /// - [attachments]: List of [CreateTaskAttachmentRequest] objects.
+  Future<void> updateAttachments(
+    List<CreateTaskAttachmentRequest> attachments,
+  ) async {
+    final current = state.value ?? CreateTaskRequest();
+    _updateState(current.copyWith(attachments: attachments));
+  }
+
   /// Submits the completed task draft to the backend API.
   ///
   /// This method reads the current state, ensuring it exists, and then sends it
@@ -172,6 +185,7 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
       request.toJson().debugLog();
       final response = await ref.read(tasksClientProvider).createTask(request);
       if (response.success) {
+        await _cleanupAttachmentUrls(request);
         await _delete();
         state = const AsyncData(null);
         final data = response.data ?? {};
@@ -182,6 +196,21 @@ class TaskCreationNotifier extends AsyncNotifier<CreateTaskRequest?> {
     } catch (e, st) {
       onError?.call(e.toFriendlyMessage());
       AppErrorHandler.instance.handleError(e, st);
+    }
+  }
+
+  Future<void> _cleanupAttachmentUrls(CreateTaskRequest request) async {
+    final attachmentUrls = request.attachments
+            ?.map((a) => a.url)
+            .whereType<String>()
+            .toList() ??
+        [];
+    if (attachmentUrls.isNotEmpty) {
+      await ref
+          .read(uploadedFileUrlsProvider.notifier)
+          .removeUrls(attachmentUrls);
+    } else {
+      await ref.read(uploadedFileUrlsProvider.notifier).clear();
     }
   }
 }

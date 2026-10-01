@@ -264,8 +264,8 @@ class _ReviewPriceAdjustmentSheetState
     final originalPrice = task?.customerTotalPrice ??
         task?.assignment?.acceptedPrice ??
         task?.basePrice;
-    final adjustmentAmount = widget.adjustment.amount ?? 0;
-    final newPrice = (originalPrice ?? 0) + adjustmentAmount;
+    final newPrice = widget.adjustment.amount ?? (originalPrice ?? 0);
+    final priceDiff = originalPrice != null ? (newPrice - originalPrice) : 0.0;
     final description = widget.adjustment.description ?? 'No reason provided';
 
     return PopScope(
@@ -559,7 +559,7 @@ class _ReviewPriceAdjustmentSheetState
                           ),
                         ],
                       ),
-                      if (originalPrice != null && adjustmentAmount != 0) ...[
+                      if (originalPrice != null && priceDiff != 0) ...[
                         SizedBox(height: 10.h),
                         Container(
                           padding: EdgeInsets.symmetric(
@@ -567,7 +567,7 @@ class _ReviewPriceAdjustmentSheetState
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: (adjustmentAmount > 0
+                            color: (priceDiff > 0
                                     ? const Color(0xFFEF4444)
                                     : const Color(0xFF10B981))
                                 .withValues(alpha: 0.1),
@@ -577,23 +577,23 @@ class _ReviewPriceAdjustmentSheetState
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                adjustmentAmount > 0
+                                priceDiff > 0
                                     ? Icons.arrow_upward_rounded
                                     : Icons.arrow_downward_rounded,
                                 size: 13.sp,
-                                color: adjustmentAmount > 0
+                                color: priceDiff > 0
                                     ? const Color(0xFFEF4444)
                                     : const Color(0xFF10B981),
                               ),
                               SizedBox(width: 4.w),
                               Text(
-                                adjustmentAmount > 0
-                                    ? 'Increase: +${adjustmentAmount.toNaira()}'
-                                    : 'Decrease: -${adjustmentAmount.abs().toNaira()}',
+                                priceDiff > 0
+                                    ? 'Increase: +${priceDiff.toNaira()}'
+                                    : 'Decrease: -${priceDiff.abs().toNaira()}',
                                 style: GoogleFonts.inter(
                                   fontSize: 11.5.sp,
                                   fontWeight: FontWeight.w700,
-                                  color: adjustmentAmount > 0
+                                  color: priceDiff > 0
                                       ? const Color(0xFFEF4444)
                                       : const Color(0xFF10B981),
                                 ),

@@ -4,4 +4,6 @@ export 'services_client.dart';
 export 'regions_client.dart';
 export 'payments_client.dart';
 export 'support_client.dart';
+export 'utils_client.dart';
+
 

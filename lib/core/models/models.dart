@@ -12,4 +12,6 @@ export 'payout/payout_models.dart';
 export 'payout/webhook_payload.dart';
 export 'review/reviews.dart';
 export 'support/support.dart';
+export 'utils/utils_models.dart';
+
 

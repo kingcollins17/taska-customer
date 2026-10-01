@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:seeker_app/core/core.dart';
+import 'package:seeker_app/core/models/models.dart';
+import 'package:seeker_app/core/providers/file_upload_provider.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
-import 'package:seeker_app/core/providers/task_attachment_upload_provider.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import '../../../../core/designs/app_colors.dart';
@@ -23,19 +24,16 @@ class TaskDescriptionScreen extends ConsumerStatefulWidget {
 class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
   final _descriptionController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final List<File> _attachments = [];
+  bool _isUploadingFiles = false;
 
   @override
   void initState() {
     super.initState();
-    final draft = ref.read(taskCreationProvider);
-    //   if (draft.description != null)
-    //     _descriptionController.text = draft.description!;
-    //
   }
 
   Future<void> _pickImage() async {
-    final attachments = ref.read(taskAttachmentUploadProvider).value ?? [];
-    if (attachments.length >= 4) {
+    if (_attachments.length >= 4) {
       if (mounted) {
         context.showToast(
           'Maximum 4 photos allowed',
@@ -48,9 +46,9 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      ref
-          .read(taskAttachmentUploadProvider.notifier)
-          .addAttachment(File(pickedFile.path));
+      setState(() {
+        _attachments.add(File(pickedFile.path));
+      });
     }
   }
 
@@ -60,10 +58,90 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
     super.dispose();
   }
 
+  Future<void> _handleSubmit() async {
+    if (_attachments.isEmpty) {
+      context.showToast(
+        'Please select at least 1 photo',
+        type: MessageType.error,
+      );
+      return;
+    }
+
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isUploadingFiles = true);
+
+    try {
+      final uploadedDataList = await ref
+          .read(fileUploadProvider.notifier)
+          .uploadMultiple(_attachments);
+
+      if (uploadedDataList.isEmpty) {
+        if (mounted) {
+          context.showToast(
+            'Failed to upload attachments. Please try again.',
+            type: MessageType.error,
+          );
+        }
+        return;
+      }
+
+      final uploadedUrls = uploadedDataList
+          .map((data) => data.url)
+          .whereType<String>()
+          .toList();
+      if (uploadedUrls.isNotEmpty) {
+        await ref
+            .read(uploadedFileUrlsProvider.notifier)
+            .addUrls(uploadedUrls);
+      }
+
+      final attachmentRequests = uploadedDataList.map((data) {
+        final fileName = data.filename ?? 'attachment';
+        final extension = fileName.contains('.')
+            ? fileName.split('.').last.toLowerCase()
+            : '';
+        String mimeType = 'image/jpeg';
+        if (extension == 'png') mimeType = 'image/png';
+        if (extension == 'pdf') mimeType = 'application/pdf';
+
+        return CreateTaskAttachmentRequest(
+          url: data.url,
+          fileName: fileName,
+          mimeType: mimeType,
+          type: 'IMAGE',
+        );
+      }).toList();
+
+      await ref.read(taskCreationProvider.notifier).updateDescription(
+            title: widget.initialTitle ?? '',
+            description: _descriptionController.text.trim(),
+          );
+
+      await ref
+          .read(taskCreationProvider.notifier)
+          .updateAttachments(attachmentRequests);
+
+      if (mounted) {
+        context.pushNamed(RouteNames.taskLocation.name);
+      }
+    } catch (e) {
+      if (mounted) {
+        context.showToast(
+          e.toFriendlyMessage(),
+          type: MessageType.error,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingFiles = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(taskCreationProvider);
-    final attachments = ref.watch(taskAttachmentUploadProvider).value ?? [];
 
     final serviceId = draft.value?.serviceId;
     final serviceAsync = serviceId != null
@@ -163,7 +241,7 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                         spacing: 12,
                         runSpacing: 12,
                         children: [
-                          ...attachments.map(
+                          ..._attachments.map(
                             (file) => Stack(
                               clipBehavior: Clip.none,
                               children: [
@@ -181,12 +259,9 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                                   right: -6,
                                   child: GestureDetector(
                                     onTap: () {
-                                      ref
-                                          .read(
-                                            taskAttachmentUploadProvider
-                                                .notifier,
-                                          )
-                                          .removeAttachment(file);
+                                      setState(() {
+                                        _attachments.remove(file);
+                                      });
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
@@ -205,7 +280,7 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                               ],
                             ),
                           ),
-                          if (attachments.length < 4)
+                          if (_attachments.length < 4)
                             GestureDetector(
                               onTap: _pickImage,
                               child: Container(
@@ -237,26 +312,9 @@ class _TaskDescriptionScreenState extends ConsumerState<TaskDescriptionScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: PrimaryButton(
                   text: 'Continue',
-                  onPressed: () {
-                    if (attachments.isEmpty) {
-                      context.showToast(
-                        'Please select at least 1 photo',
-                        type: MessageType.error,
-                      );
-                      return;
-                    }
-                    if (_formKey.currentState!.validate()) {
-                      ref
-                          .read(taskCreationProvider.notifier)
-                          .updateDescription(
-                            title: widget.initialTitle ?? '',
-                            description: _descriptionController.text.trim(),
-                          )
-                          .then((_) {
-                            context.pushNamed(RouteNames.taskLocation.name);
-                          });
-                    }
-                  },
+                  isLoading: _isUploadingFiles,
+                 
+                  onPressed: _isUploadingFiles ? null : _handleSubmit,
                 ),
               ),
             ],

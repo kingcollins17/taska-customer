@@ -94,11 +94,9 @@ class ConfirmTaskSheet extends ConsumerWidget {
           color: isDark ? AppColors.darkBackground : AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
         ),
-        padding: EdgeInsets.only(
-          left: 16.w,
-          right: 16.w,
-          top: 14.h,
-          bottom: MediaQuery.of(context).padding.bottom + 16.h,
+        padding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 14.h,
         ),
         child: SafeArea(
           top: false,
@@ -346,14 +344,112 @@ class ConfirmTaskSheet extends ConsumerWidget {
               );
             },
             loading: () => buildShimmer(),
-            error: (error, _) => Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.w),
-                child: Text(
-                  'Failed to load task details',
-                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.red),
+            error: (error, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Confirm Task Order',
+                      style: AppTextStyles.heading3.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20.sp,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
-              ),
+                SizedBox(height: 16.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: isDark ? 0.12 : 0.06),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: isDark ? 0.25 : 0.15),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 44.r,
+                        height: 44.r,
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.error_outline_rounded,
+                            color: Colors.red,
+                            size: 24.sp,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Text(
+                        'Failed to load task details',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        error.toString().contains('Exception:')
+                            ? error.toString().replaceAll('Exception:', '').trim()
+                            : 'Something went wrong while fetching task details.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontSize: 12.sp,
+                          color: isDark ? Colors.white70 : AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16.h),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => ref.invalidate(taskDetailProvider(taskId)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(vertical: 10.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          icon: Icon(Icons.refresh_rounded, size: 18.sp),
+                          label: Text(
+                            'Retry',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: Colors.white,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),

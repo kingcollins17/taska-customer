@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:seeker_app/core/designs/widgets/app_storage_view.dart';
 import 'package:seeker_app/core/utils/debug_log.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -130,6 +131,13 @@ class _DebugConsoleViewState extends State<DebugConsoleView> {
             ),
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.storage_rounded, size: 22),
+              tooltip: 'Inspect App Storage',
+              onPressed: () {
+                AppStorageViewScreen.show(context);
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded, size: 22),
               tooltip: 'Clear all logs',

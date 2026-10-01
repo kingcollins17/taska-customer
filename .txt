@@ -1,1 +1,3 @@
 https://mcp.render.com/mcp
+
+"SseHandler connecting to https://stellar-prosperity-production.up.railway.app/api/v1/notifications/stream?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImI4ZjBkYzQxLTg3YzAtNGMwZC04MTIwLTE2Y2FjOWQwMTM2ZiIsImVtYWlsIjoiY2FyYUB5b3BtYWlsLmNvbSIsImlzX2FjdGl2ZSI6dHJ1ZSwiZXhwIjoxODE5ODE2MzA3fQ.G7lNsA1ZQRCin_gZMz0HO4xAlclub3XoKQRBokqGc5s"

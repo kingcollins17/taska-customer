@@ -278,173 +278,139 @@ class PinDisplaySheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
       builder: (context) => PinDisplaySheet(pin: pin),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pinValue = pin?.trim();
     final hasPin = pinValue != null && pinValue.isNotEmpty;
     final safePin = pinValue ?? '';
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
+    void copyPin() {
+      if (!hasPin) return;
+      Clipboard.setData(ClipboardData(text: safePin));
+      context.showMessage(
+        'Pin copied to clipboard',
+        type: MessageType.success,
+        title: 'Copied',
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkBackground : AppColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
-      child: Container(
-        padding: EdgeInsets.only(
-          left: 24.w,
-          right: 24.w,
-          top: 16.h,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkBackground : AppColors.background,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 48.w,
-                  height: 5.h,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(2.5.r),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    hasPin ? 'Task Pin' : 'Pin Unavailable',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                  IconButton(
-                    icon: HugeIcon(
-                      icon: HugeIcons.strokeRoundedCancel01,
-                      color: AppColors.textSecondary,
-                      size: 20.sp,
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                hasPin
-                    ? 'Share this code with the assigned service provider when needed.'
-                    : 'This pin is not available yet. It will appear once the task reaches the correct stage.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: 6.h),
-              Container(
-                padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36.w,
+                height: 4.h,
                 decoration: BoxDecoration(
-                  // color: isDark ? const Color(0xFF111827) : Colors.white,
-                  borderRadius: BorderRadius.circular(18.r),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(
-                      alpha: isDark ? 0.5 : 0.18,
-                    ),
-                    width: 1.2,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      hasPin ? safePin : '—',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.heading1.copyWith(
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                        fontSize: 28.sp,
-                        letterSpacing: 2.2,
-                      ),
-                    ),
-                  ],
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.black.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
-              SizedBox(height: 24.h),
-              if (hasPin)
-                InkWell(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: safePin));
-                    context.showMessage(
-                      'Pin copied to clipboard',
-                      type: MessageType.success,
-                      title: 'Copied',
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(14.r),
-                  child: Container(
-                    height: 52.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(14.r),
+            ),
+            SizedBox(height: 12.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  hasPin ? 'Task Verification PIN' : 'PIN Unavailable',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                    size: 20.sp,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              hasPin
+                  ? 'Share this code with your service provider when needed.'
+                  : 'PIN is not available yet.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 14.h),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: hasPin ? copyPin : null,
+                borderRadius: BorderRadius.circular(14.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(
+                      alpha: isDark ? 0.12 : 0.06,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        HugeIcon(
-                          icon: HugeIcons.strokeRoundedCopy01,
-                          color: Colors.white,
-                          size: 18.sp,
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(
+                        alpha: isDark ? 0.3 : 0.2,
+                      ),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        hasPin ? safePin : '—',
+                        style: AppTextStyles.heading1.copyWith(
+                          color: AppColors.primary,
+                          fontSize: 26.sp,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 4.0,
                         ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          'Copy Pin',
-                          style: AppTextStyles.bodyLarge.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                      ),
+                      if (hasPin) ...[
+                        SizedBox(width: 12.w),
+                        Container(
+                          padding: EdgeInsets.all(6.r),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: HugeIcon(
+                            icon: HugeIcons.strokeRoundedCopy01,
+                            color: AppColors.primary,
+                            size: 16.sp,
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
-              if (!hasPin)
-                Container(
-                  height: 52.h,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(
-                      alpha: 0.7,
-                    ),
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Pin not available yet',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+              ),
+            ),
+            SizedBox(height: 4.h),
+          ],
         ),
       ),
     );

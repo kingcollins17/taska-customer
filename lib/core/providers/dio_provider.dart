@@ -29,6 +29,7 @@ final dioProvider = Provider<Dio>((ref) {
       onResponse: (response, handler) {
         if (response.data is Map<String, dynamic>) {
           response.data['statusCode'] = response.statusCode;
+          response.data['status_code'] = response.statusCode;
         }
         return handler.next(response);
       },

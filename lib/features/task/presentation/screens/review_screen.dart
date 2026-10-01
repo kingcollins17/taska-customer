@@ -1,28 +1,19 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
+
 import 'package:seeker_app/core/constants.dart';
 import 'package:seeker_app/core/core.dart';
-import 'package:seeker_app/core/designs/widgets/current_location.dart';
-import 'package:seeker_app/core/models/tasks/task.dart';
-import 'package:seeker_app/core/providers/task_creation_provider.dart';
+import 'package:seeker_app/core/designs/app_colors.dart';
+import 'package:seeker_app/core/models/models.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
-import 'package:seeker_app/core/providers/task_attachment_upload_provider.dart';
+import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
-import 'package:seeker_app/core/utils/flushbar_message.dart';
-import 'package:seeker_app/core/utils/loading_overlay.dart';
-import 'package:shimmer/shimmer.dart';
-
-import '../../../../core/designs/app_colors.dart';
-import '../../../../core/designs/app_text_styles.dart';
-import '../../../../core/designs/widgets/primary_button.dart';
-import '../../../../core/designs/widgets/confirmation_dialog.dart';
-import '../../../../core/designs/widgets/confirm_task_sheet.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   const ReviewScreen({super.key});
@@ -36,341 +27,311 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final draftState = ref.watch(taskCreationProvider);
-    final attachmentsState = ref.watch(taskAttachmentUploadProvider);
-    final attachments = attachmentsState.value ?? [];
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.darkBackground : AppColors.background;
-    final textColor = isDark ? Colors.white : AppColors.textPrimary;
-    final cardColor = isDark ? AppColors.darkerBackground : AppColors.surface;
-
     final draft = draftState.value;
 
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'Review',
-          style: AppTextStyles.heading3.copyWith(
-            color: textColor,
-            fontSize: 18,
-          ),
-        ),
-        leading: CustomBackButton(),
-        // actions: [CurrentLocation()],
-      ),
+      backgroundColor: colorScheme.surface,
       body: draft == null
           ? const Center(child: CircularProgressIndicator())
-          : SafeArea(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 16.0,
-                              right: 16.0,
-                              top: 16.0,
-                              bottom: 12.0,
-                            ),
-                            child: _TitleSection(draft: draft, isDark: isDark),
-                          ),
-                          if (attachments.isNotEmpty)
-                            _AttachmentsSection(
-                              attachments: attachments,
-                              isDark: isDark,
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (draft.description != null &&
-                                    draft.description!.isNotEmpty) ...[
-                                  Text(
-                                    draft.description!,
-                                    style: AppTextStyles.bodyMedium.copyWith(
-                                      color: textColor.withOpacity(0.85),
-                                      height: 1.4,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                ],
-                                _InfoSection(
-                                  draft: draft,
-                                  textColor: textColor,
-                                  cardColor: cardColor,
-                                  isDark: isDark,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  PrimaryButton(
-                    text: 'Continue',
-                    height: 48.h,
-                    margin: EdgeInsets.symmetric(horizontal: 16.0.w),
-                    isLoading: _isPosting,
-                    onPressed: () async {
-                      final confirm = await ConfirmationDialog.show(
-                        context: context,
-                        title: 'Ready to go?',
-                        description:
-                            'Once you confirm, we\'ll start looking for someone to help you out.',
-                        confirmText: 'Yes',
-                        icon: Icons.check_circle_outline_rounded,
-                      );
-                      if (confirm) {
-                        _handleSubmit(attachments);
-                      }
-                    },
-                  ),
-                ],
-              ),
+          : _ReviewScreenContent(
+              draft: draft,
+              isPosting: _isPosting,
+              onSubmit: _handleSubmit,
             ),
+      bottomNavigationBar: draft != null
+          ? _ReviewBottomActionBar(
+              isPosting: _isPosting,
+              onSubmit: () async {
+                final confirm = await ConfirmationDialog.show(
+                  context: context,
+                  title: 'Ready to submit?',
+                  description:
+                      'Once confirmed, we\'ll create your task draft and match you with available Taskers.',
+                  confirmText: 'Yes, Submit',
+                  icon: Icons.check_circle_outline_rounded,
+                );
+                if (confirm) {
+                  _handleSubmit();
+                }
+              },
+            )
+          : null,
     );
   }
 
-  Future<void> _handleSubmit(List<File> attachments) async {
+  Future<void> _handleSubmit() async {
     setState(() => _isPosting = true);
     context.showLoading();
 
-    final completer = Completer<void>();
-
     try {
-      await ref
-          .read(taskCreationProvider.notifier)
-          .submit(
-            onSuccess: (taskId) async {
-              if (attachments.isNotEmpty && taskId != null) {
-                await ref
-                    .read(taskAttachmentUploadProvider.notifier)
-                    .upload(
-                      taskId: taskId,
-                      onSuccess: () {
-                        // Refresh the tasks list
-                        ref.invalidate(tasksProvider);
+      await ref.read(taskCreationProvider.notifier).submit(
+        onSuccess: (taskId) async {
+          ref.invalidate(tasksProvider);
 
-                        completer.complete();
-                        context.go('/');
-                        // Root Context
-                        Future.delayed(Duration(seconds: 1), () {
-                          final rc = rootNavigatorKey.currentContext;
-                          if (rc?.mounted ?? false) {
-                            ConfirmTaskSheet.show(rc!, taskId);
-                          }
-                        });
-                      },
-                      onError: (err) {
-                        completer.completeError(err);
-                      },
-                    );
-              } else {
-                completer.complete();
-                if (mounted && taskId != null) {
-                  ConfirmTaskSheet.show(context, taskId);
+          if (mounted) {
+            context.hideLoading();
+            context.go('/');
+            Future.delayed(const Duration(seconds: 1), () {
+              final rc = rootNavigatorKey.currentContext;
+              if (rc != null && rc.mounted) {
+                if (taskId != null) {
+                  ConfirmTaskSheet.show(rc, taskId);
                 }
               }
-            },
-            onError: (msg) {
-              completer.completeError(msg);
-            },
-          );
-
-      await completer.future;
+            });
+          }
+        },
+        onError: (msg) {
+          if (mounted) {
+            context.hideLoading();
+            context.showMessage(msg, type: MessageType.error);
+          }
+        },
+      );
     } catch (e) {
       if (mounted) {
+        context.hideLoading();
         context.showMessage(e.toString(), type: MessageType.error);
       }
     } finally {
       if (mounted) setState(() => _isPosting = false);
-      context.hideLoading();
     }
   }
 }
 
-class _AttachmentsSection extends StatefulWidget {
-  final List<File> attachments;
-  final bool isDark;
+class _ReviewScreenContent extends StatelessWidget {
+  final CreateTaskRequest draft;
+  final bool isPosting;
+  final VoidCallback onSubmit;
 
-  const _AttachmentsSection({required this.attachments, required this.isDark});
-
-  @override
-  State<_AttachmentsSection> createState() => _AttachmentsSectionState();
-}
-
-class _AttachmentsSectionState extends State<_AttachmentsSection> {
-  int _currentIndex = 0;
+  const _ReviewScreenContent({
+    required this.draft,
+    required this.isPosting,
+    required this.onSubmit,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (widget.attachments.isEmpty) return const SizedBox.shrink();
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Column(
-      children: [
-        SizedBox(
-          height: MediaQuery.of(context).size.width * 0.7,
-          child: PageView.builder(
-            itemCount: widget.attachments.length,
-            onPageChanged: (index) {
-              setState(() => _currentIndex = index);
-            },
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.file(
-                    widget.attachments[index],
-                    fit: BoxFit.cover,
+    final imageAttachments = (draft.attachments ?? []).where((att) {
+      final url = att.url?.toLowerCase() ?? '';
+      return url.endsWith('.jpg') ||
+          url.endsWith('.jpeg') ||
+          url.endsWith('.png') ||
+          url.endsWith('.webp') ||
+          att.type == 'image';
+    }).toList();
+
+    final hasHeroImage =
+        imageAttachments.isNotEmpty && imageAttachments.first.url != null;
+
+    final dateStr = draft.scheduledStartAt != null
+        ? DateFormat('EEE, MMM d, yyyy • h:mm a').format(draft.scheduledStartAt!)
+        : 'Flexible Start Time';
+
+    String locationStr = 'Location not specified';
+    final primaryLocation = draft.locations?.firstOrNull;
+    if (primaryLocation != null) {
+      final addr = primaryLocation.address?.trim() ?? '';
+      final city = primaryLocation.city?.trim() ?? '';
+      final state = primaryLocation.state?.trim() ?? '';
+
+      final cityState = [
+        if (city.isNotEmpty) city,
+        if (state.isNotEmpty) state,
+      ].join(', ');
+
+      if (addr.isNotEmpty && cityState.isNotEmpty) {
+        if (!addr.toLowerCase().contains(city.toLowerCase())) {
+          locationStr = '$addr, $cityState';
+        } else {
+          locationStr = addr;
+        }
+      } else if (addr.isNotEmpty) {
+        locationStr = addr;
+      } else if (cityState.isNotEmpty) {
+        locationStr = cityState;
+      }
+    }
+
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          expandedHeight: 240.h,
+          pinned: true,
+          elevation: 0,
+          backgroundColor: colorScheme.surface,
+          leading: Padding(
+            padding: EdgeInsets.all(8.r),
+            child: const CustomBackButton(),
+          ),
+          actions: [
+            Padding(
+              padding: EdgeInsets.only(right: 12.w, top: 8.h, bottom: 8.h),
+              child: const _DraftStatusBadge(),
+            ),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (hasHeroImage)
+                  _HeroImageCarousel(attachments: imageAttachments)
+                else
+                  const _HeroFallback(),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.35),
+                          Colors.transparent,
+                          colorScheme.surface,
+                        ],
+                        stops: const [0.0, 0.5, 1.0],
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
         ),
-        if (widget.attachments.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                widget.attachments.length,
-                (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentIndex == index ? 16 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: _currentIndex == index
-                        ? AppColors.primary
-                        : (widget.isDark ? Colors.white24 : Colors.black12),
+        SliverToBoxAdapter(
+          child: Container(
+            transform: Matrix4.translationValues(0, -20.h, 0),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.2,
+                        ),
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
                   ),
-                ),
+                  SizedBox(height: 12.h),
+                  if (draft.categoryId != null) ...[
+                    _CategoryBadge(categoryId: draft.categoryId!),
+                    SizedBox(height: 8.h),
+                  ],
+                  Text(
+                    draft.title ?? 'Task Details',
+                    style: textTheme.titleLarge?.copyWith(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                      height: 1.25,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  if (draft.description != null &&
+                      draft.description!.isNotEmpty) ...[
+                    Text(
+                      draft.description!,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontSize: 13.sp,
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.45,
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                  ],
+                  Text(
+                    'Task Details',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _InfoOptionCard(
+                          title: 'Scheduled Time',
+                          subtitle: dateStr,
+                          icon: HugeIcons.strokeRoundedCalendar01,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: _InfoOptionCard(
+                          title: 'Location',
+                          subtitle: locationStr,
+                          icon: HugeIcons.strokeRoundedLocation01,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                  if (draft.attachments != null &&
+                      draft.attachments!.isNotEmpty) ...[
+                    _ReviewAttachmentsSection(
+                      attachments: draft.attachments!,
+                    ),
+                    SizedBox(height: 16.h),
+                  ],
+                  SizedBox(height: 24.h),
+                ],
               ),
             ),
           ),
-      ],
-    );
-  }
-}
-
-class _TitleSection extends StatelessWidget {
-  final CreateTaskRequest draft;
-  final bool isDark;
-
-  const _TitleSection({required this.draft, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          draft.title ?? 'Untitled Task',
-          style: AppTextStyles.heading2.copyWith(
-            color: isDark ? Colors.white : AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-            height: 1.2,
-            fontSize: 20,
-          ),
         ),
-        const SizedBox(height: 8),
-        if (draft.categoryId != null)
-          _CategoryBadge(categoryId: draft.categoryId!, isDark: isDark),
       ],
     );
   }
 }
 
-class _InfoSection extends StatelessWidget {
-  final CreateTaskRequest draft;
-  final Color textColor;
-  final Color cardColor;
-  final bool isDark;
-
-  const _InfoSection({
-    required this.draft,
-    required this.textColor,
-    required this.cardColor,
-    required this.isDark,
-  });
-
-  String _formatLocation(CreateTaskRequest draft) {
-    final locations = draft.locations;
-    if (locations == null || locations.isEmpty) return 'Not specified';
-    final loc = locations.first;
-    if (loc.city != null && loc.state != null) {
-      return '${loc.city}, ${loc.state}';
-    } else if (loc.address != null) {
-      return loc.address!;
-    }
-    return 'Location selected';
-  }
-
-  String _formatStartDate(DateTime? date) {
-    if (date == null) return 'As soon as possible';
-
-    final now = DateTime.now();
-    final difference = date.difference(now);
-
-    final DateFormat timeFormat = DateFormat('h:mm a');
-    final DateFormat dateFormat = DateFormat('d MMM, yyyy');
-
-    if (difference.inDays == 0 && date.day == now.day) {
-      return '${timeFormat.format(date)}, Today';
-    } else if (difference.inDays == 1 ||
-        (difference.inDays == 0 &&
-            date.day == now.add(const Duration(days: 1)).day)) {
-      return '${timeFormat.format(date)}, Tomorrow';
-    } else if (difference.inDays > 1 && difference.inDays < 7) {
-      return '${timeFormat.format(date)}, ${difference.inDays} days from now';
-    } else {
-      return '${timeFormat.format(date)}, ${dateFormat.format(date)}';
-    }
-  }
+class _DraftStatusBadge extends StatelessWidget {
+  const _DraftStatusBadge();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
-        ),
-      ),
-      child: Column(
-        children: [
-          _CompactInfoTile(
-            icon: Icons.location_on_rounded,
-            title: 'Location',
-            value: _formatLocation(draft),
-            iconColor: AppColors.secondaryVariant,
-            isDark: isDark,
+        color: Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(height: 12),
-          _CompactInfoTile(
-            icon: Icons.calendar_today_rounded,
-            title: 'Start Date',
-            value: _formatStartDate(draft.scheduledStartAt),
-            iconColor: AppColors.accentOrange,
-            isDark: isDark,
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.edit_note_rounded, size: 13.sp, color: Colors.white),
+          SizedBox(width: 4.w),
+          Text(
+            'Draft',
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 0.2,
+            ),
           ),
         ],
       ),
@@ -378,169 +339,337 @@ class _InfoSection extends StatelessWidget {
   }
 }
 
-class _CompactInfoTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final Color iconColor;
-  final bool isDark;
+class _HeroImageCarousel extends StatefulWidget {
+  final List<CreateTaskAttachmentRequest> attachments;
 
-  const _CompactInfoTile({
-    required this.icon,
+  const _HeroImageCarousel({required this.attachments});
+
+  @override
+  State<_HeroImageCarousel> createState() => _HeroImageCarouselState();
+}
+
+class _HeroImageCarouselState extends State<_HeroImageCarousel> {
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        PageView.builder(
+          itemCount: widget.attachments.length,
+          onPageChanged: (index) => setState(() => _currentIndex = index),
+          itemBuilder: (context, index) {
+            final url = widget.attachments[index].url ?? '';
+            return Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  const _HeroFallback(),
+            );
+          },
+        ),
+        if (widget.attachments.length > 1)
+          Positioned(
+            bottom: 30.h,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.attachments.length,
+                (index) => Container(
+                  margin: EdgeInsets.symmetric(horizontal: 3.w),
+                  width: _currentIndex == index ? 16.w : 6.w,
+                  height: 6.h,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(3.r),
+                    color: _currentIndex == index
+                        ? AppColors.primary
+                        : Colors.white54,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HeroFallback extends StatelessWidget {
+  const _HeroFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  AppColors.darkerBackground,
+                  colorScheme.surfaceContainerHighest,
+                ]
+              : [
+                  colorScheme.primaryContainer.withValues(alpha: 0.5),
+                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                ],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16.r),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: HugeIcon(
+                icon: HugeIcons.strokeRoundedTask01,
+                color: colorScheme.primary,
+                size: 42.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoOptionCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final dynamic icon;
+
+  const _InfoOptionCard({
     required this.title,
-    required this.value,
-    required this.iconColor,
-    required this.isDark,
+    required this.subtitle,
+    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: iconColor, size: 18),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: EdgeInsets.all(10.w),
+      decoration: BoxDecoration(
+        color: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                title,
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
+              Container(
+                padding: EdgeInsets.all(4.r),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: HugeIcon(
+                  icon: icon,
+                  color: colorScheme.primary,
+                  size: 14.sp,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-        ),
-      ],
+          SizedBox(height: 6.h),
+          Text(
+            subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _CategoryBadge extends ConsumerWidget {
   final String categoryId;
-  final bool isDark;
 
-  const _CategoryBadge({required this.categoryId, required this.isDark});
+  const _CategoryBadge({required this.categoryId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoryAsync = ref.watch(categoryByIdProvider(categoryId));
     return categoryAsync.when(
-      data: (category) => _BadgeContainer(
-        text: category.name ?? 'Category',
-        color: AppColors.primary,
-        icon: Icons.category_rounded,
+      data: (category) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.category_rounded, size: 13.sp, color: AppColors.primary),
+            SizedBox(width: 4.w),
+            Text(
+              category.name ?? 'Service',
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
       ),
-      loading: () => _ShimmerBadge(isDark: isDark),
-      error: (_, __) => const _BadgeContainer(
-        text: 'Unknown',
-        color: AppColors.primary,
-        icon: Icons.error_outline,
-      ),
+      loading: () => const SizedBox.shrink(),
+      error: (err, stack) => const SizedBox.shrink(),
     );
   }
 }
 
-class _ServiceBadge extends ConsumerWidget {
-  final String serviceId;
-  final bool isDark;
+class _ReviewAttachmentsSection extends StatelessWidget {
+  final List<CreateTaskAttachmentRequest> attachments;
 
-  const _ServiceBadge({required this.serviceId, required this.isDark});
+  const _ReviewAttachmentsSection({required this.attachments});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final serviceAsync = ref.watch(serviceByIdProvider(serviceId));
-    return serviceAsync.when(
-      data: (service) => _BadgeContainer(
-        text: service.name ?? 'Service',
-        color: AppColors.secondaryVariant,
-        icon: Icons.design_services_rounded,
-      ),
-      loading: () => _ShimmerBadge(isDark: isDark),
-      error: (_, __) => const _BadgeContainer(
-        text: 'Unknown',
-        color: AppColors.secondaryVariant,
-        icon: Icons.error_outline,
-      ),
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Attachments (${attachments.length})',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w700,
+            color: colorScheme.onSurface,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        SizedBox(
+          height: 70.h,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: attachments.length,
+            separatorBuilder: (ctx, idx) => SizedBox(width: 8.w),
+            itemBuilder: (context, index) {
+              final att = attachments[index];
+              final url = att.url ?? '';
+              final isImage = url.endsWith('.jpg') ||
+                  url.endsWith('.jpeg') ||
+                  url.endsWith('.png') ||
+                  url.endsWith('.webp') ||
+                  att.type == 'image';
+
+              return Container(
+                width: 70.h,
+                height: 70.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10.r),
+                  color: colorScheme.surfaceContainerHighest,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10.r),
+                  child: isImage
+                      ? Image.network(url, fit: BoxFit.cover)
+                      : Center(
+                          child: Icon(
+                            Icons.insert_drive_file_rounded,
+                            size: 24.sp,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _BadgeContainer extends StatelessWidget {
-  final String text;
-  final Color color;
-  final IconData icon;
+class _ReviewBottomActionBar extends StatelessWidget {
+  final bool isPosting;
+  final VoidCallback onSubmit;
 
-  const _BadgeContainer({
-    required this.text,
-    required this.color,
-    required this.icon,
+  const _ReviewBottomActionBar({
+    required this.isPosting,
+    required this.onSubmit,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      decoration: BoxDecoration(color: colorScheme.surface),
+      child: SafeArea(
+        child: SizedBox(
+          height: 44.h,
+          child: ElevatedButton(
+            onPressed: isPosting ? null : onSubmit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isPosting)
+                  SizedBox(
+                    width: 18.r,
+                    height: 18.r,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                else
+                  Text(
+                    'Confirm Task Order',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShimmerBadge extends StatelessWidget {
-  final bool isDark;
-  const _ShimmerBadge({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
-    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
-
-    return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
-      child: Container(
-        width: 100,
-        height: 28,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );

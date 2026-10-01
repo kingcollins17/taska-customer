@@ -318,9 +318,14 @@ class ProfileScreen extends ConsumerWidget {
                     description: 'Are you sure you want to logout',
                   );
                   if (!confirm) return;
-                  ref
-                      .read(userProvider.notifier)
-                      .logout(onSuccess: () => context.go('/login'));
+                  ref.read(userProvider.notifier).logout(
+                    onSuccess: () {
+                      ref.invalidate(isAuthenticatedProvider);
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    },
+                  );
                 },
               ),
 

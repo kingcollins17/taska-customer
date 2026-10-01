@@ -44,6 +44,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           username: email,
           password: password,
           onSuccess: () {
+            ref.invalidate(isAuthenticatedProvider);
             context.hideLoading();
             // TODO: Navigate to Home once implemented
             context.showMessage('Login successful', type: MessageType.success);

@@ -10,10 +10,11 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:seeker_app/core/providers/user_provider.dart';
 import 'package:seeker_app/core/providers/notification_providers.dart';
-import 'package:seeker_app/core/providers/websocket_provider.dart';
+import 'package:seeker_app/core/providers/notification_sse_provider.dart';
 import 'package:seeker_app/core/providers/task_providers.dart';
 import 'package:seeker_app/core/providers/services_provider.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
+import 'package:seeker_app/core/providers/file_upload_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:seeker_app/core/utils/category_icon_helper.dart';
@@ -38,11 +39,12 @@ class HomeScreen extends ConsumerWidget {
     final userAsync = ref.watch(userProvider);
     final notificationCountsAsync = ref.watch(notificationCountsProvider);
     final user = userAsync.value;
-    ref.watch(deviceTrayNotificationsProvider);
+    ref.watch(notificationSseTrayListenerProvider);
 
     ref.watch(pendingPayoutListenerProvider);
     ref.watch(pendingReviewPromptListenerProvider);
     ref.watch(recentPendingPriceAdjustmentListenerProvider);
+    ref.watch(syncUploadedFileUrlsProvider);
 
     ref.listen<AsyncValue<User?>>(userProvider, (previous, next) {
       if (!next.isLoading && next.value == null) {
@@ -596,6 +598,7 @@ class _ActiveWorkItem extends ConsumerWidget {
         task.customerTotalPrice?.toNaira(2) ?? task.basePrice?.toNaira(2);
 
     final categoryName = task.category?.name;
+    final cardBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
 
     return Material(
       color: Colors.transparent,
@@ -608,30 +611,39 @@ class _ActiveWorkItem extends ConsumerWidget {
             );
           }
         },
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(14.r),
         child: Container(
-          padding: EdgeInsets.all(12.w),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: isDark ? 0.10 : 0.05),
-            borderRadius: BorderRadius.circular(16.r),
+            color: cardBg,
+            borderRadius: BorderRadius.circular(14.r),
             border: Border.all(
-              color: AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+              color: colorScheme.onSurface.withValues(alpha: 0.08),
             ),
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Row(
             children: [
               // Left Icon Badge
               Container(
-                width: 40.r,
-                height: 40.r,
+                width: 38.r,
+                height: 38.r,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: statusColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: HugeIcon(
                     icon: HugeIcons.strokeRoundedTask01,
-                    color: AppColors.primary,
+                    color: statusColor,
                     size: 18.sp,
                   ),
                 ),
@@ -648,7 +660,7 @@ class _ActiveWorkItem extends ConsumerWidget {
                       task.title ?? 'Task',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: colorScheme.onSurface,
-                        fontSize: 14.sp,
+                        fontSize: 13.5.sp,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -676,12 +688,12 @@ class _ActiveWorkItem extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        if (categoryName != null) ...[
+                        if (categoryName != null && categoryName.isNotEmpty) ...[
                           SizedBox(width: 6.w),
                           Text(
                             '•',
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                               fontSize: 10.sp,
                             ),
                           ),
@@ -690,7 +702,7 @@ class _ActiveWorkItem extends ConsumerWidget {
                             child: Text(
                               categoryName,
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: colorScheme.onSurfaceVariant,
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                                 fontSize: 11.sp,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -708,19 +720,24 @@ class _ActiveWorkItem extends ConsumerWidget {
               SizedBox(width: 8.w),
 
               // Right side Price & Chevron
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (priceStr != null)
                     Text(
                       priceStr,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.primary,
-                        fontSize: 14.sp,
+                        color: colorScheme.onSurface,
+                        fontSize: 13.5.sp,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                  SizedBox(width: 4.w),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                    size: 18.sp,
+                  ),
                 ],
               ),
             ],
@@ -873,15 +890,49 @@ class _PendingPayoutSection extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Pending Payment',
-              style: AppTextStyles.heading3.copyWith(
-                color: colorScheme.onSurface,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Action Required',
+                  style: AppTextStyles.heading3.copyWith(
+                    color: colorScheme.onSurface,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6.r,
+                        height: 6.r,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFD97706),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 5.w),
+                      Text(
+                        'Payment Requested',
+                        style: AppTextStyles.label.copyWith(
+                          color: const Color(0xFFD97706),
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: 10.h),
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -894,32 +945,40 @@ class _PendingPayoutSection extends ConsumerWidget {
                   ref.invalidate(pendingPayoutProvider(null));
                   ref.invalidate(activeTasksProvider);
                 },
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(14.r),
                 child: Container(
-                  padding: EdgeInsets.all(14.w),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                   decoration: BoxDecoration(
-                    color: AppColors.accentOrange
-                        .withValues(alpha: isDark ? 0.12 : 0.08),
-                    borderRadius: BorderRadius.circular(16.r),
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    borderRadius: BorderRadius.circular(14.r),
                     border: Border.all(
-                      color: AppColors.accentOrange
-                          .withValues(alpha: isDark ? 0.25 : 0.20),
+                      color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.35 : 0.25),
+                      width: 1.2,
                     ),
+                    boxShadow: isDark
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 42.r,
-                        height: 42.r,
+                        width: 38.r,
+                        height: 38.r,
                         decoration: BoxDecoration(
-                          color: AppColors.accentOrange.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Center(
                           child: HugeIcon(
                             icon: HugeIcons.strokeRoundedCreditCard,
-                            color: AppColors.accentOrange,
-                            size: 20.sp,
+                            color: const Color(0xFFD97706),
+                            size: 19.sp,
                           ),
                         ),
                       ),
@@ -932,19 +991,18 @@ class _PendingPayoutSection extends ConsumerWidget {
                               title,
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: colorScheme.onSurface,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.w700,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            SizedBox(height: 4.h),
+                            SizedBox(height: 2.h),
                             Text(
-                              'Tap to complete payment',
+                              'Tap to pay ${amount?.toNaira()}',
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.accentOrange,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                fontSize: 11.sp,
                               ),
                             ),
                           ],
@@ -952,26 +1010,32 @@ class _PendingPayoutSection extends ConsumerWidget {
                       ),
                       SizedBox(width: 8.w),
                       if (amount != null)
-                        Text(
-                          amount.toNaira(2),
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.accentOrange,
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w800,
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Pay',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: Colors.white,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      SizedBox(width: 4.w),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.accentOrange,
-                        size: 20.sp,
-                      ),
                     ],
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 24.h),
+            SizedBox(height: 18.h),
           ],
         );
       },

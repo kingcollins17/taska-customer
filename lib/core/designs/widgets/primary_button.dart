@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class PrimaryButton extends StatelessWidget {
@@ -51,9 +52,9 @@ class PrimaryButton extends StatelessWidget {
           ),
           child: isLoading
               ? SizedBox(
-                  height: 24.h,
-                  width: 24.h,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: fg),
+                  height: 20.h,
+                  width: 20.h,
+                  child: SpinKitCircle(color: colorScheme.onSurface,size: 20.h)
                 )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,

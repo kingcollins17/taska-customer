@@ -234,6 +234,28 @@ Map<String, dynamic> _$CreateTaskLocationRequestToJson(
   'country': instance.country,
 };
 
+_CreateTaskAttachmentRequest _$CreateTaskAttachmentRequestFromJson(
+  Map<String, dynamic> json,
+) => _CreateTaskAttachmentRequest(
+  url: json['url'] as String?,
+  storageKey: json['storage_key'] as String?,
+  fileName: json['file_name'] as String?,
+  fileSize: (json['file_size'] as num?)?.toInt(),
+  mimeType: json['mime_type'] as String?,
+  type: json['type'] as String?,
+);
+
+Map<String, dynamic> _$CreateTaskAttachmentRequestToJson(
+  _CreateTaskAttachmentRequest instance,
+) => <String, dynamic>{
+  'url': instance.url,
+  'storage_key': instance.storageKey,
+  'file_name': instance.fileName,
+  'file_size': instance.fileSize,
+  'mime_type': instance.mimeType,
+  'type': instance.type,
+};
+
 _CreateTaskRequest _$CreateTaskRequestFromJson(Map<String, dynamic> json) =>
     _CreateTaskRequest(
       title: json['title'] as String?,
@@ -252,6 +274,12 @@ _CreateTaskRequest _$CreateTaskRequestFromJson(Map<String, dynamic> json) =>
                 CreateTaskLocationRequest.fromJson(e as Map<String, dynamic>),
           )
           .toList(),
+      attachments: (json['attachments'] as List<dynamic>?)
+          ?.map(
+            (e) =>
+                CreateTaskAttachmentRequest.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
     );
 
 Map<String, dynamic> _$CreateTaskRequestToJson(_CreateTaskRequest instance) =>
@@ -263,4 +291,5 @@ Map<String, dynamic> _$CreateTaskRequestToJson(_CreateTaskRequest instance) =>
       'expires_at': instance.expiresAt?.toIso8601String(),
       'scheduled_start_at': instance.scheduledStartAt?.toIso8601String(),
       'locations': instance.locations?.map((e) => e.toJson()).toList(),
+      'attachments': instance.attachments?.map((e) => e.toJson()).toList(),
     };

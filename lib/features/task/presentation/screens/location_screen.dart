@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:seeker_app/core/core.dart';
-import 'package:seeker_app/core/designs/widgets/current_location.dart';
 import 'package:seeker_app/core/providers/location_provider.dart';
 import 'package:seeker_app/core/providers/task_creation_provider.dart';
 import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/models/tasks/task.dart';
 import '../../../../core/designs/app_colors.dart';
 import '../../../../core/designs/app_text_styles.dart';
-import '../../../../core/designs/widgets/primary_button.dart';
-import '../../../../core/designs/widgets/custom_back_button.dart';
 
 class LocationScreen extends ConsumerStatefulWidget {
   const LocationScreen({super.key});
@@ -57,7 +54,12 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         );
 
         ref.read(taskCreationProvider.notifier).updateLocation(locationRequest);
-        context.pushNamed(RouteNames.taskSchedule.name);
+        final now = DateTime.now();
+        final expiresAt = now.add(const Duration(days: 3));
+        ref
+            .read(taskCreationProvider.notifier)
+            .updateSchedule(startAt: null, expiresAt: expiresAt);
+        context.pushNamed(RouteNames.taskReview.name);
       } else {
         context.showMessage(
           'Could not determine current location. Please ensure location services are enabled.',
@@ -156,13 +158,13 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
     final isSelected = _selectedOption == value;
     final effectiveTextColor = isDisabled ? AppColors.textSecondary : textColor;
     final iconColor = isDisabled
-        ? AppColors.textSecondary.withOpacity(0.5)
+        ? AppColors.textSecondary.withValues(alpha: 0.5)
         : (isSelected ? AppColors.primary : AppColors.textSecondary);
     final borderColor = (isSelected && !isDisabled)
         ? AppColors.primary
         : Colors.transparent;
     final effectiveCardColor = isDisabled
-        ? cardColor.withOpacity(0.5)
+        ? cardColor.withValues(alpha: 0.5)
         : cardColor;
 
     return InkWell(

@@ -275,6 +275,22 @@ abstract class CreateTaskLocationRequest with _$CreateTaskLocationRequest {
 }
 
 @freezed
+abstract class CreateTaskAttachmentRequest with _$CreateTaskAttachmentRequest {
+  @JsonSerializable(explicitToJson: true)
+  const factory CreateTaskAttachmentRequest({
+    String? url,
+    @JsonKey(name: 'storage_key') String? storageKey,
+    @JsonKey(name: 'file_name') String? fileName,
+    @JsonKey(name: 'file_size') int? fileSize,
+    @JsonKey(name: 'mime_type') String? mimeType,
+    String? type,
+  }) = _CreateTaskAttachmentRequest;
+
+  factory CreateTaskAttachmentRequest.fromJson(Map<String, dynamic> json) =>
+      _$CreateTaskAttachmentRequestFromJson(json);
+}
+
+@freezed
 abstract class CreateTaskRequest with _$CreateTaskRequest {
   @JsonSerializable(explicitToJson: true)
   const factory CreateTaskRequest({
@@ -285,6 +301,7 @@ abstract class CreateTaskRequest with _$CreateTaskRequest {
     @JsonKey(name: 'expires_at') DateTime? expiresAt,
     @JsonKey(name: 'scheduled_start_at') DateTime? scheduledStartAt,
     List<CreateTaskLocationRequest>? locations,
+    List<CreateTaskAttachmentRequest>? attachments,
   }) = _CreateTaskRequest;
 
   factory CreateTaskRequest.fromJson(Map<String, dynamic> json) =>

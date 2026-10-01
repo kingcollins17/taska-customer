@@ -13,12 +13,11 @@ final userProvider = AsyncNotifierProvider<UserNotifier, User?>(
 class UserNotifier extends AsyncNotifier<User?> {
   @override
   FutureOr<User?> build() async {
-    // Attempt to load the user profile on initialization if a token exists
-    final token = await appStorage.get(StorageKey.accessToken);
-    if (token != null && token.toString().isNotEmpty) {
-      return _fetchUser();
+    final isAuthenticated = await ref.watch(isAuthenticatedProvider.future);
+    if (!isAuthenticated) {
+      return null;
     }
-    return null;
+    return _fetchUser();
   }
 
   Future<User?> _fetchUser() async {
@@ -48,6 +47,7 @@ class UserNotifier extends AsyncNotifier<User?> {
 
       if (response.accessToken != null) {
         await appStorage.set(StorageKey.accessToken, response.accessToken!);
+        // ref.invalidate(isAuthenticatedProvider);
         final user = await _fetchUser();
         state = AsyncData(user);
         onSuccess?.call();
@@ -220,6 +220,7 @@ class UserNotifier extends AsyncNotifier<User?> {
   }) async {
     try {
       await appStorage.delete(StorageKey.accessToken);
+      // ref.invalidate(isAuthenticatedProvider);
       state = const AsyncData(null);
       onSuccess?.call();
     } catch (e, st) {
@@ -231,8 +232,8 @@ class UserNotifier extends AsyncNotifier<User?> {
 }
 
 final isAuthenticatedProvider = FutureProvider<bool>((ref) async {
-  final user = await ref.watch(userProvider.future);
-  return user != null;
+  final token = await appStorage.get(StorageKey.accessToken);
+  return token != null && token.toString().isNotEmpty;
 }, retry: (_, _) => null);
 
 final supportedBanksProvider = FutureProvider<List<SupportedBank>>((ref) async {

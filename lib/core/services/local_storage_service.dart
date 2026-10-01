@@ -7,6 +7,7 @@ enum StorageKey {
   taskDraft,
   matchingState,
   reviewPromptHistory,
+  uploadedFileUrls,
 }
 enum HiveBox { defaultBox }
 
