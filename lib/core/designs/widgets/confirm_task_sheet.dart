@@ -36,6 +36,8 @@ class ConfirmTaskSheet extends ConsumerWidget {
     final taskAsync = ref.watch(taskDetailProvider(taskId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     Widget buildShimmer() {
       final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
       final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
@@ -144,17 +146,22 @@ class ConfirmTaskSheet extends ConsumerWidget {
                   ),
                   SizedBox(height: 10.h),
 
-                  // Task Summary Card with Category Name
+                  // Task Summary Card with Category Name & Estimated Price
                   Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
+                      horizontal: 14.w,
+                      vertical: 12.h,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(
                         alpha: isDark ? 0.12 : 0.06,
                       ),
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(
+                          alpha: isDark ? 0.25 : 0.15,
+                        ),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,7 +171,7 @@ class ConfirmTaskSheet extends ConsumerWidget {
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 8.w,
-                                vertical: 3.h,
+                                vertical: 4.h,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.primary.withValues(
@@ -182,17 +189,32 @@ class ConfirmTaskSheet extends ConsumerWidget {
                               ),
                             ),
                             const Spacer(),
-                            Text(
-                              priceStr,
-                              style: AppTextStyles.heading3.copyWith(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  priceStr,
+                                  style: AppTextStyles.heading3.copyWith(
+                                    fontSize: 17.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                Text(
+                                  'Est. Starting Price',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    fontSize: 9.5.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? Colors.white60
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        SizedBox(height: 6.h),
+                        SizedBox(height: 8.h),
                         Text(
                           task.title ?? 'Untitled Task',
                           style: AppTextStyles.heading3.copyWith(
@@ -204,6 +226,102 @@ class ConfirmTaskSheet extends ConsumerWidget {
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 10.h),
+
+                  // Price Renegotiation Disclaimer Card
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3)
+                          : colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color:
+                            colorScheme.outlineVariant.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(5.r),
+                          decoration: BoxDecoration(
+                            color: Colors.blue
+                                .withValues(alpha: isDark ? 0.2 : 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: HugeIcon(
+                            icon: HugeIcons.strokeRoundedInformationCircle,
+                            color:
+                                isDark ? Colors.blue[300]! : Colors.blue[700]!,
+                            size: 15.sp,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Price Subject to Negotiation',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? Colors.blue[200]
+                                          : Colors.blue[900],
+                                    ),
+                                  ),
+                                  SizedBox(width: 5.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 5.w,
+                                      vertical: 1.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                    child: Text(
+                                      'Not Final',
+                                      style: TextStyle(
+                                        fontSize: 8.5.sp,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? Colors.blue[300]
+                                            : Colors.blue[800],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                'This initial price is an estimate. You and your assigned provider can discuss and renegotiate the final quote after evaluating full task details.',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  fontSize: 10.sp,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppColors.textSecondary,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -239,8 +357,9 @@ class ConfirmTaskSheet extends ConsumerWidget {
                   SizedBox(height: 6.h),
                   _StepRow(
                     stepNumber: '3',
-                    title: 'Flexible Payment',
-                    subtitle: 'Pay via online (recommended) or cash offline.',
+                    title: 'Agree Price & Pay',
+                    subtitle:
+                        'Confirm final price with Tasker and pay online or cash.',
                     isDark: isDark,
                   ),
 

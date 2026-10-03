@@ -81,7 +81,7 @@ class _TaskDetailContent extends ConsumerWidget {
 
     final dateStr = task.scheduledStartAt != null
         ? DateFormat('EEE, MMM d, yyyy • h:mm a').format(task.scheduledStartAt!)
-        : 'Flexible Start Time';
+        : 'As soon as possible';
 
     final priceStr = task.customerTotalPrice != null
         ? task.customerTotalPrice!.toNaira(2)
@@ -94,27 +94,43 @@ class _TaskDetailContent extends ConsumerWidget {
       orElse: () => TaskLocation(),
     );
 
-    String locationStr = 'Location not specified';
+    String locationCardStr = 'Location not specified';
+    String fullLocationStr = '';
+
     if (primaryLocation != null) {
       final addr = primaryLocation.address?.trim() ?? '';
       final city = primaryLocation.city?.trim() ?? '';
       final state = primaryLocation.state?.trim() ?? '';
+      final country = primaryLocation.country?.trim() ?? '';
 
       final cityState = [
         if (city.isNotEmpty) city,
         if (state.isNotEmpty) state,
       ].join(', ');
 
-      if (addr.isNotEmpty && cityState.isNotEmpty) {
-        if (!addr.toLowerCase().contains(city.toLowerCase())) {
-          locationStr = '$addr, $cityState';
-        } else {
-          locationStr = addr;
-        }
+      if (cityState.isNotEmpty) {
+        locationCardStr = cityState;
       } else if (addr.isNotEmpty) {
-        locationStr = addr;
+        final parts = addr
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+        if (parts.length >= 2) {
+          locationCardStr = '${parts[parts.length - 2]}, ${parts.last}';
+        } else {
+          locationCardStr = addr;
+        }
+      }
+
+      if (addr.isNotEmpty) {
+        fullLocationStr = addr;
+        if (country.isNotEmpty &&
+            !addr.toLowerCase().contains(country.toLowerCase())) {
+          fullLocationStr = '$fullLocationStr, $country';
+        }
       } else if (cityState.isNotEmpty) {
-        locationStr = cityState;
+        fullLocationStr = cityState;
       }
     }
 
@@ -272,13 +288,9 @@ class _TaskDetailContent extends ConsumerWidget {
                       _TaskSupportBanner(taskId: task.id!),
                     if (const {
                       'assigned',
-                      'matched',
-                      'booked',
                       'in_progress',
                       'in progress',
                       'inprogress',
-                      'started',
-                      'completed',
                     }.contains(task.status?.toLowerCase())) ...[
                       _TaskAssignmentDisplay(taskId: task.id ?? ''),
                       SizedBox(height: 14.h),
@@ -305,12 +317,61 @@ class _TaskDetailContent extends ConsumerWidget {
                         Expanded(
                           child: _InfoOptionCard(
                             title: 'Location',
-                            subtitle: locationStr,
+                            subtitle: locationCardStr,
                             icon: HugeIcons.strokeRoundedLocation01,
                           ),
                         ),
                       ],
                     ),
+                    if (fullLocationStr.isNotEmpty) ...[
+                      SizedBox(height: 12.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(5.r),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: HugeIcon(
+                                icon: HugeIcons.strokeRoundedLocation01,
+                                color: AppColors.primary,
+                                size: 14.sp,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Full Address',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    fullLocationStr,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 14.h),
 
                     _PriceBreakdownCard(task: task),
@@ -1146,7 +1207,7 @@ class _BottomActionBar extends ConsumerWidget {
       actionText = amount != null ? 'Pay ${amount.toNaira(2)}' : 'Pay Now';
     } else if (status == 'draft') {
       actionText = 'Confirm Task Order';
-    } else if (status == 'open') {
+    } else if (status == 'open' || status == 'searching' || status == 'pending') {
       actionText = 'Searching Provider...';
     } else if (status == 'matched' || status == 'in progress' || status == 'in_progress' || status == 'inprogress') {
       actionText = 'Track Progress';
@@ -1166,12 +1227,13 @@ class _BottomActionBar extends ConsumerWidget {
                 if (task.id != null) {
                   ConfirmTaskSheet.show(context, task.id!);
                 }
-              } else if (status == 'open') {
-                context.pushNamed(
-                  RouteNames.taskMatching.name,
-                  pathParameters: {if (task.id != null) 'taskId': task.id!},
-                  queryParameters: {if (task.id != null) 'taskId': task.id!},
-                );
+              } else if (status == 'open' || status == 'searching' || status == 'pending') {
+                if (task.id != null && task.id!.isNotEmpty) {
+                  context.pushNamed(
+                    RouteNames.taskMatching.name,
+                    pathParameters: {'taskId': task.id!},
+                  );
+                }
               } else {
                 context.pop();
               }

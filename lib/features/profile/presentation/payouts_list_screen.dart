@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +11,7 @@ import 'package:seeker_app/core/designs/widgets/custom_back_button.dart';
 import 'package:seeker_app/core/designs/widgets/primary_button.dart';
 import 'package:seeker_app/core/models/payout/payout_models.dart';
 import 'package:seeker_app/core/providers/payout_providers.dart';
+import 'package:seeker_app/core/routes/route_names.dart';
 import 'package:seeker_app/core/utils/num_extension.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -119,12 +121,16 @@ class _PayoutsListScreenState extends ConsumerState<PayoutsListScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: const CustomBackButton(),
         title: Text(
           'Transactions',
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -628,9 +634,11 @@ class _PayoutItemTile extends StatelessWidget {
             ? payout.description!
             : 'Task Payout');
 
-    final subtitle = payout.reference != null && payout.reference!.isNotEmpty
-        ? 'Ref: ${payout.reference}'
-        : (payout.task?.status ?? payout.status ?? '');
+    final String statusKey = (payout.status ?? payout.task?.status ?? '').toUpperCase();
+    final String statusDisplay = _payoutStatusDisplayNames[statusKey] ??
+        (statusKey.isNotEmpty
+            ? statusKey[0] + statusKey.substring(1).toLowerCase().replaceAll('_', ' ')
+            : 'Completed');
 
     final num amountNum = payout.customerPaymentAmount ??
         payout.payoutAmount ??
@@ -638,19 +646,18 @@ class _PayoutItemTile extends StatelessWidget {
         0;
 
     final String amountStr = amountNum.toNaira(2);
-    final String statusStr = (payout.status ?? '').toUpperCase();
 
     Color statusColor;
     IconData iconData;
     String prefix;
 
-    switch (statusStr) {
+    switch (statusKey) {
       case 'SUCCESS':
       case 'COMPLETED':
       case 'CUSTOMER_PAID':
-        statusColor = const Color(0xFF22C55E);
-        iconData = Icons.south_west;
-        prefix = '+ ';
+        statusColor = AppColors.primary;
+        iconData = Icons.north_east;
+        prefix = ' ';
         break;
       case 'PENDING':
       case 'TRANSFER_INITIATED':
@@ -661,105 +668,122 @@ class _PayoutItemTile extends StatelessWidget {
       case 'FAILED':
       case 'CANCELLED':
         statusColor = AppColors.error;
-        iconData = Icons.north_east;
-        prefix = '- ';
+        iconData = Icons.close_rounded;
+        prefix = '';
         break;
       default:
-        statusColor = isDark ? Colors.white70 : AppColors.textPrimary;
-        iconData = Icons.receipt_long_outlined;
-        prefix = '';
+        statusColor = AppColors.primary;
+        iconData = Icons.north_east;
+        prefix = '- ';
     }
 
     final cardBg = isDark
         ? AppColors.darkerBackground
         : AppColors.surface;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: cardBg,
+    final taskId = payout.taskId ?? payout.task?.id;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          if (taskId != null && taskId.isNotEmpty) {
+            context.pushNamed(
+              RouteNames.taskDetail.name,
+              pathParameters: {'taskId': taskId},
+            );
+          }
+        },
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Left Circular Icon Avatar
-          Container(
-            width: 44.w,
-            height: 44.w,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: statusColor.withValues(alpha: isDark ? 0.18 : 0.1),
-            ),
-            child: Icon(
-              iconData,
-              color: statusColor,
-              size: 20.sp,
+        child: Container(
+          margin: EdgeInsets.only(bottom: 10.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.05),
             ),
           ),
-          SizedBox(width: 12.w),
-
-          // Middle Title & Subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 3.h),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                    color: colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8.w),
-
-          // Right Amount & Date/Time
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Row(
             children: [
-              Text(
-                '$prefix$amountStr',
-                style: GoogleFonts.inter(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w700,
+              // Left Circular Icon Avatar
+              Container(
+                width: 44.w,
+                height: 44.w,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: statusColor.withValues(alpha: isDark ? 0.18 : 0.1),
+                ),
+                child: Icon(
+                  iconData,
                   color: statusColor,
+                  size: 20.sp,
                 ),
               ),
-              if (formattedDate.isNotEmpty) ...[
-                SizedBox(height: 3.h),
-                Text(
-                  formattedDate,
-                  style: GoogleFonts.inter(
-                    fontSize: 11.sp,
-                    color: colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
+              SizedBox(width: 12.w),
+
+              // Middle Title & Subtitle (Status)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      statusDisplay,
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        color: statusColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ],
+              ),
+              SizedBox(width: 8.w),
+
+              // Right Amount & Date/Time
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$prefix$amountStr',
+                    style: GoogleFonts.inter(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: statusColor,
+                    ),
+                  ),
+                  if (formattedDate.isNotEmpty) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      formattedDate,
+                      style: GoogleFonts.inter(
+                        fontSize: 11.sp,
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
